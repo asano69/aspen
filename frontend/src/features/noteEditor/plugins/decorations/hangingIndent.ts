@@ -78,19 +78,21 @@ class IndentMarkWidget extends WidgetType {
 //     a native tab character's browser-dependent tab-stop width,
 //     since each pad is a plain, fixed-width element under
 //     our own control.
-function buildDecorations(view: EditorView): DecorationSet {
+export function buildDecorations(view: EditorView): DecorationSet {
   const decorations = [];
 
-  // `code:` block ranges (see codeBlockLines.ts for the same
+  // `code:` block body ranges (see codeBlockLines.ts for the same
   // pattern): inside one of these, the parser's Indent node is the
   // block's own indent level, not a bullet, so its pads get no dot.
   // Any whitespace deeper than that Indent node is raw code and is
-  // left untouched.
+  // left untouched. The declaration line is not part of the body: it
+  // is an ordinary bullet line, so it keeps its dot.
   const codeBlockRanges: { from: number; to: number }[] = [];
   syntaxTree(view.state).iterate({
     enter(node) {
       if (node.type !== CodeBlock) return;
-      codeBlockRanges.push({ from: node.from, to: node.to });
+      const bodyFrom = view.state.doc.lineAt(node.from).to + 1;
+      codeBlockRanges.push({ from: bodyFrom, to: node.to });
     },
   });
   const inCodeBlock = (pos: number) =>
