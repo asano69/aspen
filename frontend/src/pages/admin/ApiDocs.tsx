@@ -65,9 +65,7 @@ export default function ApiDocs() {
         <p class="api-docs-status">Status: {status()}</p>
       )}
 
-      <pre class="api-docs-body">
-        {body()}
-      </pre>
+      <pre class="api-docs-body">{body()}</pre>
     </div>
   );
 }

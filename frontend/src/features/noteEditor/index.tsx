@@ -360,10 +360,7 @@ export default function NoteEditor(props: NoteEditorProps) {
   // "not-persistent" and drawn faded until its title creates the card.
   return (
     <>
-      <div
-        class="page"
-        classList={{ "not-persistent": !props.provider }}
-      >
+      <div class="page" classList={{ "not-persistent": !props.provider }}>
         <div ref={mountEditor} class="editor" />
       </div>
       {/* Reserves space below the editor so a long note's last line

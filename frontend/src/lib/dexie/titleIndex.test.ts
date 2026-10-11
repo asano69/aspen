@@ -50,7 +50,10 @@ describe("suggestTitles", () => {
     await cardsReplica.put([card("1", "p", "apple")]);
     expect(await suggestTitles("p", "app")).toEqual(["apple"]);
 
-    await cardsReplica.put([card("1", "p", "banana"), card("2", "p", "apricot")]);
+    await cardsReplica.put([
+      card("1", "p", "banana"),
+      card("2", "p", "apricot"),
+    ]);
     expect(await suggestTitles("p", "app")).toEqual([]);
     expect(await suggestTitles("p", "ap")).toEqual(["apricot"]);
 

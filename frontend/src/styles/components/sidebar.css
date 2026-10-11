@@ -95,6 +95,14 @@
     flex-shrink: 0;
   }
 
+  /* The pot icon is the same avatar as in TopBar, shrunk to fit a row. */
+  .sidebar-link > .avatar,
+  .sidebar-link .avatar-img {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
   .sidebar-link .title {
     overflow: hidden;
     text-overflow: ellipsis;

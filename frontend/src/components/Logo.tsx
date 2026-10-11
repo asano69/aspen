@@ -135,10 +135,7 @@ export default function Logo(props: LogoProps) {
 
   const title = () =>
     props.showTitle && (
-      <div
-        class="logo"
-        style={{ "font-size": `${titleFontSize()}px` }}
-      >
+      <div class="logo" style={{ "font-size": `${titleFontSize()}px` }}>
         {__APP_NAME__}
       </div>
     );

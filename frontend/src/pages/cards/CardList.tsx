@@ -190,24 +190,24 @@ export default function CardList() {
   return (
     <Show when={potWindow(pot()?.id)?.loaded} fallback={<Loading />}>
       <>
-      <QuickLaunch />
-      <DragDropProvider sensors={sensors} onDragEnd={handleDragEnd}>
-        <ul class="card-grid">
-          <For each={cards()}>
-            {(card, index) => (
-              <CardItem card={card} index={index()} potSlug={params.slug} />
-            )}
-          </For>
-          {/* Invisible row-spanning marker: loading the next page when
+        <QuickLaunch />
+        <DragDropProvider sensors={sensors} onDragEnd={handleDragEnd}>
+          <ul class="card-grid">
+            <For each={cards()}>
+              {(card, index) => (
+                <CardItem card={card} index={index()} potSlug={params.slug} />
+              )}
+            </For>
+            {/* Invisible row-spanning marker: loading the next page when
               this scrolls into view is what drives the infinite
               scroll above. */}
-          <li
-            ref={observeSentinel}
-            aria-hidden="true"
-            class="card-grid-sentinel"
-          />
-        </ul>
-      </DragDropProvider>
+            <li
+              ref={observeSentinel}
+              aria-hidden="true"
+              class="card-grid-sentinel"
+            />
+          </ul>
+        </DragDropProvider>
       </>
     </Show>
   );

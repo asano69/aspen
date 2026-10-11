@@ -4,7 +4,8 @@ import { DragDropProvider } from "@dnd-kit/solid";
 import { useSortable, isSortable } from "@dnd-kit/solid/sortable";
 import { PointerSensor, KeyboardSensor } from "@dnd-kit/dom";
 
-import { GalleryVerticalEnd } from "@/lib/icons";
+import PotIcon from "@/components/PotIcon";
+import { potCoverURL } from "@/lib/api/pots";
 import { orderedPots, reorderPot } from "@/lib/stores/potsStore";
 import type { PotRecord } from "@/lib/models/pot";
 
@@ -45,7 +46,7 @@ function SidebarPotRow(props: SidebarPotRowProps) {
       data-dragging={isDragging() ? "" : undefined}
     >
       <A href={`/${props.pot.name}`} class="sidebar-link">
-        <GalleryVerticalEnd size={18} />
+        <PotIcon src={potCoverURL(props.pot)} />
         <span class="title">{props.pot.title}</span>
       </A>
     </li>

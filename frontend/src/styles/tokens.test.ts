@@ -7,7 +7,10 @@ const root = resolve(process.cwd(), "src/styles");
 const read = (file: string) => readFileSync(resolve(root, file), "utf8");
 
 // The public tokens, copied from token.txt.
-const PUBLIC_TOKENS = read("tokens.txt").split("\n").map((t) => t.trim()).filter(Boolean);
+const PUBLIC_TOKENS = read("tokens.txt")
+  .split("\n")
+  .map((t) => t.trim())
+  .filter(Boolean);
 
 // Source files that may read a token (everything under src/ except this test).
 function sourceFiles(): string[] {
@@ -33,7 +36,11 @@ describe("design tokens", () => {
   });
 
   it("never gives a public token a fallback value at its use site", () => {
-    const files = ["components/card-grid.css", "components/related.css", "components/page.css"];
+    const files = [
+      "components/card-grid.css",
+      "components/related.css",
+      "components/page.css",
+    ];
     const offenders = files.filter((f) =>
       PUBLIC_TOKENS.some((name) => read(f).includes(`var(${name},`)),
     );

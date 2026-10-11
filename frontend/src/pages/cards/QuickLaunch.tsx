@@ -21,9 +21,7 @@ function QuickMenu(props: QuickMenuProps) {
     <DropdownMenu>
       {/* The label and the arrow are one button: no border or fill, only a
           background tint on hover. */}
-      <DropdownMenu.Trigger
-        class={`${props.menuClass} quick-launch-trigger`}
-      >
+      <DropdownMenu.Trigger class={`${props.menuClass} quick-launch-trigger`}>
         {selected()}
         <ChevronDown size={14} />
       </DropdownMenu.Trigger>

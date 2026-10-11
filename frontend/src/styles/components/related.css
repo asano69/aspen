@@ -32,27 +32,51 @@
       animation-delay: calc(var(--row, 0) * 80ms + var(--i, 0) * 30ms);
     }
 
-    ul.grid > li:nth-child(1) { --i: 0; }
-    ul.grid > li:nth-child(2) { --i: 1; }
-    ul.grid > li:nth-child(3) { --i: 2; }
-    ul.grid > li:nth-child(4) { --i: 3; }
-    ul.grid > li:nth-child(5) { --i: 4; }
-    ul.grid > li:nth-child(6) { --i: 5; }
-    ul.grid > li:nth-child(7) { --i: 6; }
-    ul.grid > li:nth-child(n + 8) { --i: 7; }
+    ul.grid > li:nth-child(1) {
+      --i: 0;
+    }
+    ul.grid > li:nth-child(2) {
+      --i: 1;
+    }
+    ul.grid > li:nth-child(3) {
+      --i: 2;
+    }
+    ul.grid > li:nth-child(4) {
+      --i: 3;
+    }
+    ul.grid > li:nth-child(5) {
+      --i: 4;
+    }
+    ul.grid > li:nth-child(6) {
+      --i: 5;
+    }
+    ul.grid > li:nth-child(7) {
+      --i: 6;
+    }
+    ul.grid > li:nth-child(n + 8) {
+      --i: 7;
+    }
 
-    .links-container > div:nth-child(1) { --row: 0; }
-    .links-container > div:nth-child(2) { --row: 1; }
-    .links-container > div:nth-child(3) { --row: 2; }
-    .links-container > div:nth-child(4) { --row: 3; }
-    .links-container > div:nth-child(n + 5) { --row: 4; }
+    .links-container > div:nth-child(1) {
+      --row: 0;
+    }
+    .links-container > div:nth-child(2) {
+      --row: 1;
+    }
+    .links-container > div:nth-child(3) {
+      --row: 2;
+    }
+    .links-container > div:nth-child(4) {
+      --row: 3;
+    }
+    .links-container > div:nth-child(n + 5) {
+      --row: 4;
+    }
 
     /* "New Links" always comes after the 1 hop / 2 hop rows, however many
      * of them there are, so it gets its own extra delay on top of its row's. */
     .links-container > div.links-new ul.grid > li {
-      animation-delay: calc(
-        var(--row, 0) * 80ms + var(--i, 0) * 30ms + 200ms
-      );
+      animation-delay: calc(var(--row, 0) * 80ms + var(--i, 0) * 30ms + 200ms);
     }
 
     @media (prefers-reduced-motion: reduce) {

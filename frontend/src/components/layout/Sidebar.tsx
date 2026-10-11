@@ -2,7 +2,7 @@ import { For, Show, type Component } from "solid-js";
 import { A } from "@solidjs/router";
 
 import { useVersion } from "@/lib/version";
-import Logo from "../Logo";
+
 import SidebarPotList from "./SidebarPotList";
 
 interface NavItem {
@@ -53,10 +53,6 @@ export default function Sidebar(props: SidebarProps) {
             column too, so its own top item needs an offset to stay clear
             of the header. */}
         <div class="sidebar-body">
-          {/* The way back to the pot list. */}
-          <div class="sidebar-logo">
-            <Logo linkable showTitle />
-          </div>
           <nav class="sidebar-nav">
             <For each={NAV_ITEMS}>
               {(item) => (
