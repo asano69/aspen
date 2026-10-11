@@ -64,7 +64,7 @@ export default function Sidebar(props: SidebarProps) {
             </For>
           </nav>
 
-          <SidebarPotList />
+          <SidebarPotList open={props.open} />
         </div>
 
         {/* Pinned to the bottom of the sidebar regardless of how tall the

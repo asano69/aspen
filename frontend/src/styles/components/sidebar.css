@@ -1,6 +1,6 @@
 /* Public classes: .sidebar, .sidebar-backdrop, .sidebar-body,
- * .sidebar-logo, .sidebar-nav, .sidebar-link, .sidebar-pot-list,
- * .sidebar-pot, .sidebar-footer.
+ * .sidebar-logo, .sidebar-nav, .sidebar-link, .sidebar-search,
+ * .sidebar-pot-list, .sidebar-pot, .sidebar-footer.
  * The overlay sidebar (see components/layout/Sidebar.tsx and
  * SidebarPotList.tsx). It is open while it has [data-open]. */
 @layer components {
@@ -56,6 +56,11 @@
 
   .sidebar-nav {
     padding: 0 8px;
+  }
+
+  /* The pot filter above the list (see SidebarPotList.tsx). */
+  .sidebar-search {
+    padding: 8px 8px 0;
   }
 
   .sidebar-pot-list {
