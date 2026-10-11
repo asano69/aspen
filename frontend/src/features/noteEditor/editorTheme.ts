@@ -188,14 +188,19 @@ export const editorTheme = EditorView.theme({
     marginLeft: "var(--indent-width, 0px)",
     textIndent: "calc(-1 * var(--indent-width, 0px))",
   },
-  // A code line hangs its wrapped rows with a transparent border
-  // instead of a margin: the border sits inside the line box, so the
-  // line's background (see ".cm-line.code-block" below) still
-  // fills it, while a margin would leave a gap. The negative
-  // text-indent above still cancels it for the first row.
-  ".cm-line.indent.code-block": {
+  // A `code:` body line. The declaration's own indent
+  // (--code-outer-width, see hangingIndent.ts) is a transparent border that
+  // the background does not paint (background-clip: padding-box); the rest
+  // of the indent is padding, so the block's own indent level is drawn with
+  // the code background and wrapped rows hang inside it. The negative
+  // text-indent above still cancels the whole indent for the first row,
+  // where the pad widgets sit. The declaration line is excluded: it is an
+  // ordinary bullet line.
+  ".cm-line.indent.code-block:not(.start)": {
     marginLeft: "0",
-    borderLeft: "var(--indent-width, 0px) solid transparent",
+    borderLeft: "var(--code-outer-width, 0px) solid transparent",
+    paddingLeft: "calc(var(--indent-width, 0px) - var(--code-outer-width, 0px))",
+    backgroundClip: "padding-box",
   },
   // One indent level's mark box (see hangingIndent.ts's
   // IndentMarkWidget), replacing the underlying whitespace character

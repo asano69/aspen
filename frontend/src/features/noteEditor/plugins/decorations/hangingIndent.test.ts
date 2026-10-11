@@ -25,6 +25,33 @@ function dotLines(doc: string): number[] {
   return lines;
 }
 
+// The "style" attribute of every line decoration, by 1-based line number.
+function lineStyles(doc: string): Record<number, string> {
+  const state = EditorState.create({ doc, extensions: [cardpotSyntax()] });
+  const fakeView = {
+    state,
+    visibleRanges: [{ from: 0, to: doc.length }],
+  } as unknown as EditorView;
+
+  const styles: Record<number, string> = {};
+  const cursor = buildDecorations(fakeView).iter();
+  for (; cursor.value; cursor.next()) {
+    const style = cursor.value.spec.attributes?.style;
+    if (style) styles[state.doc.lineAt(cursor.from).number] = style;
+  }
+  return styles;
+}
+
+describe("hangingIndent code: block margin", () => {
+  it("passes the declaration's own indent to the body lines only", () => {
+    // Lines: 1 title, 2 declaration (1 level), 3 body (2 levels).
+    const styles = lineStyles("T\n\tcode:x\n\t\tfoo");
+    expect(styles[2]).not.toContain("--code-outer-width");
+    expect(styles[3]).toContain("--code-outer-width: 22.5px");
+    expect(styles[3]).toContain("--indent-width: 45px");
+  });
+});
+
 describe("hangingIndent bullets", () => {
   it("draws a dot on an indented code: declaration line but not on its body", () => {
     // Regression test: the declaration line was treated as code, so its

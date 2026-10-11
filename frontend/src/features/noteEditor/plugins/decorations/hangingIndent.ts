@@ -6,7 +6,10 @@ import {
 } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import { CodeBlock } from "../../parser/cardpot";
-import { indentRangeForLine } from "../../parser/cardpot/indent";
+import {
+  countIndent,
+  indentRangeForLine,
+} from "../../parser/cardpot/indent";
 import { decorationPlugin } from "./decorationPlugin";
 
 // Width of one indent level's mark element, in pixels (see
@@ -87,22 +90,31 @@ export function buildDecorations(view: EditorView): DecorationSet {
   // Any whitespace deeper than that Indent node is raw code and is
   // left untouched. The declaration line is not part of the body: it
   // is an ordinary bullet line, so it keeps its dot.
-  const codeBlockRanges: { from: number; to: number }[] = [];
+  // outerDepth is the declaration's own indent: the pads up to it stay
+  // transparent, and the pad after it (the block's own level) is drawn with
+  // the code background (see editorTheme.ts's ".cm-line.indent.code-block").
+  const codeBlockRanges: { from: number; to: number; outerDepth: number }[] =
+    [];
   syntaxTree(view.state).iterate({
     enter(node) {
       if (node.type !== CodeBlock) return;
-      const bodyFrom = view.state.doc.lineAt(node.from).to + 1;
-      codeBlockRanges.push({ from: bodyFrom, to: node.to });
+      const declaration = view.state.doc.lineAt(node.from);
+      codeBlockRanges.push({
+        from: declaration.to + 1,
+        to: node.to,
+        outerDepth: countIndent(declaration.text),
+      });
     },
   });
-  const inCodeBlock = (pos: number) =>
-    codeBlockRanges.some((range) => pos >= range.from && pos < range.to);
+  const codeBlockAt = (pos: number) =>
+    codeBlockRanges.find((range) => pos >= range.from && pos < range.to);
 
   for (const { from, to } of view.visibleRanges) {
     let pos = from;
     while (pos <= to) {
       const line = view.state.doc.lineAt(pos);
-      const inCode = inCodeBlock(line.from);
+      const code = codeBlockAt(line.from);
+      const inCode = code !== undefined;
       const indent = indentRangeForLine(
         syntaxTree(view.state),
         line.from,
@@ -114,7 +126,13 @@ export function buildDecorations(view: EditorView): DecorationSet {
         decorations.push(
           Decoration.line({
             class: "indent",
-            attributes: { style: `--indent-width: ${width}px;` },
+            attributes: {
+              style:
+                `--indent-width: ${width}px;` +
+                (code
+                  ? ` --code-outer-width: ${code.outerDepth * INDENT_WIDTH_PX}px;`
+                  : ""),
+            },
           }).range(line.from),
         );
 
