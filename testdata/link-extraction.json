@@ -152,5 +152,17 @@
     "name": "hashtag-runs-to-the-next-space",
     "text": "T\n#hash#Tag",
     "links": [{ "title": "hash#Tag", "titleLc": "hash#tag" }]
+  },
+  {
+    "name": "attachment-image-is-not-a-link",
+    "text": "T\n[@/abc123def456ghi/a.png]",
+    "links": []
+  },
+  {
+    "name": "attachment-without-image-extension-is-a-wikilink",
+    "text": "T\n[@/abc123def456ghi/a.pdf]",
+    "links": [
+      { "title": "@/abc123def456ghi/a.pdf", "titleLc": "@/abc123def456ghi/a.pdf" }
+    ]
   }
 ]

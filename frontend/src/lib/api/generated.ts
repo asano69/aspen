@@ -72,7 +72,7 @@ export interface SeenResponse {
 }
 /**
  * UploadAttachmentResponse is the body of POST /api/admin/attachments. URL is
- * the path (starting with "/") the stored image is served under.
+ * the attachment path ("@/<recordId>/<filename>") to write in image notation.
  */
 export interface UploadAttachmentResponse {
   url: string;

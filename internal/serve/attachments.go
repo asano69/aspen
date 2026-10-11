@@ -19,7 +19,10 @@ import (
 const maxUploadBytes = 10 << 20
 
 // uploadAttachmentHandler serves POST /api/admin/attachments. The image comes
-// in the "image" form field; the response holds the URL it is served under.
+// in the "image" form field; the response holds the attachment path
+// ("@/<recordId>/<filename>") to write in image notation. The path has no
+// origin, so notes keep working when the server moves; the frontend resolves
+// it (see frontend/src/lib/models/attachmentPath.ts).
 func uploadAttachmentHandler(e *core.RequestEvent) error {
 	e.Request.Body = http.MaxBytesReader(e.Response, e.Request.Body, maxUploadBytes)
 	upload, _, err := e.Request.FormFile("image")
@@ -56,6 +59,6 @@ func uploadAttachmentHandler(e *core.RequestEvent) error {
 		return e.InternalServerError("save attachment", err)
 	}
 
-	url := "/api/files/" + record.BaseFilesPath() + "/" + record.GetString("image")
+	url := "@/" + record.Id + "/" + record.GetString("image")
 	return e.JSON(http.StatusOK, api.UploadAttachmentResponse{URL: url})
 }

@@ -36,7 +36,15 @@ const GYAZO_RE =
 const IMAGE_EXTENSION_RE =
   /\.(?:avif|bmp|gif|ico|jpe?g|png|svg|tiff?|webp)(?:[?#].*)?$/iu;
 
+// An uploaded attachment, written relative to the origin as
+// "@/<recordId>/<filename>" so the notation survives a change of origin.
+// Keep in sync with internal/parser/decide.go.
+const ATTACHMENT_RE = /^@\/[a-z0-9]+\/[^\s/]+$/u;
+
 function inferUrl(value: string): UrlKind | undefined {
+  if (ATTACHMENT_RE.test(value) && IMAGE_EXTENSION_RE.test(value)) {
+    return "image";
+  }
   if (!value.includes("://") || !URL.canParse(value)) return undefined;
   const scheme = new URL(value).protocol; // "http:" | "https:" | "javascript:" ...
   if (scheme !== "http:" && scheme !== "https:") return undefined;

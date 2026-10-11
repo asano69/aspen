@@ -8,6 +8,7 @@ import type { EditorState } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
 import { Image, LinkedImage, StrongImage } from "../../parser/cardpot";
 import { decideBracketNodeType } from "../../parser/cardpot/rules/bracket";
+import { resolveImageSrc } from "@/lib/models/attachmentPath";
 import { decorationPlugin } from "./decorationPlugin";
 
 // Scrapbox distinguishes a plain image reference ("[url]") from its
@@ -34,7 +35,7 @@ class ImageWidget extends WidgetType {
 
   toDOM() {
     const img = document.createElement("img");
-    img.src = this.src;
+    img.src = resolveImageSrc(this.src);
     img.alt = "";
     // Inline styles beat any stylesheet regardless of cascade layers,
     // so the width/height caps below need no separate theme entry

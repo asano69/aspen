@@ -10,6 +10,7 @@ import {
   type CardRecord,
 } from "@/lib/models/card";
 import { ripple } from "@/lib/directives/ripple";
+import { resolveImageSrc } from "@/lib/models/attachmentPath";
 import { CardDescription } from "@/features/cardDescription";
 import { usePot } from "../pots/PotContext";
 
@@ -97,7 +98,11 @@ export function CardItemView(props: CardItemViewProps) {
             </Match>
             <Match when={props.card.image}>
               <div class="icon">
-                <img loading="lazy" src={props.card.image} alt="" />
+                <img
+                  loading="lazy"
+                  src={resolveImageSrc(props.card.image)}
+                  alt=""
+                />
               </div>
             </Match>
           </Switch>

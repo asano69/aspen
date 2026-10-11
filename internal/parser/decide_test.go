@@ -19,6 +19,9 @@ func TestDecideBracket(t *testing.T) {
 		{"aaa\u3000https://example.com/", KindExternalLink, ""},
 		{"https://example.com/\u3000aaa", KindExternalLink, ""},
 		{"日本語\u3000タイトル", KindWikiLink, ""},
+		{"@/abc123def456ghi/a.png", KindImage, "@/abc123def456ghi/a.png"},
+		{"@/abc123def456ghi/a.png https://example.com/", KindLinkedImage, "@/abc123def456ghi/a.png"},
+		{"@/abc123def456ghi/a.pdf", KindWikiLink, ""},
 	}
 	for _, tt := range cases {
 		if got := DecideBracket(tt.content); got.Kind != tt.kind || got.Src != tt.src {

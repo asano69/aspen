@@ -162,6 +162,18 @@ describe("Cardpot Lezer syntax", () => {
     );
   });
 
+  it("treats an attachment path with an image extension as an image", () => {
+    expect(
+      tree("[@/abc123def456ghi/a.png] [[@/abc123def456ghi/a.png]]"),
+    ).toBe(
+      "Document(Paragraph(image,strong(strongMark,strongImage,strongMark)))",
+    );
+    // Not an image: an ordinary wiki link.
+    expect(tree("[@/abc123def456ghi/a.pdf]")).toBe(
+      "Document(Paragraph(link(linkMark,linkMark)))",
+    );
+  });
+
   it("parses double brackets as strong and preserves nested bracket pairing", () => {
     expect(
       tree("[[strong [page]]] [[https://example.com/a.png]] [[me.icon]]"),

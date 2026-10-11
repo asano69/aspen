@@ -74,9 +74,10 @@ export async function postSeen(
 }
 
 // Uploads an image to the server (see internal/serve/attachments.go), which
-// shrinks it and stores it. Resolves to the absolute URL of the stored image:
-// the image notation only recognizes a URL with a scheme. requestKey: null
-// keeps concurrent uploads from auto-cancelling each other.
+// shrinks it and stores it. Resolves to the attachment path
+// ("@/<recordId>/<filename>") to write in image notation; it has no origin
+// (see lib/models/attachmentPath.ts). requestKey: null keeps concurrent
+// uploads from auto-cancelling each other.
 export async function uploadAttachment(file: File): Promise<string> {
   const body = new FormData();
   body.append("image", file);
@@ -84,7 +85,7 @@ export async function uploadAttachment(file: File): Promise<string> {
     "/api/admin/attachments",
     { method: "POST", body, requestKey: null },
   );
-  return new URL(res.url, window.location.origin).href;
+  return res.url;
 }
 
 // Resolves a single card by its URL slug, without fetching the rest

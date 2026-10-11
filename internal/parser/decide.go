@@ -25,6 +25,9 @@ var (
 	// Matched against the whole URL so that a trailing ".png" in the query
 	// or fragment counts too; keep in sync with frontend rules/bracket.ts.
 	imageExtRe = regexp.MustCompile(`(?i)\.(?:avif|bmp|gif|ico|jpe?g|png|svg|tiff?|webp)(?:[?#].*)?$`)
+	// An uploaded attachment, written relative to the origin as
+	// "@/<recordId>/<filename>"; keep in sync with frontend rules/bracket.ts.
+	attachmentRe = regexp.MustCompile(`^@/[a-z0-9]+/[^\s/]+$`)
 )
 
 type urlKind int
@@ -36,6 +39,9 @@ const (
 )
 
 func inferURL(value string) urlKind {
+	if attachmentRe.MatchString(value) && imageExtRe.MatchString(value) {
+		return urlImage
+	}
 	if !strings.Contains(value, "://") {
 		return urlNone
 	}

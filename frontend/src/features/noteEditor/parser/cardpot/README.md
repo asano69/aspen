@@ -210,6 +210,7 @@ parse 関数の契約（`(cx: InlineContext, next: number, pos: number) => numbe
 
 - URL とラベルの区切りは EMAScript の空白（`\s`）1文字で、全角スペースやタブも含む（scrapbox-parser 互換）。Go 側 `internal/parser/decide.go` も同じ。
 - 「URL」= `://` を含み `new URL()` で解釈できるもの。「画像URL」= Gyazo か、URL 末尾（クエリ・フラグメントを除く直前）の拡張子が画像（png, jpg, gif, svg, webp など）。`...&s=10.png` や `...#.png` のように拡張子をクエリ側に足した URL も画像になる（Scrapbox 互換）。
+- 添付ファイルのパス `@/<recordId>/<filename>`（オリジンなし。アップロード時にこの形で挿入される）は、拡張子が画像なら画像URLとして扱う。`<img>` の `src` への解決は `lib/models/attachmentPath.ts` の `resolveImageSrc` が唯一の場所。画像でない拡張子は通常の WikiLink になる。Go 側 `internal/parser/decide.go` も同じ。
 - ラベル付き ExternalLink のラベルだけがインライン再帰解析される。**WikiLink の中身は解析しない**（`[a [b] c]` は1つの WikiLink で、内側の `[b]` はノードにならない）。
 - ラベル付き ExternalLink では、URL 側の mark が URL とその直後（直前）の空白まで広がる。`[https://e.com label]` の開き mark は `[https://e.com `、`[label https://e.com]` の閉じ mark は ` https://e.com]`。これによりカーソルが触れていない間はラベルだけが表示される。ラベルなし（`[https://e.com]`）の mark は括弧1文字ずつのまま。
 - `parseStrong`（`[[...]]`）: 中身が Image なら `StrongImage`、Icon なら `StrongIcon`、それ以外はインライン解析。`StrongMark` は `[[` と `]]`（各2文字）。`[[]]` や閉じ括弧が揃わない場合は `-1`。
