@@ -9,7 +9,6 @@ import PotIcon from "@/components/PotIcon";
 import { potCoverURL } from "@/lib/api/pots";
 import { normalizeForSearch } from "@/lib/search/titleSearch";
 import { orderedPots, reorderPot } from "@/lib/stores/potsStore";
-import { topBarPotLink } from "@/lib/topBarSlot";
 import type { PotRecord } from "@/lib/models/pot";
 
 // Same override as PotList/CardList's own sensors: without it,
@@ -28,7 +27,8 @@ interface SidebarPotRowProps {
 }
 
 // A plain text row: the pot icon followed by its title. No border,
-// background or shadow of its own, only a hover/active tint.
+// background or shadow of its own, only a hover/active tint. The open
+// pot is marked by the router with .active (see sidebar.css).
 function SidebarPotRow(props: SidebarPotRowProps) {
   // Getter syntax (not a plain destructure) so the hook re-reads
   // id/index reactively instead of only once at setup -- see
@@ -64,7 +64,7 @@ export interface SidebarPotListProps {
 
 // Sidebar-only list of pots: a search box that filters the list, and
 // drag-to-reorder. Adding/renaming/deleting a pot still happens on the pots
-// page. The pot that is currently open is not listed. Kept as its own
+// page. The pot that is currently open is listed too, highlighted. Kept as its own
 // component (not folded into Sidebar.tsx) since it owns its own
 // drag-to-reorder wiring, mirroring PotList.tsx's pattern. Both lists read
 // the same pots store (see lib/stores/potsStore.ts), so a reorder or rename
@@ -81,13 +81,11 @@ export default function SidebarPotList(props: SidebarPotListProps) {
     input?.select();
   });
 
-  // The pots shown: every pot but the open one whose title matches the query.
+  // The pots shown: every pot whose title matches the query.
   const visiblePots = createMemo(() => {
-    const openId = topBarPotLink()?.id;
     const needle = normalizeForSearch(query());
-    return orderedPots().filter(
-      (pot) =>
-        pot.id !== openId && normalizeForSearch(pot.title).includes(needle),
+    return orderedPots().filter((pot) =>
+      normalizeForSearch(pot.title).includes(needle),
     );
   });
 

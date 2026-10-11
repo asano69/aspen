@@ -89,7 +89,7 @@
   }
 
   .sidebar-link.active {
-    background-color: var(--color-active-bg);
+    background-color: color-mix(in oklab, var(--color-active-bg) 70%, transparent);
   }
 
   .sidebar-link:hover {
