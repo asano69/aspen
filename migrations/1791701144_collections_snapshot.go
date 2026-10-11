@@ -1471,7 +1471,7 @@ func init() {
 						"id": "number4156564586",
 						"max": null,
 						"min": null,
-						"name": "size",
+						"name": "filesize",
 						"onlyInt": false,
 						"presentable": false,
 						"required": false,

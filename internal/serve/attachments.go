@@ -55,6 +55,8 @@ func uploadAttachmentHandler(e *core.RequestEvent) error {
 	}
 	record := core.NewRecord(collection)
 	record.Set("image", file)
+	// The size after processing, i.e. what is actually stored.
+	record.Set("filesize", len(result.Data))
 	if err := e.App.Save(record); err != nil {
 		return e.InternalServerError("save attachment", err)
 	}
