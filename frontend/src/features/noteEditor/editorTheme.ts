@@ -199,7 +199,8 @@ export const editorTheme = EditorView.theme({
   ".cm-line.indent.code-block:not(.start)": {
     marginLeft: "0",
     borderLeft: "var(--code-outer-width, 0px) solid transparent",
-    paddingLeft: "calc(var(--indent-width, 0px) - var(--code-outer-width, 0px))",
+    paddingLeft:
+      "calc(var(--indent-width, 0px) - var(--code-outer-width, 0px))",
     backgroundClip: "padding-box",
   },
   // One indent level's mark box (see hangingIndent.ts's
@@ -320,7 +321,7 @@ export const editorTheme = EditorView.theme({
       "light-dark(rgba(175, 184, 193, 0.2), rgba(110, 118, 129, 0.4))",
     borderRadius: "6px",
     padding: "0.15em 0.35em",
-    fontSize: "0.9em",
+    fontSize: "90%",
     color: "#342d9c", //--code-color
   },
 
@@ -332,7 +333,7 @@ export const editorTheme = EditorView.theme({
     fontFamily: "var(--font-mono)",
     backgroundColor:
       "light-dark(rgba(175, 184, 193, 0.2), rgba(110, 118, 129, 0.4))",
-    fontSize: "0.9em",
+    fontSize: "90%",
     padding: "0px",
   },
   // The declaration line ("code: python") has no full-width background;
@@ -397,7 +398,7 @@ export const editorTheme = EditorView.theme({
   ".mermaid-block.mermaid-error": {
     color: "#dc3545",
     fontFamily: "var(--font-mono)",
-    fontSize: "0.9em",
+    fontSize: "90%",
     whiteSpace: "pre-wrap",
   },
 
