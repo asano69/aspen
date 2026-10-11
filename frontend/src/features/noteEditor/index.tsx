@@ -48,6 +48,8 @@ import { wikiLinkNavigation } from "./plugins/interactions/wikiLinkNavigation";
 import { externalLinkNavigation } from "./plugins/interactions/externalLinkNavigation";
 import { pasteUrlDecode } from "./plugins/interactions/pasteUrlDecode";
 import { pasteMarkdown } from "./plugins/interactions/pasteMarkdown";
+import { pasteImage } from "./plugins/interactions/pasteImage";
+import { uploadAttachment } from "@/lib/api/cardApi";
 import { pasteCodeBlockIndent } from "./plugins/interactions/pasteCodeBlockIndent";
 import { selectionMenu } from "./plugins/interactions/selectionMenu";
 import { titleCompletion } from "./plugins/interactions/titleCompletion";
@@ -189,6 +191,9 @@ export default function NoteEditor(props: NoteEditorProps) {
         wikiLinkNavigation(props.potSlug, navigate),
         externalLinkNavigation(),
         pasteUrlDecode(),
+        // Uploads a pasted image and inserts it as "[url]" (see
+        // plugins/interactions/pasteImage.ts).
+        pasteImage(uploadAttachment),
         // Converts pasted Markdown to Scrapbox notation (see
         // plugins/interactions/pasteMarkdown). Runs before
         // pasteCodeBlockIndent, which only sees pastes this one declines.

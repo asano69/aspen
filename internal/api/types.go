@@ -57,3 +57,9 @@ type SeenRequest struct {
 type SeenResponse struct {
 	Seen map[string]uint64 `json:"seen"`
 }
+
+// UploadAttachmentResponse is the body of POST /api/admin/attachments. URL is
+// the path (starting with "/") the stored image is served under.
+type UploadAttachmentResponse struct {
+	URL string `json:"url"`
+}

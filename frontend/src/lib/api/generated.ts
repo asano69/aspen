@@ -70,3 +70,10 @@ export interface SeenRequest {
 export interface SeenResponse {
   seen: { [key: string]: number /* uint64 */};
 }
+/**
+ * UploadAttachmentResponse is the body of POST /api/admin/attachments. URL is
+ * the path (starting with "/") the stored image is served under.
+ */
+export interface UploadAttachmentResponse {
+  url: string;
+}

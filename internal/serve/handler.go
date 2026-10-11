@@ -68,6 +68,7 @@ func registerRoutes(e *core.ServeEvent) error {
 	admin.POST("/cards/{id}/rename-links", renameLinksHandler)
 	admin.GET("/cards/{id}/seen", getSeenHandler)
 	admin.POST("/cards/{id}/seen", postSeenHandler)
+	admin.POST("/attachments", uploadAttachmentHandler)
 
 	// Public-data-shaped but still gated behind authentication (any
 	// regular user or superuser), since it returns the same card fields
