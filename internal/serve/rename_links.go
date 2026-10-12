@@ -166,23 +166,9 @@ func prepareRenames(app core.App, ids []string, oldLc, newTitle string) ([]*rena
 // seconds behind it. The edit is made on a scratch copy, so the live doc stays
 // untouched until the database commit succeeded.
 func prepareRename(p *ydocPersistence, room, oldLc, newTitle string) (*renamedCard, error) {
-	live := liveDoc(room)
-
-	var stored []byte
-	if live != nil {
-		stored = live.EncodeStateAsUpdate()
-	} else {
-		var err error
-		if stored, err = p.LoadDoc(room); err != nil {
-			return nil, fmt.Errorf("load card %s: %w", room, err)
-		}
-	}
-
-	doc := crdt.New()
-	if len(stored) > 0 {
-		if err := doc.ApplyUpdate(stored); err != nil {
-			return nil, fmt.Errorf("apply stored updates of card %s: %w", room, err)
-		}
+	doc, live, err := loadCardDoc(p, room)
+	if err != nil {
+		return nil, err
 	}
 
 	content := doc.GetText("content")
@@ -222,6 +208,29 @@ func saveRenamed(tx core.App, p *ydocPersistence, ydocs *core.Collection, r *ren
 		return fmt.Errorf("save card document: %w", err)
 	}
 	return p.syncDerived(r.id, r.text)
+}
+
+// loadCardDoc returns a scratch copy of a card's doc, so an edit can be
+// computed without touching the live one, and the room's live doc (nil when
+// the room is not loaded). A loaded room is the source of truth, because the
+// stored log can be a few seconds behind it.
+func loadCardDoc(p *ydocPersistence, room string) (doc, live *crdt.Doc, err error) {
+	live = liveDoc(room)
+
+	var stored []byte
+	if live != nil {
+		stored = live.EncodeStateAsUpdate()
+	} else if stored, err = p.LoadDoc(room); err != nil {
+		return nil, nil, fmt.Errorf("load card %s: %w", room, err)
+	}
+
+	doc = crdt.New()
+	if len(stored) > 0 {
+		if err := doc.ApplyUpdate(stored); err != nil {
+			return nil, nil, fmt.Errorf("apply stored updates of card %s: %w", room, err)
+		}
+	}
+	return doc, live, nil
 }
 
 // liveDoc returns the doc of room if it is loaded in memory, or nil.

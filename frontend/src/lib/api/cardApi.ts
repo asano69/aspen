@@ -3,6 +3,8 @@ import pb from "./pb";
 import type { CardRecord, TitleCandidate } from "../models/card";
 import type {
   CreateCardRequest,
+  MoveCardsRequest,
+  MoveCardsResponse,
   RenameLinksRequest,
   RenameLinksResponse,
   SeenRequest,
@@ -28,6 +30,20 @@ export async function createCard(
 ): Promise<CardMutationResult> {
   const body: CreateCardRequest = { pot, titleCandidate };
   return await pb.send<CardMutationResult>("/api/admin/cards", {
+    method: "POST",
+    body,
+  });
+}
+
+// Moves cards to another pot (see internal/serve/move_cards.go). The server
+// soft-deletes each card and creates a copy in the target pot, so the copies
+// have new ids and arrive through the ordinary realtime events.
+export async function moveCards(
+  ids: string[],
+  pot: string,
+): Promise<MoveCardsResponse> {
+  const body: MoveCardsRequest = { ids, pot };
+  return await pb.send<MoveCardsResponse>("/api/admin/cards/move", {
     method: "POST",
     body,
   });

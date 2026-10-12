@@ -2,7 +2,12 @@
    These are imperative store functions called from event handlers and
    async code. Reading the store there is deliberately untracked. */
 import { createStore, produce } from "solid-js/store";
-import { deleteCard, fetchCardBySlug, updateCard } from "../api/cardApi";
+import {
+  deleteCard,
+  fetchCardBySlug,
+  moveCards,
+  updateCard,
+} from "../api/cardApi";
 import { subscribeToCollection, type CollectionEvent } from "../api/realtime";
 import type { CardRecord } from "../models/card";
 import { computePosition } from "../position";
@@ -437,6 +442,20 @@ export async function setCardPinned(
 // store unchanged.
 export async function setCardQuery(id: string, query: string): Promise<void> {
   mergeCards([await updateCard(id, { query })]);
+}
+
+// Moves cards to another pot. The server deletes each one here and creates a
+// copy in the target pot, so they leave the store right away, like a deleted
+// card, instead of waiting for the realtime echo. The copies are not added:
+// the target pot loads them when it is opened.
+export async function moveCardsToPot(
+  ids: string[],
+  potId: string,
+): Promise<void> {
+  await moveCards(ids, potId);
+  withCardsFlip(() => {
+    for (const id of ids) dropCard(id, cardsById[id]?.pot);
+  });
 }
 
 // Soft-deletes a card and drops it from the store right away, instead of

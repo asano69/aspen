@@ -84,6 +84,11 @@
     background-color: var(--color-hover-bg);
   }
 
+  /* A card is being dragged over this pot (see SidebarPotList.tsx). */
+  .sidebar-link[data-drop-target] {
+    background-color: var(--color-active-bg);
+  }
+
   .sidebar-link > svg {
     flex-shrink: 0;
   }

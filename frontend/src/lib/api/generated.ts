@@ -17,6 +17,21 @@ export interface CreateCardRequest {
   titleCandidate: TitleCandidate;
 }
 /**
+ * MoveCardsRequest is the body of POST /api/admin/cards/move. Each card is
+ * moved to the pot Pot, in the order of IDs.
+ */
+export interface MoveCardsRequest {
+  ids: string[];
+  pot: string;
+}
+/**
+ * MoveCardsResponse reports how many cards were moved. Cards that are missing,
+ * deleted or already in the pot are skipped and not counted.
+ */
+export interface MoveCardsResponse {
+  moved: number /* int */;
+}
+/**
  * LinkedCard is one card entry in the links1hop / links2hop responses.
  */
 export interface LinkedCard {
@@ -61,14 +76,14 @@ export interface RenameLinksResponse {
  * vector as JSON).
  */
 export interface SeenRequest {
-  seen: { [key: string]: number /* uint64 */ };
+  seen: { [key: string]: number /* uint64 */};
 }
 /**
  * SeenResponse is the body of GET /api/admin/cards/{id}/seen. It is empty
  * when the user has not seen the card yet.
  */
 export interface SeenResponse {
-  seen: { [key: string]: number /* uint64 */ };
+  seen: { [key: string]: number /* uint64 */};
 }
 /**
  * UploadAttachmentResponse is the body of POST /api/admin/attachments. URL is

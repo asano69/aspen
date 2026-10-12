@@ -11,6 +11,19 @@ type CreateCardRequest struct {
 	TitleCandidate TitleCandidate `json:"titleCandidate" tstype:"TitleCandidate"`
 }
 
+// MoveCardsRequest is the body of POST /api/admin/cards/move. Each card is
+// moved to the pot Pot, in the order of IDs.
+type MoveCardsRequest struct {
+	IDs []string `json:"ids"`
+	Pot string   `json:"pot"`
+}
+
+// MoveCardsResponse reports how many cards were moved. Cards that are missing,
+// deleted or already in the pot are skipped and not counted.
+type MoveCardsResponse struct {
+	Moved int `json:"moved"`
+}
+
 // LinkedCard is one card entry in the links1hop / links2hop responses.
 type LinkedCard struct {
 	ID      string    `json:"id"`

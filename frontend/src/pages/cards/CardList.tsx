@@ -7,9 +7,7 @@ import {
   untrack,
 } from "solid-js";
 import { useParams } from "@solidjs/router";
-import { DragDropProvider } from "@dnd-kit/solid";
 import { isSortable } from "@dnd-kit/solid/sortable";
-import { PointerSensor, KeyboardSensor } from "@dnd-kit/dom";
 
 import Loading from "@/components/Loading";
 import CardItem from "./CardItem";
@@ -18,9 +16,11 @@ import {
   cardsById,
   loadNextCardsPage,
   moveCard,
+  moveCardsToPot,
   potWindow,
 } from "@/lib/stores/cardsStore";
 import { computePosition } from "@/lib/position";
+import { useDragEnd } from "@/lib/dragEnd";
 import { useTitle } from "@/lib/useTitle";
 import { useFooterSlot } from "@/lib/footerSlot";
 import { usePot } from "../pots/PotContext";
@@ -28,20 +28,6 @@ import { usePot } from "../pots/PotContext";
 // PotItem: the pot's title, an add-card button, and every card
 // belonging to it laid out as a Scrapbox/Cosense-style card grid (see
 // CardItem).
-// CardItem wraps the whole card in an <a> link (see CardItem.tsx), and
-// PointerSensor's default preventActivation refuses to start a drag on
-// interactive elements (<a>/<button>/<input>) unless they're the
-// designated drag handle -- that's why no drag ever activated here.
-// Overriding it lets a pointerdown on the card start tracking; the
-// default per-pointer-type activation constraint (5px of movement for
-// mouse) still lets a plain click with no movement fall through to the
-// link's normal navigation, and only real dragging hijacks it.
-const sensors = [
-  PointerSensor.configure({
-    preventActivation: () => false,
-  }),
-  KeyboardSensor,
-];
 
 export default function CardList() {
   const params = useParams();
@@ -121,6 +107,16 @@ export default function CardList() {
     }
   });
 
+  // The cards leave this list at once; a failure leaves the list as it was.
+  const moveToPot = async (ids: string[], destPot: string) => {
+    try {
+      await moveCardsToPot(ids, destPot);
+    } catch (err) {
+      console.error("[cards] failed to move cards:", err);
+      window.alert("Failed to move the cards.");
+    }
+  };
+
   // Persists a drag-to-reorder drop: only the moved card's own
   // position changes (see lib/position.ts), computed from whichever
   // two cards now sit on either side of it -- this works the same way
@@ -132,7 +128,18 @@ export default function CardList() {
   // its initialIndex/index can be read instead.
   const handleDragEnd = (event) => {
     if (event.canceled) return;
-    const { source } = event.operation;
+    const { source, target } = event.operation;
+    if (source?.type !== "card") return;
+
+    // Dropped on a pot of the sidebar (see SidebarPotList's droppable):
+    // move instead of reorder. Moving several cards later only needs more
+    // ids here.
+    const destPot = target?.data?.potId;
+    if (destPot) {
+      if (destPot !== pot()?.id) void moveToPot([String(source.id)], destPot);
+      return;
+    }
+
     if (!isSortable(source)) return;
 
     const { initialIndex, index: newIndex } = source;
@@ -187,27 +194,27 @@ export default function CardList() {
     moveCard(moved, position);
   };
 
+  useDragEnd(handleDragEnd);
+
   return (
     <Show when={potWindow(pot()?.id)?.loaded} fallback={<Loading />}>
       <>
         <QuickLaunch />
-        <DragDropProvider sensors={sensors} onDragEnd={handleDragEnd}>
-          <ul class="card-grid">
-            <For each={cards()}>
-              {(card, index) => (
-                <CardItem card={card} index={index()} potSlug={params.slug} />
-              )}
-            </For>
-            {/* Invisible row-spanning marker: loading the next page when
+        <ul class="card-grid">
+          <For each={cards()}>
+            {(card, index) => (
+              <CardItem card={card} index={index()} potSlug={params.slug} />
+            )}
+          </For>
+          {/* Invisible row-spanning marker: loading the next page when
               this scrolls into view is what drives the infinite
               scroll above. */}
-            <li
-              ref={observeSentinel}
-              aria-hidden="true"
-              class="card-grid-sentinel"
-            />
-          </ul>
-        </DragDropProvider>
+          <li
+            ref={observeSentinel}
+            aria-hidden="true"
+            class="card-grid-sentinel"
+          />
+        </ul>
       </>
     </Show>
   );

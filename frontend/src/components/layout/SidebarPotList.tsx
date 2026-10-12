@@ -1,25 +1,16 @@
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import { A } from "@solidjs/router";
-import { DragDropProvider } from "@dnd-kit/solid";
+import { useDroppable } from "@dnd-kit/solid";
 import { useSortable, isSortable } from "@dnd-kit/solid/sortable";
-import { PointerSensor, KeyboardSensor } from "@dnd-kit/dom";
 import { TextField } from "@kobalte/core/text-field";
 
 import PotIcon from "@/components/PotIcon";
 import { potCoverURL } from "@/lib/api/pots";
+import { useDragEnd } from "@/lib/dragEnd";
 import { normalizeForSearch } from "@/lib/search/titleSearch";
 import { orderedPots, reorderPot } from "@/lib/stores/potsStore";
 import type { PotRecord } from "@/lib/models/pot";
 
-// Same override as PotList/CardList's own sensors: without it,
-// PointerSensor's default preventActivation refuses to start a drag
-// from inside an interactive element (each row's <a>).
-const sensors = [
-  PointerSensor.configure({
-    preventActivation: () => false,
-  }),
-  KeyboardSensor,
-];
 
 interface SidebarPotRowProps {
   pot: PotRecord;
@@ -33,6 +24,7 @@ function SidebarPotRow(props: SidebarPotRowProps) {
   // Getter syntax (not a plain destructure) so the hook re-reads
   // id/index reactively instead of only once at setup -- see
   // dnd-kit's Solid docs (same as CardItem/PotGridItem).
+  // type/accept keep cards (type "card") from reordering the pots.
   const { ref, isDragging } = useSortable({
     get id() {
       return props.pot.id;
@@ -40,6 +32,21 @@ function SidebarPotRow(props: SidebarPotRowProps) {
     get index() {
       return props.index;
     },
+    type: "pot",
+    accept: "pot",
+  });
+
+  // The row is also where a card can be dropped to move it to this pot (see
+  // CardList's handleDragEnd, which reads data.potId). It is a separate
+  // droppable on the link, so the row's sortable keeps accepting pots only.
+  const { ref: dropRef, isDropTarget } = useDroppable({
+    get id() {
+      return `pot-drop:${props.pot.id}`;
+    },
+    get data() {
+      return { potId: props.pot.id };
+    },
+    accept: "card",
   });
 
   return (
@@ -48,7 +55,12 @@ function SidebarPotRow(props: SidebarPotRowProps) {
       class="sidebar-pot"
       data-dragging={isDragging() ? "" : undefined}
     >
-      <A href={`/${props.pot.name}`} class="sidebar-link">
+      <A
+        ref={dropRef}
+        href={`/${props.pot.name}`}
+        class="sidebar-link"
+        data-drop-target={isDropTarget() ? "" : undefined}
+      >
         <PotIcon src={potCoverURL(props.pot)} />
         <span class="title">{props.pot.title}</span>
       </A>
@@ -95,7 +107,7 @@ export default function SidebarPotList(props: SidebarPotListProps) {
   const handleDragEnd = (event) => {
     if (event.canceled) return;
     const { source } = event.operation;
-    if (!isSortable(source)) return;
+    if (source?.type !== "pot" || !isSortable(source)) return;
 
     const visible = visiblePots();
     const moved = visible[source.initialIndex];
@@ -109,6 +121,8 @@ export default function SidebarPotList(props: SidebarPotListProps) {
     );
   };
 
+  useDragEnd(handleDragEnd);
+
   return (
     <Show when={orderedPots().length > 0}>
       <TextField value={query()} onChange={setQuery} class="sidebar-search">
@@ -121,13 +135,11 @@ export default function SidebarPotList(props: SidebarPotListProps) {
           class="input"
         />
       </TextField>
-      <DragDropProvider sensors={sensors} onDragEnd={handleDragEnd}>
-        <ul class="sidebar-pot-list">
-          <For each={visiblePots()}>
-            {(pot, index) => <SidebarPotRow pot={pot} index={index()} />}
-          </For>
-        </ul>
-      </DragDropProvider>
+      <ul class="sidebar-pot-list">
+        <For each={visiblePots()}>
+          {(pot, index) => <SidebarPotRow pot={pot} index={index()} />}
+        </For>
+      </ul>
     </Show>
   );
 }

@@ -1,7 +1,25 @@
 import { createSignal, type ParentProps } from "solid-js";
+import { DragDropProvider } from "@dnd-kit/solid";
+import { PointerSensor, KeyboardSensor } from "@dnd-kit/dom";
+import { dispatchDragEnd } from "@/lib/dragEnd";
 import TopBar from "./TopBar";
 import Sidebar from "./Sidebar";
 import Footer from "./Footer";
+
+// CardItem wraps the whole card in an <a> link, and PointerSensor's default
+// preventActivation refuses to start a drag on interactive elements
+// (<a>/<button>/<input>) unless they're the designated drag handle -- that's
+// why no drag ever activated. Overriding it lets a pointerdown on the card
+// start tracking; the default per-pointer-type activation constraint (5px of
+// movement for mouse) still lets a plain click with no movement fall through
+// to the link's normal navigation, and only real dragging hijacks it. The
+// same goes for the sidebar's pot rows.
+const sensors = [
+  PointerSensor.configure({
+    preventActivation: () => false,
+  }),
+  KeyboardSensor,
+];
 
 export default function MainLayout(props: ParentProps) {
   // Whether the overlay sidebar is open. The sidebar is collapsed by
@@ -11,9 +29,12 @@ export default function MainLayout(props: ParentProps) {
   const toggleSidebar = () => setSidebarOpen((open) => !open);
 
   return (
-    // .app is bounded to the viewport height, so Sidebar and <main> below
-    // can each scroll independently instead of the whole page scrolling as
-    // one (see styles/components/layout.css).
+    // One provider for the whole app, so a card can be dragged from the card
+    // list onto a pot in the sidebar (see lib/dragEnd.ts).
+    <DragDropProvider sensors={sensors} onDragEnd={dispatchDragEnd}>
+    {/* .app is bounded to the viewport height, so Sidebar and <main> below
+        can each scroll independently instead of the whole page scrolling as
+        one (see styles/components/layout.css). */}
     <div class="app">
       {/* TopBar with logo and sidebar toggle. Its height comes from the
           --topbar-height token, so there is nothing to size here. */}
@@ -38,5 +59,6 @@ export default function MainLayout(props: ParentProps) {
 
       <Footer />
     </div>
+    </DragDropProvider>
   );
 }

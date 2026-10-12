@@ -65,6 +65,7 @@ func registerRoutes(e *core.ServeEvent) error {
 	admin := e.Router.Group("/api/admin")
 	admin.Bind(apis.RequireAuth())
 	admin.POST("/cards", createCardHandler)
+	admin.POST("/cards/move", moveCardsHandler)
 	admin.POST("/cards/{id}/rename-links", renameLinksHandler)
 	admin.GET("/cards/{id}/seen", getSeenHandler)
 	admin.POST("/cards/{id}/seen", postSeenHandler)

@@ -132,6 +132,8 @@ export default function CardItem(props: CardItemProps) {
   // Getter syntax (not a plain destructure) is required so the hook
   // re-reads id/index reactively instead of only once at setup -- see
   // dnd-kit's Solid docs.
+  // type/accept keep cards and the sidebar's pots (type "pot") from
+  // reordering each other inside the shared provider (see MainLayout).
   const { ref, isDragging } = useSortable({
     get id() {
       return props.card.id;
@@ -139,6 +141,8 @@ export default function CardItem(props: CardItemProps) {
     get index() {
       return props.index;
     },
+    type: "card",
+    accept: "card",
   });
 
   // Registers this card's element so a reorder -- local or from
