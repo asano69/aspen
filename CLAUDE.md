@@ -71,8 +71,9 @@ import (
 - yjs
 - Dexie.js
 - CodeMirror6
+- sigma.js v4
 - googlechrome/workbox
 - Kobalte v0.13+
-- Plain CSS (cascade layers)
+- Plain CSS / CSS Module
 - clauderic/dnd-kit v0.5.0
 - jamiebuilds/tinykeys v4.0+
