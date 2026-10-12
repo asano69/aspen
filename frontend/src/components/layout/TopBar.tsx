@@ -1,6 +1,6 @@
 import { createSignal, Show } from "solid-js";
 import { A } from "@solidjs/router";
-import { Plus } from "@/lib/icons";
+import { Plus, Menu, Ellipsis } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
 import PotIcon from "../PotIcon";
 
@@ -39,6 +39,16 @@ export default function TopBar(props: TopBarProps) {
           {/* The sidebar is always collapsed by default, so this
               toggle is shown on every device. Its icon is the current
               pot's cover, mirroring the user icon on the right. */}
+
+          <button
+            type="button"
+            onClick={() => props.onToggleSidebar()}
+            aria-label="Toggle sidebar"
+            aria-expanded={props.sidebarOpen}
+            class="icon-btn"
+          >
+            <Menu src={topBarPotLink()?.cover} />
+          </button>
           <button
             type="button"
             onClick={() => props.onToggleSidebar()}
@@ -48,6 +58,7 @@ export default function TopBar(props: TopBarProps) {
           >
             <PotIcon src={topBarPotLink()?.cover} />
           </button>
+
           {/* Current pot's name, when the active page registered one
               (see CardList/CardForm's useTopBarPotLink call). Links
               back to that pot's card list. */}
@@ -56,6 +67,16 @@ export default function TopBar(props: TopBarProps) {
               {topBarPotLink()!.name}
             </A>
           </Show>
+
+          <button
+            type="button"
+            onClick={() => props.onToggleSidebar()}
+            aria-label="Toggle sidebar"
+            aria-expanded={props.sidebarOpen}
+            class="icon-btn"
+          >
+            <Ellipsis src={topBarPotLink()?.cover} />
+          </button>
         </div>
 
         {/* Center slot: "add card" and the title search are shared between

@@ -6,10 +6,7 @@ import {
 } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import { CodeBlock } from "../../parser/cardpot";
-import {
-  countIndent,
-  indentRangeForLine,
-} from "../../parser/cardpot/indent";
+import { countIndent, indentRangeForLine } from "../../parser/cardpot/indent";
 import { decorationPlugin } from "./decorationPlugin";
 
 // Width of one indent level's mark element, in pixels (see

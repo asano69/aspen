@@ -12,7 +12,6 @@ import { Plus } from "@/lib/icons";
 import { addPot, orderedPots, reorderPot } from "@/lib/stores/potsStore";
 import type { PotRecord } from "@/lib/models/pot";
 
-
 interface SidebarPotRowProps {
   pot: PotRecord;
   index: number;
