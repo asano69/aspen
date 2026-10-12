@@ -1,14 +1,15 @@
 import { createResource, For, Show } from "solid-js";
 import { A, useSearchParams } from "@solidjs/router";
-import { usePot } from "../../lib/pot";
+import { usePot } from "../pots/PotContext";
 import { searchCards } from "../../lib/api/cardApi";
+import { titleToSegment } from "../../lib/models/slugify";
 
 export default function SearchPage() {
   const pot = usePot();
   const [params, setParams] = useSearchParams();
   const [res] = createResource(
-    () => [pot().name, params.q ?? ""] as const,
-    ([name, q]) => (q ? searchCards(name, q) : undefined),
+    () => [pot()?.name, params.q ?? ""] as const,
+    ([name, q]) => (name && q ? searchCards(name, q) : undefined),
   );
 
   return (
@@ -28,8 +29,10 @@ export default function SearchPage() {
             <For each={r().items} fallback={<li>No results.</li>}>
               {(it) => (
                 <li>
-                  <A href={`/${pot().name}/${it.slug}`}>{it.title}</A>
-                  <p>{it.preview}</p>
+                  <A href={`/${pot()?.name}/${titleToSegment(it.title)}`}>
+                    {it.title}
+                  </A>
+                  <p>{it.preview.join(" ")}</p>
                 </li>
               )}
             </For>

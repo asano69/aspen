@@ -25,6 +25,7 @@ func Run(app *pocketbase.PocketBase, cfg *config.Config) error {
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 
 	app.OnServe().BindFunc(registerRoutes)
+	app.OnServe().BindFunc(openSearchEngine)
 	registerValidationHooks(app)
 	registerLinkCleanupHooks(app)
 	registerSearchHooks(app)

@@ -79,10 +79,9 @@ type UploadAttachmentResponse struct {
 
 // SearchItem is one full-text search hit.
 type SearchItem struct {
-	ID      string `json:"id"`
-	Slug    string `json:"slug"`
-	Title   string `json:"title"`
-	Preview string `json:"preview"`
+	ID      string   `json:"id"`
+	Title   string   `json:"title"`
+	Preview []string `json:"preview"`
 }
 
 // SearchResponse is the body of GET /api/pages/{pot}/search/query.

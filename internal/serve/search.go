@@ -1,20 +1,40 @@
 package serve
 
 import (
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 
-	"cardpot/internal/api"
-	"cardpot/internal/search"
+	"github.com/asano69/cardpot/internal/api"
+	"github.com/asano69/cardpot/internal/search"
 )
 
 // searchEngine is set once at startup (or by CLI commands) and may be nil
 // when search is not configured.
 var searchEngine search.Engine
+
+// openSearchEngine opens the Bleve index next to the PocketBase data and
+// closes it on shutdown. The reindex command opens it the same way.
+func openSearchEngine(e *core.ServeEvent) error {
+	engine, err := search.OpenBleve(filepath.Join(e.App.DataDir(), "search.bleve"))
+	if err != nil {
+		return err
+	}
+	searchEngine = engine
+	e.App.OnTerminate().BindFunc(func(te *core.TerminateEvent) error {
+		if err := engine.Close(); err != nil {
+			slog.Warn("close search index", "error", err)
+		}
+		return te.Next()
+	})
+	return e.Next()
+}
 
 // splitTitleBody treats the first line as the title, like the card list does.
 func splitTitleBody(text string) (title, body string) {
@@ -76,17 +96,35 @@ func searchHandler(e *core.RequestEvent) error {
 		if err != nil || !card.GetDateTime("deleted").IsZero() {
 			continue
 		}
+		var preview []string
+		_ = json.Unmarshal([]byte(card.GetString("description")), &preview)
 		items = append(items, api.SearchItem{
-			ID: card.Id, Slug: card.GetString("slug"),
-			Title: card.GetString("title"), Preview: card.GetString("preview"),
+			ID: card.Id, Title: card.GetString("title"), Preview: preview,
 		})
 	}
 	return e.JSON(http.StatusOK, api.SearchResponse{Total: int(res.Total), Items: items})
 }
 
-// Reindex rebuilds the whole index; used by `cardpot reindex`.
+// loadCardText returns the current text of a card, read from its stored
+// update log (or from its live room, when one is loaded).
+func loadCardText(app core.App, card *core.Record) (string, error) {
+	doc, _, err := loadCardDoc(&ydocPersistence{app: app}, card.Id)
+	if err != nil {
+		return "", err
+	}
+	return doc.GetText("content").ToString(), nil
+}
+
+// Reindex rebuilds the whole index; used by `cardpot reindex`. It opens the
+// index itself, so the server must be stopped (Bleve allows one writer).
 func Reindex(app core.App) (int, error) {
-	cards, err := app.FindRecordsByFilter("cards", "deleted = ''", "", 0, 0)
+	engine, err := search.OpenBleve(filepath.Join(app.DataDir(), "search.bleve"))
+	if err != nil {
+		return 0, err
+	}
+	defer engine.Close()
+	searchEngine = engine
+	cards, err := app.FindRecordsByFilter("cards", "deleted = ''", "", 0, 0, nil)
 	if err != nil {
 		return 0, err
 	}

@@ -92,3 +92,18 @@ export interface SeenResponse {
 export interface UploadAttachmentResponse {
   url: string;
 }
+/**
+ * SearchItem is one full-text search hit.
+ */
+export interface SearchItem {
+  id: string;
+  title: string;
+  preview: string[];
+}
+/**
+ * SearchResponse is the body of GET /api/pages/{pot}/search/query.
+ */
+export interface SearchResponse {
+  total: number /* int */;
+  items: SearchItem[];
+}
