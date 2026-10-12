@@ -3,7 +3,7 @@ import { DragDropProvider } from "@dnd-kit/solid";
 import { PointerSensor, KeyboardSensor } from "@dnd-kit/dom";
 import { dispatchDragEnd } from "@/lib/dragEnd";
 import TopBar from "./TopBar";
-import Sidebar from "./Sidebar";
+import { Sidebar } from "@/features/sidebar";
 import Footer from "./Footer";
 
 // CardItem wraps the whole card in an <a> link, and PointerSensor's default

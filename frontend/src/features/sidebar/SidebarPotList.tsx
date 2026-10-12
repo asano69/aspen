@@ -8,7 +8,8 @@ import PotIcon from "@/components/PotIcon";
 import { potCoverURL } from "@/lib/api/pots";
 import { useDragEnd } from "@/lib/dragEnd";
 import { normalizeForSearch } from "@/lib/search/titleSearch";
-import { orderedPots, reorderPot } from "@/lib/stores/potsStore";
+import { Plus } from "@/lib/icons";
+import { addPot, orderedPots, reorderPot } from "@/lib/stores/potsStore";
 import type { PotRecord } from "@/lib/models/pot";
 
 
@@ -75,14 +76,17 @@ export interface SidebarPotListProps {
 }
 
 // Sidebar-only list of pots: a search box that filters the list, and
-// drag-to-reorder. Adding/renaming/deleting a pot still happens on the pots
-// page. The pot that is currently open is listed too, highlighted. Kept as its own
+// drag-to-reorder. When the search matches no pot, the typed text can be used
+// to create one. Renaming/deleting a pot still happens on the pots page. The
+// pot that is currently open is listed too, highlighted. Kept as its own
 // component (not folded into Sidebar.tsx) since it owns its own
 // drag-to-reorder wiring, mirroring PotList.tsx's pattern. Both lists read
 // the same pots store (see lib/stores/potsStore.ts), so a reorder or rename
 // in one shows up in the other immediately.
 export default function SidebarPotList(props: SidebarPotListProps) {
   const [query, setQuery] = createSignal("");
+  const [creating, setCreating] = createSignal(false);
+  const [error, setError] = createSignal("");
   let input: HTMLInputElement | undefined;
 
   // preventScroll: the sidebar is still sliding in from off-screen, and
@@ -100,6 +104,25 @@ export default function SidebarPotList(props: SidebarPotListProps) {
       normalizeForSearch(pot.title).includes(needle),
     );
   });
+
+  // A pot can be created from the typed text only when nothing matches it.
+  const newTitle = () => query().trim();
+  const canCreate = () => newTitle() !== "" && visiblePots().length === 0;
+
+  const handleCreate = async (e?: SubmitEvent) => {
+    e?.preventDefault();
+    if (!canCreate() || creating()) return;
+    setError("");
+    setCreating(true);
+    try {
+      await addPot(newTitle());
+      setQuery("");
+    } catch {
+      setError("Failed to add the pot.");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   // reorderPot works on indexes into the full pot list, while the drag
   // reports indexes into the visible one, so both ends are translated
@@ -124,22 +147,49 @@ export default function SidebarPotList(props: SidebarPotListProps) {
   useDragEnd(handleDragEnd);
 
   return (
-    <Show when={orderedPots().length > 0}>
-      <TextField value={query()} onChange={setQuery} class="sidebar-search">
-        <TextField.Input
-          ref={input}
-          type="search"
-          placeholder="Search pots"
-          autocomplete="off"
-          spellcheck={false}
-          class="input"
-        />
-      </TextField>
+    <>
+      <form onSubmit={handleCreate}>
+        <TextField
+          value={query()}
+          onChange={(value) => {
+            setQuery(value);
+            setError("");
+          }}
+          class="sidebar-search"
+        >
+          <TextField.Input
+            ref={input}
+            type="search"
+            placeholder="Search or create pots"
+            autocomplete="off"
+            spellcheck={false}
+            class="input"
+          />
+        </TextField>
+      </form>
+      <Show when={canCreate()}>
+        <div class="sidebar-pot-list">
+          <button
+            type="button"
+            class="sidebar-link sidebar-create"
+            disabled={creating()}
+            onClick={() => handleCreate()}
+          >
+            <Plus size={20} />
+            <span class="title">
+              {creating() ? "Creating…" : `Create "${newTitle()}"`}
+            </span>
+          </button>
+          <Show when={error()}>
+            <p class="form-error">{error()}</p>
+          </Show>
+        </div>
+      </Show>
       <ul class="sidebar-pot-list">
         <For each={visiblePots()}>
           {(pot, index) => <SidebarPotRow pot={pot} index={index()} />}
         </For>
       </ul>
-    </Show>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 /* Public classes: .sidebar, .sidebar-body,
- * .sidebar-logo, .sidebar-nav, .sidebar-link, .sidebar-search,
+ * .sidebar-logo, .sidebar-nav, .sidebar-link, .sidebar-create, .sidebar-search,
  * .sidebar-pot-list, .sidebar-pot, .sidebar-footer.
  * The overlay sidebar (see components/layout/Sidebar.tsx and
  * SidebarPotList.tsx). It is open while it has [data-open]. */
@@ -87,6 +87,18 @@
   /* A card is being dragged over this pot (see SidebarPotList.tsx). */
   .sidebar-link[data-drop-target] {
     background-color: var(--color-active-bg);
+  }
+
+  /* The "create pot" button is a .sidebar-link rendered as a <button>. */
+  .sidebar-create {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sidebar-create:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
   }
 
   .sidebar-link > svg {
