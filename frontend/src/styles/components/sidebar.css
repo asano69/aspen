@@ -1,4 +1,5 @@
-/* Public classes: .sidebar, .sidebar-body,
+/* Public classes: .sidebar, .sidebar-body, .sidebar-footer,
+ * .user-menu-trigger, .user-menu-name,
  * .sidebar-logo, .sidebar-nav, .sidebar-link, .sidebar-create, .sidebar-search,
  * .sidebar-pot-list, .sidebar-pot, .sidebar-footer.
  * The overlay sidebar (see components/layout/Sidebar.tsx and
@@ -119,10 +120,51 @@
     white-space: nowrap;
   }
 
-  .sidebar-footer {
+  /* The bar at the bottom of the sidebar: the user menu button and the
+   * version (see SidebarFooter.tsx). */
+  /* The user menu button: avatar, name and chevron as one button. It takes
+   * the free width of the footer, so the version stays at the right edge
+   * and a long name is cut with an ellipsis instead of pushing it out. */
+  .user-menu-trigger {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--page-text-color);
+    cursor: pointer;
+    transition: background-color 0.15s;
+  }
+
+  .user-menu-trigger:hover {
+    background-color: var(--color-hover-bg);
+  }
+
+  .user-menu-trigger > .avatar,
+  .user-menu-trigger > svg {
     flex-shrink: 0;
+  }
+
+  .user-menu-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    height: 48px;
     margin-top: auto;
-    padding: 8px;
+    padding: 0 8px;
+    border-top: 1px solid var(--color-border);
     font-family: var(--font-mono);
     font-size: 12px;
     line-height: 16px;

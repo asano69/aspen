@@ -1,8 +1,7 @@
-import { For, Show, type Component } from "solid-js";
+import { For, type Component } from "solid-js";
 import { A } from "@solidjs/router";
 
-import { useVersion } from "@/lib/version";
-
+import SidebarFooter from "./SidebarFooter";
 import SidebarPotList from "./SidebarPotList";
 
 interface NavItem {
@@ -23,8 +22,6 @@ export interface SidebarProps {
 }
 
 export default function Sidebar(props: SidebarProps) {
-  const version = useVersion();
-
   return (
     <>
       {/* The sidebar always floats above the page instead of sitting in
@@ -63,9 +60,7 @@ export default function Sidebar(props: SidebarProps) {
 
         {/* Pinned to the bottom of the sidebar regardless of how tall the
             content above ends up being, and never squeezed by it. */}
-        <footer class="sidebar-footer">
-          <Show when={version()}>v{version()}</Show>
-        </footer>
+        <SidebarFooter />
       </aside>
     </>
   );

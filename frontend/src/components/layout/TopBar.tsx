@@ -1,12 +1,11 @@
 import { createSignal, Show } from "solid-js";
 import { A } from "@solidjs/router";
-import { Plus } from "@/lib/icons";
+import { Plus, Menu } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
 import PotIcon from "../PotIcon";
 
 import TitleSearch from "./TitleSearch";
 
-import UserMenu from "./UserMenu";
 import { topBarActions, topBarPotLink } from "@/lib/topBarSlot";
 
 export interface TopBarProps {
@@ -46,7 +45,7 @@ export default function TopBar(props: TopBarProps) {
             aria-expanded={props.sidebarOpen}
             class="icon-btn"
           >
-            <PotIcon src={topBarPotLink()?.cover} />
+            <Menu />
           </button>
           {/* Current pot's name, when the active page registered one
               (see CardList/CardForm's useTopBarPotLink call). Links
@@ -89,7 +88,15 @@ export default function TopBar(props: TopBarProps) {
               Empty on pages that register nothing. */}
           {topBarActions()}
 
-          <UserMenu />
+          {/* The current pot's icon again, at the right edge: it links
+              to the pot's card list, or to the pot list outside a pot. */}
+          <A
+            href={topBarPotLink() ? `/${topBarPotLink()!.slug}` : "/"}
+            aria-label="Pot"
+            class="icon-btn"
+          >
+            <PotIcon src={topBarPotLink()?.cover} />
+          </A>
         </nav>
       </div>
     </header>

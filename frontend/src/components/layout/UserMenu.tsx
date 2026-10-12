@@ -11,9 +11,10 @@ import {
   Moon,
   SunMoon,
   Check,
+  ChevronDown,
   ChevronRight,
 } from "@/lib/icons";
-import { avatarURL, logout, userInitial } from "@/lib/api/auth";
+import { avatarURL, currentUser, logout, userInitial } from "@/lib/api/auth";
 import { currentMode, setMode, type Mode } from "@/lib/theme";
 
 interface ThemeOption {
@@ -32,9 +33,10 @@ const THEME_OPTIONS: ThemeOption[] = [
   { value: "system", label: "System", icon: SunMoon },
 ];
 
-// Dropdown menu in the top-right corner: settings, help, theme and logout.
-// Split out of TopBar so TopBar stays focused on layout (toggle + logo)
-// and this file can grow its own menu items without bloating TopBar.
+// Dropdown menu at the bottom of the sidebar (see SidebarFooter.tsx):
+// settings, help, theme and logout. It opens upwards, since its trigger sits
+// at the bottom edge of the screen. The trigger is one button holding the
+// avatar, the user's name and a chevron, so the whole group opens the menu.
 export default function UserMenu() {
   const handleLogout = () => {
     logout();
@@ -51,8 +53,8 @@ export default function UserMenu() {
     THEME_OPTIONS.find((o) => o.value === currentMode()) ?? THEME_OPTIONS[2];
 
   return (
-    <DropdownMenu>
-      <DropdownMenu.Trigger aria-label="Open menu" class="icon-btn">
+    <DropdownMenu placement="top-start">
+      <DropdownMenu.Trigger aria-label="Open menu" class="user-menu-trigger">
         {/* The user's avatar cropped to a circle. While it is missing,
             loading or failed, Kobalte shows the fallback: the user's
             initial. */}
@@ -62,6 +64,8 @@ export default function UserMenu() {
             {userInitial()}
           </Image.Fallback>
         </Image>
+        <span class="user-menu-name">{currentUser()?.name}</span>
+        <ChevronDown size={16} />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content class="menu-content">
