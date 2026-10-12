@@ -19,11 +19,7 @@ import { createLiveQuery } from "@/lib/dexie/liveQuery";
 import { computeRelated, type RelatedInput } from "@/lib/dexie/relatedQuery";
 import { Link, Unlink } from "@/lib/icons";
 import { titleToLowerKey, titleToSegment } from "@/lib/models/slugify";
-import {
-  asCardTitle,
-  type CardGridCard,
-  type RelatedHopCard,
-} from "@/lib/models/card";
+import { asCardTitle, type CardGridCard } from "@/lib/models/card";
 import { usePot } from "../pots/PotContext";
 import { CardItemView } from "./CardItem";
 
@@ -138,10 +134,11 @@ export default function RelatedCards(props: RelatedCardsProps) {
     { oneHop: [], twoHop: [] },
   );
 
-  // A different card starts over: its rows are not computed yet.
+  // A different card starts over: its rows are not computed yet. Only the
+  // card id counts: a rename keeps the rows, and resetting on it would hide
+  // "New Links" and replay its appear animation.
   createEffect(() => {
     void props.cardId;
-    void props.title;
     setRelatedLoaded(false);
   });
 
@@ -156,28 +153,18 @@ export default function RelatedCards(props: RelatedCardsProps) {
     onCleanup(() => clearQuery(id));
   });
 
-  // The 2 hop rows come with the rows of a target adjacent, so grouping is a
-  // single pass over consecutive rows.
-  const twoHopGroups = createMemo(() => {
-    const groups: {
-      title: string;
-      titleLc: string;
-      cards: RelatedHopCard[];
-    }[] = [];
-    for (const row of related().twoHop) {
-      const last = groups[groups.length - 1];
-      if (last?.titleLc === row.via_titleLc) {
-        last.cards.push(row);
-      } else {
-        groups.push({
-          title: row.via_title,
-          titleLc: row.via_titleLc,
-          cards: [row],
-        });
-      }
-    }
-    return groups;
-  });
+  // The 2 hop rows come with the rows of a target adjacent. The list of rows
+  // is a list of target keys (strings, compared by value), so a row survives
+  // while its target is still there and only its cards update. Building new
+  // group objects on every change would recreate every row and replay its
+  // appear animation.
+  const sameKeys = (a: string[], b: string[]) =>
+    a.length === b.length && a.every((key, i) => key === b[i]);
+  const twoHopTargets = createMemo(
+    () => [...new Set(related().twoHop.map((row) => row.via_titleLc))],
+    [],
+    { equals: sameKeys },
+  );
 
   // Links of the open card whose target is dead, drawn as empty cards. Reads
   // the same shared results as the editor's red links (see linkAliveStore.ts),
@@ -187,18 +174,31 @@ export default function RelatedCards(props: RelatedCardsProps) {
       requestLinkAlive(link.target_pot, link.target_titleLc);
     }
   });
-  const newLinks = createMemo<CardGridCard[]>(() =>
-    ownLinks()
-      .filter(
-        (link) => linkAlive(link.target_pot, link.target_titleLc) === false,
-      )
-      .map((link) => ({
-        title: asCardTitle(link.target_title),
-        description: [],
-        image: "",
-        pin: false,
-      })),
-  );
+  //
+  // The card of a link is kept (by titleLc) while the link stays dead, so
+  // <For> keeps its element instead of recreating it on every edit, which
+  // would replay the appear animation of every "New Links" card.
+  let newLinkCards = new Map<string, CardGridCard>();
+  const newLinks = createMemo<CardGridCard[]>(() => {
+    const next = new Map<string, CardGridCard>();
+    for (const link of ownLinks()) {
+      if (linkAlive(link.target_pot, link.target_titleLc) !== false) continue;
+      const kept = newLinkCards.get(link.target_titleLc);
+      next.set(
+        link.target_titleLc,
+        kept && kept.title === link.target_title
+          ? kept
+          : {
+              title: asCardTitle(link.target_title),
+              description: [],
+              image: "",
+              pin: false,
+            },
+      );
+    }
+    newLinkCards = next;
+    return [...next.values()];
+  });
 
   return (
     <>
@@ -211,17 +211,24 @@ export default function RelatedCards(props: RelatedCardsProps) {
           potSlug={props.potSlug}
         />
       </Show>
-      <For each={twoHopGroups()}>
-        {(group) => (
-          <RelationRow
-            rowClass="links-2-hop"
-            labelClass="headword"
-            label={group.title}
-            href={`/${props.potSlug}/${titleToSegment(group.title)}`}
-            cards={group.cards}
-            potSlug={props.potSlug}
-          />
-        )}
+      <For each={twoHopTargets()}>
+        {(titleLc) => {
+          // The rows of related() are store objects with a stable identity,
+          // so the cards of a row keep their elements too.
+          const cards = () =>
+            related().twoHop.filter((row) => row.via_titleLc === titleLc);
+          const title = () => cards()[0]?.via_title ?? titleLc;
+          return (
+            <RelationRow
+              rowClass="links-2-hop"
+              labelClass="headword"
+              label={title()}
+              href={`/${props.potSlug}/${titleToSegment(title())}`}
+              cards={cards()}
+              potSlug={props.potSlug}
+            />
+          );
+        }}
       </For>
       {/* The rows always appear in this order: Links, the 2-hop rows, New
           Links, Query. A row with no cards is simply not rendered, so
