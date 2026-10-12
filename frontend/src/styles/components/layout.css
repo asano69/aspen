@@ -106,21 +106,29 @@
     justify-self: end;
   }
 
+  /* The pot's icon and name as one link: the hover tint covers both. */
   .topbar-pot-link {
-    overflow: hidden;
-    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 4px 12px 4px 4px;
     border-radius: 9999px;
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 28px;
     font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     transition: background-color 0.15s;
   }
 
   .topbar-pot-link:hover {
     background-color: var(--color-hover-bg);
+  }
+
+  .topbar-pot-link .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* The round "add card" button next to the title search. */

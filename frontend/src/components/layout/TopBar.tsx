@@ -1,12 +1,13 @@
 import { createSignal, Show } from "solid-js";
 import { A } from "@solidjs/router";
-import { Plus, Menu, Ellipsis } from "@/lib/icons";
+import { Plus, Menu } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
 import PotIcon from "../PotIcon";
 
 import TitleSearch from "./TitleSearch";
 
 import UserMenu from "./UserMenu";
+import PotMenu from "./PotMenu";
 import { topBarActions, topBarPotLink } from "@/lib/topBarSlot";
 
 export interface TopBarProps {
@@ -49,34 +50,17 @@ export default function TopBar(props: TopBarProps) {
           >
             <Menu src={topBarPotLink()?.cover} />
           </button>
-          <button
-            type="button"
-            onClick={() => props.onToggleSidebar()}
-            aria-label="Toggle sidebar"
-            aria-expanded={props.sidebarOpen}
-            class="icon-btn"
-          >
-            <PotIcon src={topBarPotLink()?.cover} />
-          </button>
-
-          {/* Current pot's name, when the active page registered one
-              (see CardList/CardForm's useTopBarPotLink call). Links
-              back to that pot's card list. */}
+          {/* Current pot, when the active page registered one (see
+              CardList/CardForm's useTopBarPotLink call): its icon and
+              name form one link back to that pot's card list, followed
+              by the pot's menu. */}
           <Show when={topBarPotLink()}>
             <A href={`/${topBarPotLink()!.slug}`} class="topbar-pot-link">
-              {topBarPotLink()!.name}
+              <PotIcon src={topBarPotLink()!.cover} />
+              <span class="title">{topBarPotLink()!.name}</span>
             </A>
+            <PotMenu id={topBarPotLink()!.id} title={topBarPotLink()!.name} />
           </Show>
-
-          <button
-            type="button"
-            onClick={() => props.onToggleSidebar()}
-            aria-label="Toggle sidebar"
-            aria-expanded={props.sidebarOpen}
-            class="icon-btn"
-          >
-            <Ellipsis src={topBarPotLink()?.cover} />
-          </button>
         </div>
 
         {/* Center slot: "add card" and the title search are shared between

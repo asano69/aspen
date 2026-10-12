@@ -10,6 +10,7 @@ import { fetchPotByName, potCoverURL } from "@/lib/api/pots";
 import { useTopBarPotLink } from "@/lib/topBarSlot";
 import { useFavicon } from "@/lib/useFavicon";
 import { ensurePotSynced, releasePot } from "@/lib/stores/cardsStore";
+import { orderedPots } from "@/lib/stores/potsStore";
 import {
   markLinkAlivePotReady,
   releaseLinkAlive,
@@ -38,10 +39,15 @@ export default function PotLayout(props: ParentProps) {
   const params = useParams();
   const [pot] = createResource(() => params.slug, fetchPotByName);
 
+  // The pots store holds the latest title (it changes on rename), while the
+  // fetched record above does not.
+  const title = () =>
+    orderedPots().find((p) => p.id === pot()?.id)?.title ?? pot()?.title;
+
   useTopBarPotLink(() =>
     pot()
       ? {
-          name: pot()!.title,
+          name: title()!,
           slug: params.slug,
           id: pot()!.id,
           cover: potCoverURL(pot()!),
