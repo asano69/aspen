@@ -23,5 +23,8 @@ func (p *ydocPersistence) syncDerived(room, text string) error {
 	if err := wikilink.Sync(p.app, room, text); err != nil {
 		errs = append(errs, fmt.Errorf("sync card links: %w", err))
 	}
+	if err := indexCard(p.app, room, text); err != nil {
+		errs = append(errs, fmt.Errorf("index card: %w", err))
+	}
 	return errors.Join(errs...)
 }

@@ -7,6 +7,7 @@ import PotLayout from "../pages/pots/PotLayout";
 import PotList from "../pages/pots/PotList";
 import CardList from "../pages/cards/CardList";
 import CardForm from "../pages/cards/CardForm";
+import SearchPage from "../pages/search/SearchPage";
 import ApiDocs from "../pages/admin/ApiDocs";
 import Md2sb from "../pages/admin/Md2sb";
 
@@ -52,6 +53,7 @@ export default function AppRouter() {
             reservedSlug handling), so a real card can never resolve to
             it and collide with this literal path; it's listed first
             so the static segment still wins the match. */}
+        <Route path="/search/page" component={SearchPage} />
         <Route path={["/new", "/:cardSlug"]} component={CardForm} />
       </Route>
     </Router>

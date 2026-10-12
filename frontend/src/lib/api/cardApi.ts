@@ -7,6 +7,7 @@ import type {
   MoveCardsResponse,
   RenameLinksRequest,
   RenameLinksResponse,
+  SearchResponse,
   SeenRequest,
   SeenResponse,
   UploadAttachmentResponse,
@@ -150,6 +151,20 @@ export async function fetchRelatedCards(cardId: string): Promise<CardRecord[]> {
     { method: "GET", requestKey: null },
   );
   return res.cards;
+}
+
+// Full-text search over the cards of a pot (see internal/serve/search.go).
+// `pot` is the pot's unique name, as in the URL. requestKey: null keeps a
+// newer search from auto-cancelling an older one still in flight.
+export async function searchCards(
+  pot: string,
+  q: string,
+): Promise<SearchResponse> {
+  return await pb.send<SearchResponse>(`/api/pages/${pot}/search/query`, {
+    method: "GET",
+    query: { q },
+    requestKey: null,
+  });
 }
 
 // Updates a card's own fields directly. The title is deliberately not

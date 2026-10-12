@@ -75,6 +75,7 @@ func registerRoutes(e *core.ServeEvent) error {
 	// regular user or superuser), since it returns the same card fields
 	// the "cards"/"card_links" collections themselves do.
 	pages := e.Router.Group("/api/pages")
+	pages.GET("/{pot}/search/query", searchHandler)
 	pages.Bind(apis.RequireAuth())
 	// links1hop / links2hop are meant for external callers such as agents. The
 	// frontend does not use them: it derives the same rows from its Dexie

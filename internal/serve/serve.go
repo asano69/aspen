@@ -27,6 +27,7 @@ func Run(app *pocketbase.PocketBase, cfg *config.Config) error {
 	app.OnServe().BindFunc(registerRoutes)
 	registerValidationHooks(app)
 	registerLinkCleanupHooks(app)
+	registerSearchHooks(app)
 	registerGeneratedImageHooks(app)
 
 	slog.Info("listening", "addr", addr)

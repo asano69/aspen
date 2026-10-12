@@ -94,4 +94,16 @@
   .search-item[data-highlighted] {
     background-color: var(--color-hover-bg);
   }
+
+  /*--*/
+  .search-page {
+    padding: var(--space-4);
+  }
+  .search-results {
+    list-style: none;
+    padding: 0;
+  }
+  .search-results p {
+    color: var(--color-text-muted);
+  }
 }

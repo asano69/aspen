@@ -76,3 +76,17 @@ type SeenResponse struct {
 type UploadAttachmentResponse struct {
 	URL string `json:"url"`
 }
+
+// SearchItem is one full-text search hit.
+type SearchItem struct {
+	ID      string `json:"id"`
+	Slug    string `json:"slug"`
+	Title   string `json:"title"`
+	Preview string `json:"preview"`
+}
+
+// SearchResponse is the body of GET /api/pages/{pot}/search/query.
+type SearchResponse struct {
+	Total int          `json:"total"`
+	Items []SearchItem `json:"items"`
+}
