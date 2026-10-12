@@ -20,33 +20,27 @@ const NAV_ITEMS: NavItem[] = [];
 
 export interface SidebarProps {
   open: boolean;
-  onClose: () => void;
 }
 
 export default function Sidebar(props: SidebarProps) {
   const version = useVersion();
-  // Both elements below show their open state through [data-open] (see
-  // styles/components/sidebar.css).
-  const openAttr = () => (props.open ? "" : undefined);
 
   return (
     <>
       {/* The sidebar always floats above the page instead of sitting in
-          the flex layout. This transparent layer does not dim the page; it
-          only catches clicks outside the sidebar to close it. It is
-          disabled while the sidebar is closed. */}
-      <div
-        class="sidebar-backdrop"
-        data-open={openAttr()}
-        onClick={() => props.onClose()}
-      />
-
-      {/* Always mounted (not conditionally rendered via <Show>) so the
+          the flex layout. It stays open until TopBar's toggle button is
+          pressed again: there is no click-outside handling. It shows its
+          open state through [data-open] (see styles/components/sidebar.css).
+          Always mounted (not conditionally rendered via <Show>) so the
           transform transition actually animates open <-> closed instead of
           the element just appearing/disappearing. It's translated
           off-screen when closed, and its shadow is dropped then too, so the
           shadow's blur does not bleed into the viewport. */}
-      <aside class="sidebar" data-open={openAttr()} aria-hidden={!props.open}>
+      <aside
+        class="sidebar"
+        data-open={props.open ? "" : undefined}
+        aria-hidden={!props.open}
+      >
         {/* Scrollable middle section: nav items plus the pot list, so a
             long pot list scrolls on its own instead of pushing the footer
             below off the sidebar. TopBar is fixed and floats over this

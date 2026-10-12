@@ -5,7 +5,8 @@ import Footer from "./Footer";
 
 export default function MainLayout(props: ParentProps) {
   // Whether the overlay sidebar is open. The sidebar is collapsed by
-  // default on every device and never sits in the page layout itself.
+  // default on every device and never sits in the page layout itself. Only
+  // the toggle button changes this, so it stays open until pressed again.
   const [sidebarOpen, setSidebarOpen] = createSignal(false);
   const toggleSidebar = () => setSidebarOpen((open) => !open);
 
@@ -22,7 +23,7 @@ export default function MainLayout(props: ParentProps) {
           sidebar overlay, so the overlay starts below TopBar instead of
           covering the whole viewport. */}
       <div class="app-body">
-        <Sidebar open={sidebarOpen()} onClose={() => setSidebarOpen(false)} />
+        <Sidebar open={sidebarOpen()} />
 
         {/* Main content. A page that wants to fill the remaining height
             (e.g. the note editor) can do so with flex, while pages with

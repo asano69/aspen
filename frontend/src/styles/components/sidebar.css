@@ -1,21 +1,9 @@
-/* Public classes: .sidebar, .sidebar-backdrop, .sidebar-body,
+/* Public classes: .sidebar, .sidebar-body,
  * .sidebar-logo, .sidebar-nav, .sidebar-link, .sidebar-search,
  * .sidebar-pot-list, .sidebar-pot, .sidebar-footer.
  * The overlay sidebar (see components/layout/Sidebar.tsx and
  * SidebarPotList.tsx). It is open while it has [data-open]. */
 @layer components {
-  /* Transparent layer that only catches clicks outside the sidebar. */
-  .sidebar-backdrop {
-    position: absolute;
-    inset: 0;
-    z-index: var(--z-sidebar-backdrop);
-    pointer-events: none;
-  }
-
-  .sidebar-backdrop[data-open] {
-    pointer-events: auto;
-  }
-
   /* Translated off-screen while closed. Its shadow only exists while open,
    * so the blur does not bleed into the viewport from past the left edge. */
   .sidebar {

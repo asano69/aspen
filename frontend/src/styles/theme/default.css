@@ -106,7 +106,6 @@
 
     /* Every z-index shared across components, lowest first. Local stacking
      * inside one component (e.g. card-grid.css) stays literal. */
-    --z-sidebar-backdrop: 20;
     --z-sidebar: 30;
     --z-topbar: 40;
     --z-popup: 50; /* dialogs, dropdown menus, search suggestions */
