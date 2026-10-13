@@ -59,7 +59,7 @@ export default function TopBar(props: TopBarProps) {
               <PotIcon src={topBarPotLink()!.cover} />
               <span class="title">{topBarPotLink()!.name}</span>
             </A>
-            <PotMenu id={topBarPotLink()!.id} title={topBarPotLink()!.name} />
+       
           </Show>
         </div>
 
@@ -93,6 +93,9 @@ export default function TopBar(props: TopBarProps) {
               useTopBarActions, e.g. CardForm's pin/delete buttons.
               Empty on pages that register nothing. */}
           {topBarActions()}
+          <Show when={topBarPotLink()}>
+                       <PotMenu id={topBarPotLink()!.id} title={topBarPotLink()!.name} />
+          </Show>
 
           <UserMenu />
         </nav>

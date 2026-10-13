@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { DropdownMenu } from "@kobalte/core/dropdown-menu";
-import { Ellipsis, Pencil, Trash2 } from "@/lib/icons";
+import { Settings, Pencil, Trash2 } from "@/lib/icons";
 import PromptDialog from "@/components/dialogs/PromptDialog";
 import ConfirmDialog from "@/components/dialogs/ConfirmDialog";
 import { removePot, renamePot } from "@/lib/stores/potsStore";
@@ -32,7 +32,7 @@ export default function PotMenu(props: PotMenuProps) {
     <>
       <DropdownMenu>
         <DropdownMenu.Trigger aria-label="Pot actions" class="icon-btn">
-          <Ellipsis size={24} />
+          <Settings size={24} />
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content class="menu-content">
