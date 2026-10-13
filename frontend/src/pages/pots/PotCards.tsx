@@ -6,7 +6,9 @@ import { PointerSensor, KeyboardSensor } from "@dnd-kit/dom";
 import Loading from "@/components/Loading";
 import { useFooterSlot } from "@/lib/footerSlot";
 import { orderedPots, potsLoaded, reorderPot } from "@/lib/stores/potsStore";
-import CardGrid from "../cards/CardGrid";
+import { potsDisplayMode } from "@/lib/stores/displayModeStore";
+import QuickLaunch from "../cards/QuickLaunch";
+import PotGraph from "./PotGraph";
 import PotItem from "./PotItem";
 
 // Same override as MainLayout's sensors: without it, PointerSensor's default
@@ -40,13 +42,22 @@ export default function PotCards() {
 
   return (
     <Show when={potsLoaded()} fallback={<Loading />}>
-      <DragDropProvider sensors={sensors} onDragEnd={handleDragEnd}>
-        <CardGrid>
-          <For each={orderedPots()}>
-            {(pot, index) => <PotItem pot={pot} index={index()} />}
-          </For>
-        </CardGrid>
-      </DragDropProvider>
+      {/* The quick launch bar stays in both views, so the user can switch back. */}
+      <QuickLaunch />
+      <Show
+        when={potsDisplayMode() === "Graph"}
+        fallback={
+          <DragDropProvider sensors={sensors} onDragEnd={handleDragEnd}>
+            <ul class="card-grid">
+              <For each={orderedPots()}>
+                {(pot, index) => <PotItem pot={pot} index={index()} />}
+              </For>
+            </ul>
+          </DragDropProvider>
+        }
+      >
+        <PotGraph />
+      </Show>
     </Show>
   );
 }

@@ -5,6 +5,12 @@ import PotIcon from "@/components/PotIcon";
 import { potCoverURL } from "@/lib/api/pots";
 import { Check, ChevronDown } from "@/lib/icons";
 import { orderedPots } from "@/lib/stores/potsStore";
+import {
+  DISPLAY_MODES,
+  potsDisplayMode,
+  setPotsDisplayMode,
+  type DisplayMode,
+} from "@/lib/stores/displayModeStore";
 import { usePot } from "../pots/PotContext";
 
 interface QuickMenuProps {
@@ -14,13 +20,21 @@ interface QuickMenuProps {
   // Heading shown at the top of the opened menu.
   header: string;
   options: string[];
+  // When given, the menu shows this option and reports a pick through
+  // onChange. Without them the selection is local and dummy.
+  value?: string;
+  onChange?: (option: string) => void;
 }
 
 // One dropdown of the quick launch bar: the trigger shows the selected
-// option, the menu lists all of them. The selection is local and dummy for
-// now; nothing reads it yet.
+// option, the menu lists all of them.
 function QuickMenu(props: QuickMenuProps) {
-  const [selected, setSelected] = createSignal(props.options[0]);
+  const [local, setLocal] = createSignal(props.options[0]);
+  const selected = () => props.value ?? local();
+  const select = (option: string) => {
+    setLocal(option);
+    props.onChange?.(option);
+  };
 
   return (
     <DropdownMenu>
@@ -39,7 +53,7 @@ function QuickMenu(props: QuickMenuProps) {
             <For each={props.options}>
               {(option) => (
                 <DropdownMenu.Item
-                  onSelect={() => setSelected(option)}
+                  onSelect={() => select(option)}
                   class="menu-item"
                 >
                   <span class="menu-item-label">{option}</span>
@@ -87,7 +101,12 @@ export default function QuickLaunch() {
           <QuickMenu
             menuClass="page-list-mode-menu"
             header="Display by"
-            options={["Card", "Table", "Graph"]}
+            options={[...DISPLAY_MODES]}
+            // Only the root page (no open pot) has a graph view so far.
+            value={pot() ? undefined : potsDisplayMode()}
+            onChange={(mode) => {
+              if (!pot()) setPotsDisplayMode(mode as DisplayMode);
+            }}
           />
           <QuickMenu
             menuClass="page-sort-menu"

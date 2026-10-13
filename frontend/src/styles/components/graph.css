@@ -1,0 +1,13 @@
+/* Public classes: .graph-view.
+ * The container of a Sigma graph (see features/graph/GraphView.tsx). Sigma
+ * needs an explicit, non-zero size, so it fills the remaining height of
+ * .app-content with a minimum. */
+@layer components {
+  .graph-view {
+    flex: 1;
+    min-height: 480px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background-color: var(--card-bg);
+  }
+}
