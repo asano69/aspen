@@ -41,12 +41,15 @@ async function syncSafely(
   }
 }
 
-// Brings every data replica of a pot up to date and keeps it synced from now
-// on. A failure is only logged; the next open (or gap) retries from the same
+// Brings every pot-scoped replica of a pot up to date and keeps it synced from
+// now on. Global replicas are not pulled per pot (see syncGlobalReplicas). A
+// failure is only logged; the next open (or gap) retries from the same
 // checkpoint.
 export async function openPotReplicas(potId: string): Promise<void> {
   openPots.add(potId);
-  await Promise.all(dataReplicas.map((replica) => syncSafely(replica, potId)));
+  await Promise.all(
+    potScopedReplicas.map((replica) => syncSafely(replica, potId)),
+  );
 }
 
 export function closePotReplicas(potId: string): void {
