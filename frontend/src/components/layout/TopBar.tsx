@@ -68,6 +68,18 @@ export default function TopBar(props: TopBarProps) {
     }
   };
 
+  // Creates a pot titled with the current unix time that links to the open
+  // pot (if any), so it shows up in that pot's quick launch bar.
+  const addLinkedPot = async () => {
+    const links = topBarPotLink() ? [topBarPotLink()!.id] : [];
+    try {
+      await addPot(String(Math.floor(Date.now() / 1000)), links);
+    } catch (err) {
+      console.error("[top-bar] failed to add the linked pot:", err);
+      window.alert("Failed to add the pot.");
+    }
+  };
+
   return (
     // The header is fixed (not sticky): TopBar must float above the
     // scrollable content rather than sit in normal flex flow, or there is
@@ -153,7 +165,15 @@ export default function TopBar(props: TopBarProps) {
               useTopBarActions, e.g. CardForm's pin/delete buttons.
               Empty on pages that register nothing. */}
           {topBarActions()}
-          <DatabasePlus />
+          <button
+            type="button"
+            aria-label="Add linked pot"
+            title="Add linked pot"
+            class="icon-btn"
+            onClick={addLinkedPot}
+          >
+            <DatabasePlus />
+          </button>
           <Show when={topBarPotLink()}>
             <PotMenu id={topBarPotLink()!.id} title={topBarPotLink()!.name} />
           </Show>

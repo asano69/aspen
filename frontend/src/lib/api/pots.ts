@@ -35,11 +35,13 @@ export async function fetchAllPots(): Promise<PotRecord[]> {
 export async function createPot(
   title: string,
   position: number,
+  links: string[] = [],
 ): Promise<PotRecord> {
   const record = await pb.collection("pots").create<PotRecord>({
     title,
     done: false,
     position,
+    links,
     name: randomKey(),
   });
   return await pb

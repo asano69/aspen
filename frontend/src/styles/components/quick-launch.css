@@ -1,4 +1,5 @@
-/* Public classes: .quick-launch, .quick-launch-trigger. */
+/* Public classes: .quick-launch, .quick-launch-pots, .quick-launch-pot,
+ * .quick-launch-menus, .quick-launch-trigger. */
 @layer components {
   /* Bar of dropdown menus right above .card-grid (see
    * pages/cards/QuickLaunch.tsx). The gap between menus is set here, by
@@ -10,11 +11,40 @@
 
     .flex-box {
       display: flex;
-      justify-content: flex-end;
       align-items: center;
       flex-wrap: wrap;
       gap: 4px;
     }
+  }
+
+  /* Pots that link to the open pot, on the left. */
+  .quick-launch-pots {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* The tint shows on hover, like the other round buttons. The title is
+   * the native tooltip. */
+  .quick-launch-pot {
+    display: inline-flex;
+    padding: 2px;
+    border-radius: 9999px;
+    transition: background-color 0.15s;
+  }
+
+  .quick-launch-pot:hover {
+    background-color: var(--color-hover-bg);
+  }
+
+  /* Pushed to the right edge, whether or not pots are listed on the left. */
+  .quick-launch-menus {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-left: auto;
   }
 
   /* The label and the arrow are one button: no border or fill, only a
