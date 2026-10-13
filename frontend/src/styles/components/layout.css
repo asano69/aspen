@@ -147,4 +147,9 @@
   .new-button:hover {
     background-color: var(--new-button-hover-bg);
   }
+
+  .new-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
 }

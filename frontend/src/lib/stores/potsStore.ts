@@ -55,8 +55,10 @@ function nextPotPosition(): number {
   return pots.length === 0 ? 0 : pots[pots.length - 1].position + 1;
 }
 
-export async function addPot(title: string): Promise<void> {
-  mergePot(await createPot(title, nextPotPosition()));
+export async function addPot(title: string): Promise<PotRecord> {
+  const record = await createPot(title, nextPotPosition());
+  mergePot(record);
+  return record;
 }
 
 export async function renamePot(id: string, title: string): Promise<void> {

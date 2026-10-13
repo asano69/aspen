@@ -1,7 +1,10 @@
-import { createSignal, Show } from "solid-js";
-import { A } from "@solidjs/router";
+import { createEffect, createSignal, on, Show } from "solid-js";
+import { A, useNavigate } from "@solidjs/router";
 import { Plus, Menu } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
+import { suggestTitles } from "@/lib/dexie/titleIndex";
+import { addPot, orderedPots } from "@/lib/stores/potsStore";
+import { normalizeForSearch, searchTitles } from "@/lib/search/titleSearch";
 import PotIcon from "../PotIcon";
 
 import TitleSearch from "./TitleSearch";
@@ -27,6 +30,42 @@ export default function TopBar(props: TopBarProps) {
     const slug = topBarPotLink()!.slug;
     const title = query().trim();
     return title ? `/${slug}/${titleToSegment(title)}` : `/${slug}/new`;
+  };
+
+  // Text typed for one scope must not leak into the other.
+  createEffect(
+    on(
+      () => topBarPotLink() !== undefined,
+      () => setQuery(""),
+      { defer: true },
+    ),
+  );
+
+  // Outside a pot the same search and add button work on the pots. Pot titles
+  // are not unique, so picking one opens the first pot with that title.
+  const navigate = useNavigate();
+  const suggestPots = async (text: string) =>
+    searchTitles(
+      orderedPots().map((pot) => ({
+        title: pot.title,
+        key: normalizeForSearch(pot.title),
+      })),
+      text,
+      20,
+    );
+  const openPot = (title: string) => {
+    const pot = orderedPots().find((p) => p.title === title);
+    if (pot) navigate(`/${pot.name}`);
+  };
+  const addPotFromQuery = async () => {
+    const title = query().trim();
+    if (!title) return;
+    try {
+      navigate(`/${(await addPot(title)).name}`);
+    } catch (err) {
+      console.error("[top-bar] failed to add the pot:", err);
+      window.alert("Failed to add the pot.");
+    }
   };
 
   return (
@@ -63,14 +102,33 @@ export default function TopBar(props: TopBarProps) {
           </Show>
         </div>
 
-        {/* Center slot: "add card" and the title search are shared between
-            CardList and CardForm (both register a pot link via
-            useTopBarPotLink), so they live here instead of being
-            duplicated as per-page controls. Only shown while a pot is in
-            context -- there's nothing to add to or search from the pots
-            list itself. */}
+        {/* Center slot: "add" and the title search are shared by every page.
+            While a pot is in context (CardList and CardForm register a pot
+            link via useTopBarPotLink) they work on its cards; otherwise on
+            the pots themselves. */}
         <div class="col-search">
-          <Show when={topBarPotLink()}>
+          <Show
+            when={topBarPotLink()}
+            fallback={
+              <>
+                <button
+                  type="button"
+                  aria-label="Add pot"
+                  title="New"
+                  class="new-button"
+                  disabled={query().trim() === ""}
+                  onClick={addPotFromQuery}
+                >
+                  <Plus size={20} strokeWidth={4} />
+                </button>
+                <TitleSearch
+                  suggest={suggestPots}
+                  onSelect={openPot}
+                  onQueryChange={setQuery}
+                />
+              </>
+            }
+          >
             <A
               href={addCardHref()}
               aria-label="Add card"
@@ -80,8 +138,12 @@ export default function TopBar(props: TopBarProps) {
               <Plus size={20} strokeWidth={4} />
             </A>
             <TitleSearch
-              potId={topBarPotLink()!.id}
-              potSlug={topBarPotLink()!.slug}
+              suggest={(text) => suggestTitles(topBarPotLink()!.id, text)}
+              onSelect={(title) =>
+                navigate(
+                  `/${topBarPotLink()!.slug}/${titleToSegment(title)}`,
+                )
+              }
               onQueryChange={setQuery}
             />
           </Show>

@@ -1,5 +1,5 @@
 // frontend/src/pages/cards/CardItem.tsx
-import { Match, onCleanup, Show, Switch } from "solid-js";
+import { Match, onCleanup, Show, Switch, type JSX } from "solid-js";
 import { A } from "@solidjs/router";
 import { useSortable } from "@dnd-kit/solid/sortable";
 import { registerCardElement } from "@/lib/stores/cardsStore";
@@ -16,11 +16,12 @@ import { usePot } from "../pots/PotContext";
 
 export interface CardItemViewProps {
   card: CardGridCard;
-  // The parent pot's slug, used to build this card's URL (see
-  // lib/cardSlug.ts). Cards only store their parent pot's
-  // PocketBase id (see CardRecord's "pot" field), not its slug, so
-  // the slug is passed down from CardList instead.
-  potSlug: string;
+  // Where the card links to. The caller builds it, so a pot can be shown
+  // with this same view.
+  href: string;
+  // Overlay shown over the top-right corner (e.g. an actions menu). It is a
+  // sibling of the <a>, so clicking it does not trigger the link.
+  actions?: JSX.Element;
   // Ref callback for the <li>, so a wrapper can make it sortable.
   ref?: (el: HTMLLIElement) => void;
   // Fades the card while it is being dragged.
@@ -54,10 +55,7 @@ export function CardItemView(props: CardItemViewProps) {
       classList={{ empty: props.empty }}
       data-dragging={props.dragging ? "" : undefined}
     >
-      <A
-        ref={ripple}
-        href={`/${props.potSlug}/${titleToSegment(props.card.title)}`}
-      >
+      <A ref={ripple} href={props.href}>
         {/* Folded-corner indicator for pinned cards (see
             styles/components.css's .card-grid-item .pin). */}
         <Show when={props.card.pin}>
@@ -113,6 +111,9 @@ export function CardItemView(props: CardItemViewProps) {
             just keeps it grouped with .pin, the other overlay layer. */}
         <div class="hover" aria-hidden="true" />
       </A>
+      <Show when={props.actions}>
+        <div class="actions">{props.actions}</div>
+      </Show>
     </li>
   );
 }
@@ -156,7 +157,7 @@ export default function CardItem(props: CardItemProps) {
   return (
     <CardItemView
       card={props.card}
-      potSlug={props.potSlug}
+      href={`/${props.potSlug}/${titleToSegment(props.card.title)}`}
       ref={setRef}
       dragging={isDragging()}
     />

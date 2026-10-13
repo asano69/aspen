@@ -1,32 +1,28 @@
 import { createSignal } from "solid-js";
-import { useNavigate } from "@solidjs/router";
 import { Search } from "@kobalte/core/search";
 import { Search as SearchIcon } from "@/lib/icons";
-import { suggestTitles } from "@/lib/dexie/titleIndex";
 import { useHotkeys } from "@/lib/hotkeys";
-import { titleToSegment } from "@/lib/models/slugify";
 
 export interface TitleSearchProps {
-  potId: string;
-  potSlug: string;
+  // Returns the titles matching the typed text, best first.
+  suggest: (query: string) => Promise<string[]>;
+  // Called with the title the user picked.
+  onSelect: (title: string) => void;
   // Called with the text of the input on every change, so the parent can
   // use it (TopBar's "add card" button opens a card with this title).
   onQueryChange?: (value: string) => void;
 }
 
-// TopBar's title search: suggests the pot's card titles that contain the typed
-// words, from the same source as the editor's "[" completion (see
-// lib/dexie/titleIndex.ts), and opens the chosen card. Class names
-// follow Cosense's navbar (.navbar-form > .search-form > .form-group >
-// .dropdown > .form-control, plus .btn-search for the icon).
+// TopBar's title search. What is searched (a pot's cards, or the pots
+// themselves) and what picking a title does are decided by the caller (see
+// TopBar). Class names follow Cosense's navbar (.navbar-form > .search-form >
+// .form-group > .dropdown > .form-control, plus .btn-search for the icon).
 export default function TitleSearch(props: TitleSearchProps) {
-  const navigate = useNavigate();
   const [titles, setTitles] = createSignal<string[]>([]);
   // Identifies the latest query, so a slow answer to an older input is dropped.
   let latest = 0;
 
-  // This component is only mounted while a pot is open (see TopBar), so the
-  // hotkey works on the card list and in the editor, and nowhere else.
+  // Mounted on every page (see TopBar), so the hotkey works everywhere.
   let input: HTMLInputElement | undefined;
   useHotkeys({
     "search.focus": () => {
@@ -43,7 +39,7 @@ export default function TitleSearch(props: TitleSearchProps) {
       return;
     }
     try {
-      const found = await suggestTitles(props.potId, value);
+      const found = await props.suggest(value);
       if (request === latest) setTitles(found);
     } catch (err) {
       console.error("[title-search] failed to search:", err);
@@ -51,7 +47,7 @@ export default function TitleSearch(props: TitleSearchProps) {
   };
 
   const handleChange = (title: string | null) => {
-    if (title) navigate(`/${props.potSlug}/${titleToSegment(title)}`);
+    if (title) props.onSelect(title);
   };
 
   return (

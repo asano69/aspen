@@ -211,26 +211,9 @@
     opacity: 0.4;
   }
 
-  /* Stands in for a missing pot cover (see PotGridItem.tsx): the logo fills
-   * the thumbnail area and is faded. */
-  .card-grid-item .cover-fallback {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-    align-items: center;
-    justify-content: center;
-    padding: 12px;
-    opacity: 0.4;
-  }
-
-  .card-grid-item .cover-fallback svg {
-    width: 100%;
-    height: 100%;
-  }
-
-  /* The actions menu of a pot card. It is a sibling of the <a>, so clicking
-   * it does not trigger the link, and sits over the top-right corner where
-   * the pin indicator of a card is. */
+  /* The actions menu of a card (see CardItemView's `actions`). It is a
+   * sibling of the <a>, so clicking it does not trigger the link, and sits
+   * over the top-right corner where the pin indicator of a card is. */
   .card-grid-item .actions {
     position: absolute;
     top: 4px;

@@ -81,7 +81,7 @@ function RelationRow(props: RelationRowProps) {
           {(card) => (
             <CardItemView
               card={card}
-              potSlug={props.potSlug}
+              href={`/${props.potSlug}/${titleToSegment(card.title)}`}
               empty={props.empty}
             />
           )}

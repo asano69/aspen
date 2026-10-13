@@ -11,7 +11,7 @@ import { isSortable } from "@dnd-kit/solid/sortable";
 
 import Loading from "@/components/Loading";
 import CardItem from "./CardItem";
-import QuickLaunch from "./QuickLaunch";
+import CardGrid from "./CardGrid";
 import {
   cardsById,
   loadNextCardsPage,
@@ -198,9 +198,7 @@ export default function CardList() {
 
   return (
     <Show when={potWindow(pot()?.id)?.loaded} fallback={<Loading />}>
-      <>
-        <QuickLaunch />
-        <ul class="card-grid">
+      <CardGrid>
           <For each={cards()}>
             {(card, index) => (
               <CardItem card={card} index={index()} potSlug={params.slug} />
@@ -214,8 +212,7 @@ export default function CardList() {
             aria-hidden="true"
             class="card-grid-sentinel"
           />
-        </ul>
-      </>
+      </CardGrid>
     </Show>
   );
 }

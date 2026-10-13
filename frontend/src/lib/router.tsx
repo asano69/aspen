@@ -4,7 +4,7 @@ import { Router, Route } from "@solidjs/router";
 import AppShell from "../components/layout/AppShell";
 import PotLayout from "../pages/pots/PotLayout";
 
-import PotList from "../pages/pots/PotList";
+import PotCards from "../pages/pots/PotCards";
 import CardList from "../pages/cards/CardList";
 import CardForm from "../pages/cards/CardForm";
 import SearchPage from "../pages/search/SearchPage";
@@ -26,7 +26,7 @@ export default function AppRouter() {
       <Route path="/admin/api-docs" component={ApiDocs} />
       {/* Markdown -> Scrapbox notation converter (see features/md2sb). */}
       <Route path="/admin/md2sb" component={Md2sb} />
-      <Route path="/" component={PotList} />
+      <Route path="/" component={PotCards} />
       {/* The pot segment in the URL is now the pot's unique
           "name" field, not its PocketBase id (see CardList.tsx
           and CardForm.tsx, which resolve the actual record via
