@@ -30,7 +30,7 @@
     "centrifuge": "^5.7.4",
     "dexie": "^4.0.11",
     "globals": "^17.7.0",
-    "lucide-solid": "^1.24.0",
+    "lucide-solid": "^1.50.0",
     "mermaid": "^12.0.0",
     "mermaid-diagram-pan-zoom": "^1.7.0",
     "pocketbase": "^0.27.0",

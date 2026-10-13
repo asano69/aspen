@@ -1,11 +1,12 @@
 import { createEffect, createSignal, on, Show } from "solid-js";
 import { A, useNavigate } from "@solidjs/router";
-import { Plus, Menu } from "@/lib/icons";
+import { Plus, Menu  } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
 import { suggestTitles } from "@/lib/dexie/titleIndex";
 import { addPot, orderedPots } from "@/lib/stores/potsStore";
 import { normalizeForSearch, searchTitles } from "@/lib/search/titleSearch";
 import PotIcon from "../PotIcon";
+
 
 import TitleSearch from "./TitleSearch";
 
@@ -88,7 +89,9 @@ export default function TopBar(props: TopBarProps) {
             class="icon-btn"
           >
             <Menu src={topBarPotLink()?.cover} />
+
           </button>
+
           {/* Current pot, when the active page registered one (see
               CardList/CardForm's useTopBarPotLink call): its icon and
               name form one link back to that pot's card list, followed

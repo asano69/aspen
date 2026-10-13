@@ -23,7 +23,7 @@
         "centrifuge": "^5.7.4",
         "dexie": "^4.0.11",
         "globals": "^17.7.0",
-        "lucide-solid": "^1.24.0",
+        "lucide-solid": "^1.50.0",
         "mermaid": "^12.0.0",
         "mermaid-diagram-pan-zoom": "^1.7.0",
         "pocketbase": "^0.27.0",
@@ -1136,7 +1136,7 @@
 
     "ltgt": ["ltgt@2.2.1", "", {}, "sha512-AI2r85+4MquTw9ZYqabu4nMwy9Oftlfa/e/52t9IjtfG+mGBbTNdAoZ3RQKLHR6r0wQnwZnPIEh/Ya6XTWAKNA=="],
 
-    "lucide-solid": ["lucide-solid@1.46.0", "", { "peerDependencies": { "solid-js": "^1.4.7" } }, "sha512-OOGNQ8PNGQu/2AHG+yyaJfktdnXM3m0Xz10YVWiu2A/T6DKvIwYj/lgb4oRZepwAj4ZmbG/cZGU3bgtlTdQn1w=="],
+    "lucide-solid": ["lucide-solid@1.55.0", "", { "peerDependencies": { "solid-js": "^1.4.7" } }, "sha512-lrbKmv1Gs0O6bGUIZJ/xNgl1KqtKDUBQw2RL66zuyKSySoh8RH2TLohYLwCs08bHzsCXaGuxmKt5nt/3yCpHEw=="],
 
     "magic-string": ["magic-string@0.30.21", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="],
 
