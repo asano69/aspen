@@ -49,7 +49,7 @@ export async function createPot(
 
 export async function updatePot(
   id: string,
-  changes: Partial<Pick<PotRecord, "title" | "position">>,
+  changes: Partial<Pick<PotRecord, "title" | "position" | "links">>,
 ): Promise<PotRecord> {
   return await pb.collection("pots").update<PotRecord>(id, changes);
 }

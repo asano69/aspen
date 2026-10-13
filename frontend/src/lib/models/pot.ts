@@ -10,6 +10,9 @@ export interface PotRecord {
   title: string;
   done: boolean;
   position: number;
+  // Ids of the pots this pot links to (a multiple relation to "pots").
+  // Backlinks are not stored: derive them by scanning the pots store.
+  links: string[];
   created: string;
   updated: string;
 }
