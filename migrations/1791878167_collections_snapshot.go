@@ -1157,20 +1157,6 @@ func init() {
 					{
 						"help": "",
 						"hidden": false,
-						"id": "select2063623452",
-						"maxSelect": 0,
-						"name": "status",
-						"presentable": false,
-						"required": false,
-						"system": false,
-						"type": "select",
-						"values": [
-							"active"
-						]
-					},
-					{
-						"help": "",
-						"hidden": false,
 						"id": "file2366146245",
 						"maxSelect": 0,
 						"maxSize": 0,
@@ -1182,6 +1168,32 @@ func init() {
 						"system": false,
 						"thumbs": null,
 						"type": "file"
+					},
+					{
+						"cascadeDelete": false,
+						"collectionId": "pbc_575754128",
+						"help": "",
+						"hidden": false,
+						"id": "relation3514999064",
+						"maxSelect": 999999,
+						"minSelect": 0,
+						"name": "links",
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "relation"
+					},
+					{
+						"help": "",
+						"hidden": false,
+						"id": "date3946532403",
+						"max": "",
+						"min": "",
+						"name": "deleted",
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "date"
 					},
 					{
 						"hidden": false,
