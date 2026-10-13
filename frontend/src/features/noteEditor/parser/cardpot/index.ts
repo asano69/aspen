@@ -64,10 +64,8 @@ const cardpotParser = parser.configure({
     "TableCell",
     { name: "quote", block: true },
     "quoteMark",
-    "Bold",
-    "BoldMark",
-    "Italic",
-    "ItalicMark",
+    "deco",
+    "decoMark",
     "code",
     "codeMark",
     "link",
@@ -92,13 +90,12 @@ const cardpotParser = parser.configure({
   ],
   props: [
     revealStyle.add({
-      // Bold also gets "level level-N" appended (see syntaxReveal.ts), so
-      // this class only marks the node as revealable. Class names follow
-      // Cosense's own DOM: "deco-*" is "[* x]", "deco-/" is "[/ x]",
+      // deco also gets one "deco-<char>" class per decoration character
+      // (see syntaxReveal.ts and decoClasses.ts), so this class only marks
+      // the node as revealable. Class names follow Cosense's own DOM:
       // "strong" is "[[x]]", "page-link" is an internal link and "link" is
       // an external one.
-      Bold: "deco-*",
-      Italic: "deco-/",
+      deco: "deco",
       code: "code highlight",
       link: "page-link",
       urlLink: "link",
@@ -122,8 +119,7 @@ const cardpotParser = parser.configure({
       imageLink: "image",
     }),
     isMark.add({
-      BoldMark: true,
-      ItalicMark: true,
+      decoMark: true,
       codeMark: true,
       linkMark: true,
       urlLinkMark: true,
@@ -184,10 +180,8 @@ function node(name: string): NodeType {
 
 // Export the exact node identities used by the configured parser. Consumers
 // compare these by identity when decorating or navigating syntax nodes.
-export const Bold = node("Bold");
-export const BoldMark = node("BoldMark");
-export const Italic = node("Italic");
-export const ItalicMark = node("ItalicMark");
+export const Deco = node("deco");
+export const DecoMark = node("decoMark");
 export const Code = node("code");
 export const CodeMark = node("codeMark");
 export const WikiLink = node("link");

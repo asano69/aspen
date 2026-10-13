@@ -38,6 +38,19 @@
     "links": [{ "title": "a", "titleLc": "a" }]
   },
   {
+    "name": "link-inside-other-decoration-characters",
+    "text": "T\n[- [a]] [_ [b]]",
+    "links": [
+      { "title": "a", "titleLc": "a" },
+      { "title": "b", "titleLc": "b" }
+    ]
+  },
+  {
+    "name": "decoration-characters-need-a-space",
+    "text": "T\n[-a] [. b]",
+    "links": [{ "title": "-a", "titleLc": "-a" }]
+  },
+  {
     "name": "link-inside-quote",
     "text": "T\n> [a]",
     "links": [{ "title": "a", "titleLc": "a" }]

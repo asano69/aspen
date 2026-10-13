@@ -34,7 +34,7 @@ function indentRanges(input: string): { from: number; to: number }[] {
 describe("Cardpot Lezer syntax", () => {
   it("parses Cardpot inline notation only inside paragraph blocks", () => {
     expect(tree("plain [page] [* bold] `code`")).toBe(
-      "Document(Paragraph(link(linkMark,linkMark),Bold(BoldMark,BoldMark),code(codeMark,codeMark)))",
+      "Document(Paragraph(link(linkMark,linkMark),deco(decoMark,decoMark),code(codeMark,codeMark)))",
     );
     expect(tree("# not a CommonMark heading\n**not CommonMark bold**")).toBe(
       "Document(Paragraph,Paragraph)",
@@ -102,7 +102,7 @@ describe("Cardpot Lezer syntax", () => {
 
   it("does not let a bare URL swallow a closing bracket", () => {
     expect(tree("[* see https://example.com/]")).toBe(
-      "Document(Paragraph(Bold(BoldMark,url,BoldMark)))",
+      "Document(Paragraph(deco(decoMark,url,decoMark)))",
     );
     // Inside a bracketed link the bracket rule wins; no nested BareUrl.
     expect(tree("[https://example.com/ label]")).toBe(
@@ -120,7 +120,7 @@ describe("Cardpot Lezer syntax", () => {
     // parses a decoration's content" test above). The bare "[]" still
     // matches nothing (empty content) and stays as plain text.
     expect(tree("[] [*** [ ]]")).toBe(
-      "Document(Paragraph(Bold(BoldMark,blank,BoldMark)))",
+      "Document(Paragraph(deco(decoMark,blank,decoMark)))",
     );
   });
 
@@ -185,13 +185,13 @@ describe("Cardpot Lezer syntax", () => {
 
   it("parses Bold regardless of how many asterisks are used", () => {
     expect(tree("[* one]")).toBe(
-      "Document(Paragraph(Bold(BoldMark,BoldMark)))",
+      "Document(Paragraph(deco(decoMark,decoMark)))",
     );
     expect(tree("[** two]")).toBe(
-      "Document(Paragraph(Bold(BoldMark,BoldMark)))",
+      "Document(Paragraph(deco(decoMark,decoMark)))",
     );
     expect(tree("[***** five]")).toBe(
-      "Document(Paragraph(Bold(BoldMark,BoldMark)))",
+      "Document(Paragraph(deco(decoMark,decoMark)))",
     );
   });
 
@@ -202,33 +202,21 @@ describe("Cardpot Lezer syntax", () => {
     expect(tree("[**]")).toBe("Document(Paragraph(link(linkMark,linkMark)))");
   });
 
-  it("parses Italic through the same generic decoration dispatcher as Bold", () => {
-    expect(tree("[/ italic]")).toBe(
-      "Document(Paragraph(Italic(ItalicMark,ItalicMark)))",
-    );
+  it("parses every decoration character as the same flat deco node", () => {
+    for (const input of ["[/ x]", "[// x]", "[*/ x]", "[/* x]", "[- x]", "[_ x]", "[. x]"]) {
+      expect(tree(input)).toBe("Document(Paragraph(deco(decoMark,decoMark)))");
+    }
   });
 
-  it("generalizes the repeated-character rule to Italic too", () => {
-    expect(tree("[// two]")).toBe(
-      "Document(Paragraph(Italic(ItalicMark,ItalicMark)))",
-    );
-  });
-
-  it("nests multiple decoration characters in MARKS' canonical order", () => {
-    expect(tree("[*/ text]")).toBe(
-      "Document(Paragraph(Bold(BoldMark,Italic,BoldMark)))",
-    );
-  });
-
-  it("nests the same way regardless of the characters' order in the source", () => {
-    expect(tree("[/* text]")).toBe(
-      "Document(Paragraph(Bold(BoldMark,Italic,BoldMark)))",
+  it("needs a space after the decoration characters", () => {
+    expect(tree("[-x] [/project/page]")).toBe(
+      "Document(Paragraph(link(linkMark,linkMark),ProjectLink(ProjectLinkMark,ProjectLinkMark)))",
     );
   });
 
   it("recurses into a combined decoration's content", () => {
     expect(tree("[*/ [Link]]")).toBe(
-      "Document(Paragraph(Bold(BoldMark,Italic(link(linkMark,linkMark)),BoldMark)))",
+      "Document(Paragraph(deco(decoMark,link(linkMark,linkMark),decoMark)))",
     );
   });
 
@@ -237,7 +225,7 @@ describe("Cardpot Lezer syntax", () => {
     // the shared decoration dispatcher tracks bracket depth and re-parses
     // its content as inline, so a nested link inside the decoration works.
     expect(tree("[* [Link] text]")).toBe(
-      "Document(Paragraph(Bold(BoldMark,link(linkMark,linkMark),BoldMark)))",
+      "Document(Paragraph(deco(decoMark,link(linkMark,linkMark),decoMark)))",
     );
   });
 
@@ -262,7 +250,7 @@ describe("Cardpot Lezer syntax", () => {
     expect(
       tree("table:links\n\t[* bold]\t[page]\t`code`\n\t#tag\t[ ]\t\noutside"),
     ).toBe(
-      "Document(Table(TableMark,TableRow(indent,TableCell(Bold(BoldMark,BoldMark)),TableCell(link(linkMark,linkMark)),TableCell(code(codeMark,codeMark))),TableRow(indent,TableCell(hashTag),TableCell(blank),TableCell)),Paragraph)",
+      "Document(Table(TableMark,TableRow(indent,TableCell(deco(decoMark,decoMark)),TableCell(link(linkMark,linkMark)),TableCell(code(codeMark,codeMark))),TableRow(indent,TableCell(hashTag),TableCell(blank),TableCell)),Paragraph)",
     );
   });
 
@@ -274,7 +262,7 @@ describe("Cardpot Lezer syntax", () => {
 
   it("parses a quote line and delegates its content to Cardpot inline rules", () => {
     expect(tree("> [* bold] [page] `code`")).toBe(
-      "Document(quote(quoteMark,Bold(BoldMark,BoldMark),link(linkMark,linkMark),code(codeMark,codeMark)))",
+      "Document(quote(quoteMark,deco(decoMark,decoMark),link(linkMark,linkMark),code(codeMark,codeMark)))",
     );
     expect(tree(">no separating space")).toBe("Document(quote(quoteMark))");
   });

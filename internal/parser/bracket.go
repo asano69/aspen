@@ -2,6 +2,10 @@ package parser
 
 import "strings"
 
+// decoChars are the characters accepted as decoration marks. Keep in sync
+// with DECO_CHARS in frontend rules/decoration.ts.
+const decoChars = `!"#%&'()*+,-./{|}<>_~`
+
 // parseBracket mirrors the frontend decoration, blank, and bracket rules.
 func parseBracket(s string, pos int) (*Node, int) {
 	if n, end := parseDecoration(s, pos); n != nil {
@@ -34,7 +38,7 @@ func matchingBracket(s string, from int) int {
 
 func parseDecoration(s string, pos int) (*Node, int) {
 	i := pos + 1
-	for i < len(s) && (s[i] == '*' || s[i] == '/') {
+	for i < len(s) && strings.IndexByte(decoChars, s[i]) >= 0 {
 		i++
 	}
 	if i == pos+1 || i >= len(s) || s[i] != ' ' {

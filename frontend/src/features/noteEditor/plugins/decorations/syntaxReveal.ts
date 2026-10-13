@@ -7,29 +7,21 @@ import {
 import { syntaxTree } from "@codemirror/language";
 import { decorationPlugin } from "./decorationPlugin";
 import type { SyntaxNodeRef } from "@lezer/common";
-import { Bold, revealStyle, isMark, hideContent } from "../../parser/cardpot";
+import { Deco, revealStyle, isMark, hideContent } from "../../parser/cardpot";
+import { decoClasses } from "./decoClasses";
 
-// Highest emphasis level styled in editorTheme.ts ("[********** x]").
-const MAX_STRONG_LEVEL = 10;
-
-// Emphasis level of a Bold node: the number of "*" in its opening mark, so
-// "[* x]" is level 1 and "[** x]" is level 2. The count is read from the
-// source text here rather than stored in the tree, because Lezer node types
-// are static and cannot carry a per-node level.
-function strongLevel(view: EditorView, bold: SyntaxNodeRef): number {
-  const open = bold.node.firstChild;
-  if (!open) return 1;
-  const stars = view.state.sliceDoc(open.from, open.to).split("*").length - 1;
-  return Math.min(Math.max(stars, 1), MAX_STRONG_LEVEL);
-}
-
-// The mark decoration styling a revealable node's whole range. Bold also
-// carries "level level-N" (like Cosense's "deco-* level level-2"); every
+// The mark decoration styling a revealable node's whole range. A deco node
+// also carries one class per decoration character (see decoClasses.ts). They
+// are derived from the source text here rather than stored in the tree,
+// because Lezer node types are static and cannot carry per-node data. Every
 // other node just gets its revealStyle class.
 function revealMark(view: EditorView, node: SyntaxNodeRef, styleClass: string) {
-  if (node.type !== Bold) return Decoration.mark({ class: styleClass });
+  if (node.type !== Deco) return Decoration.mark({ class: styleClass });
+  const open = node.node.firstChild;
+  // The opening mark is "[<chars> ": drop the bracket and the space.
+  const chars = open ? view.state.sliceDoc(open.from + 1, open.to - 1) : "";
   return Decoration.mark({
-    class: `${styleClass} level level-${strongLevel(view, node)}`,
+    class: [styleClass, ...decoClasses(chars)].join(" "),
   });
 }
 

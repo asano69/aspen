@@ -18,8 +18,7 @@ const CONTAINERS = new Set([
   "Table",
   "TableRow",
   "TableCell",
-  "Bold",
-  "Italic",
+  "deco",
   "strong",
 ]);
 

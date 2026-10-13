@@ -292,9 +292,9 @@ export const editorTheme = EditorView.theme({
   },
 
   // Bold notation ("[* x]", "[** x]", ...): the number of asterisks picks
-  // the level class (see syntaxReveal.ts's strongLevel). Level 1 is plain
-  // bold; higher levels also grow the font and the line height. The "*" in
-  // the class name is escaped for the CSS selector.
+  // the level class (see decoClasses.ts). Level 1 is plain bold; higher
+  // levels also grow the font and the line height. The "*" in the class
+  // name is escaped for the CSS selector.
   ".deco-\\*": {
     fontWeight: "bold",
   },

@@ -19,7 +19,7 @@ const (
 	KindTable     Kind = "Table"
 
 	KindInlineCode Kind = "code"
-	KindDecoration Kind = "Decoration"
+	KindDecoration Kind = "deco"
 	KindStrong     Kind = "strong"
 	KindBlank      Kind = "blank"
 	KindHashTag    Kind = "hashTag"
