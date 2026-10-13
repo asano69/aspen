@@ -211,15 +211,6 @@
     opacity: 0.4;
   }
 
-  /* The actions menu of a card (see CardItemView's `actions`). It is a
-   * sibling of the <a>, so clicking it does not trigger the link, and sits
-   * over the top-right corner where the pin indicator of a card is. */
-  .card-grid-item .actions {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    z-index: 10;
-  }
 
   /* Invisible row-spanning marker at the end of the grid: loading the next
    * page when it scrolls into view drives the infinite scroll (see

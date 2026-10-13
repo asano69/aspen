@@ -1,5 +1,5 @@
 // frontend/src/pages/cards/CardItem.tsx
-import { Match, onCleanup, Show, Switch, type JSX } from "solid-js";
+import { Match, onCleanup, Show, Switch } from "solid-js";
 import { A } from "@solidjs/router";
 import { useSortable } from "@dnd-kit/solid/sortable";
 import { registerCardElement } from "@/lib/stores/cardsStore";
@@ -19,9 +19,6 @@ export interface CardItemViewProps {
   // Where the card links to. The caller builds it, so a pot can be shown
   // with this same view.
   href: string;
-  // Overlay shown over the top-right corner (e.g. an actions menu). It is a
-  // sibling of the <a>, so clicking it does not trigger the link.
-  actions?: JSX.Element;
   // Ref callback for the <li>, so a wrapper can make it sortable.
   ref?: (el: HTMLLIElement) => void;
   // Fades the card while it is being dragged.
@@ -111,9 +108,6 @@ export function CardItemView(props: CardItemViewProps) {
             just keeps it grouped with .pin, the other overlay layer. */}
         <div class="hover" aria-hidden="true" />
       </A>
-      <Show when={props.actions}>
-        <div class="actions">{props.actions}</div>
-      </Show>
     </li>
   );
 }
