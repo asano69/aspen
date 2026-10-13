@@ -1,17 +1,22 @@
-import { createSignal } from "solid-js";
-import { createStore, produce } from "solid-js/store";
-import { createPot, deletePot, fetchAllPots, updatePot } from "../api/pots";
+import { createRoot, createSignal } from "solid-js";
+import { createPot, deletePot, updatePot } from "../api/pots";
+import { syncGlobalReplicas } from "../dexie/dataReplicas";
+import { createLiveQuery } from "../dexie/liveQuery";
+import { potsReplica, readPot, readPots } from "../dexie/potsCollection";
 import type { PotRecord } from "../models/pot";
 import { computePosition } from "../position";
 
-// Global cache of every "pots" record, keyed by id. Every view of the
-// pot list (the pots page, the sidebar) reads from here, so a change
-// made in one is immediately visible in the other. Unlike cardsStore,
-// there is no realtime subscription yet: changes made elsewhere only
-// show up after a reload.
-const [potsById, setPotsById] = createStore<Record<string, PotRecord>>({});
+// Every view of the pot list (the pots page, the sidebar) reads from here, so
+// a change made in one is immediately visible in the other. The pots are not
+// held in a store of their own: they follow the Dexie replica (see
+// lib/dexie/potsCollection.ts), which pulls and realtime events keep current.
+// A local change is written through to the replica as soon as the server has
+// accepted it, so it shows up without waiting for its realtime echo.
+const pots = createRoot(() =>
+  createLiveQuery(() => true, readPots, [] as PotRecord[]),
+);
 
-// Whether the initial fetch (see loadAllPots below) has completed.
+// Whether the initial pull (see loadAllPots below) has settled.
 const [potsLoaded, setPotsLoaded] = createSignal(false);
 
 export { potsLoaded };
@@ -20,29 +25,15 @@ export { potsLoaded };
 // no pin concept, so this is a single flat ordering. Reactive when
 // called inside a tracking scope.
 export function orderedPots(): PotRecord[] {
-  return Object.values(potsById).sort((a, b) => a.position - b.position);
+  return pots();
 }
 
-function mergePot(record: PotRecord) {
-  setPotsById(record.id, record);
-}
-
-// Fetches every pot once and merges it into the store. Called once
-// from AppShell. Like loadAllCards, a failure is only logged and the
-// store simply stays empty.
+// Pulls every pot change since the stored checkpoint. Called once from
+// AppShell. A failure is only logged: the replica keeps whatever it already
+// holds, which is also what shows while offline.
 export async function loadAllPots(): Promise<void> {
-  try {
-    const records = await fetchAllPots();
-    setPotsById(
-      produce((store) => {
-        for (const record of records) store[record.id] = record;
-      }),
-    );
-  } catch (err) {
-    console.error("[pots] failed to load pots:", err);
-  } finally {
-    setPotsLoaded(true);
-  }
+  await syncGlobalReplicas();
+  setPotsLoaded(true);
 }
 
 // Position for a newly created pot: one past the current highest
@@ -51,8 +42,8 @@ export async function loadAllPots(): Promise<void> {
 // simple incrementing scale; only reordering (see reorderPot) switches
 // to fractional indexing.
 function nextPotPosition(): number {
-  const pots = orderedPots();
-  return pots.length === 0 ? 0 : pots[pots.length - 1].position + 1;
+  const list = orderedPots();
+  return list.length === 0 ? 0 : list[list.length - 1].position + 1;
 }
 
 export async function addPot(
@@ -60,35 +51,31 @@ export async function addPot(
   links: string[] = [],
 ): Promise<PotRecord> {
   const record = await createPot(title, nextPotPosition(), links);
-  mergePot(record);
+  await potsReplica.put([record]);
   return record;
 }
 
 export async function renamePot(id: string, title: string): Promise<void> {
-  mergePot(await updatePot(id, { title }));
+  await potsReplica.put([await updatePot(id, { title })]);
 }
 
 export async function removePot(id: string): Promise<void> {
   await deletePot(id);
-  setPotsById(
-    produce((store) => {
-      delete store[id];
-    }),
-  );
+  await potsReplica.remove(id);
 }
 
 // Applies the new position immediately, then persists it; rolls back
 // if the request fails.
 async function persistPosition(id: string, position: number): Promise<void> {
-  const previous = potsById[id]?.position;
-  if (previous === undefined) return;
+  const previous = await readPot(id);
+  if (!previous) return;
 
-  setPotsById(id, "position", position);
+  await potsReplica.put([{ ...previous, position }]);
   try {
-    mergePot(await updatePot(id, { position }));
+    await potsReplica.put([await updatePot(id, { position })]);
   } catch (err) {
     console.error("[pots] failed to reorder pot:", err);
-    setPotsById(id, "position", previous);
+    await potsReplica.put([previous]);
   }
 }
 

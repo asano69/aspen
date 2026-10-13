@@ -6,8 +6,8 @@
 //
 // A replicated collection needs an autodate "updated" field, a "deleted"
 // date field (records are removed by soft delete, so that a pull can report
-// the removal to a client that was offline) and a field holding the id of the
-// pot a record belongs to.
+// the removal to a client that was offline) and, unless it is global, a field
+// holding the id of the pot a record belongs to.
 package replica
 
 // Collection describes one replicated collection.
@@ -16,7 +16,8 @@ type Collection struct {
 	// pull URL and the name of the realtime channel.
 	Name string
 	// PotField is the field holding the id of the pot a record belongs to. A
-	// pull returns the records of a single pot.
+	// pull returns the records of a single pot. Empty for a global collection
+	// (e.g. pots), which is not scoped to a pot: a pull returns every record.
 	PotField string
 }
 
@@ -25,6 +26,7 @@ type Collection struct {
 var Collections = []Collection{
 	{Name: "cards", PotField: "pot"},
 	{Name: "card_links", PotField: "target_pot"},
+	{Name: "pots"},
 }
 
 // Find returns the replicated collection with the given name.

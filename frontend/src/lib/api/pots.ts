@@ -9,7 +9,9 @@ import type { PotRecord } from "../models/pot";
 export async function fetchPotByName(name: string): Promise<PotRecord> {
   return await pb
     .collection("pots")
-    .getFirstListItem<PotRecord>(pb.filter("name = {:name}", { name }));
+    .getFirstListItem<PotRecord>(
+      pb.filter('name = {:name} && deleted = ""', { name }),
+    );
 }
 
 // URL of a pot's cover image, or undefined when none is set. The "cover"
@@ -19,12 +21,6 @@ export function potCoverURL(pot: PotRecord): string | undefined {
   return pot.cover ? pb.files.getURL(pot, pot.cover) : undefined;
 }
 
-// Fetches every "pots" record, ordered by position.
-export async function fetchAllPots(): Promise<PotRecord[]> {
-  return await pb
-    .collection("pots")
-    .getFullList<PotRecord>({ sort: "position" });
-}
 
 // Creates a pot. The "name" field is required and pattern-constrained,
 // but the real id isn't known until after creation -- so this creates
@@ -51,11 +47,15 @@ export async function createPot(
 
 export async function updatePot(
   id: string,
-  changes: Partial<Pick<PotRecord, "title" | "position" | "links">>,
+  changes: Partial<
+    Pick<PotRecord, "title" | "position" | "links" | "deleted">
+  >,
 ): Promise<PotRecord> {
   return await pb.collection("pots").update<PotRecord>(id, changes);
 }
 
+// Soft-deletes a pot by stamping its "deleted" date; the record itself stays
+// in the database, so a pull can report the removal to an offline client.
 export async function deletePot(id: string): Promise<void> {
-  await pb.collection("pots").delete(id);
+  await updatePot(id, { deleted: new Date().toISOString() });
 }

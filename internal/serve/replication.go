@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
@@ -57,21 +58,27 @@ func parsePullQuery(q url.Values) (*checkpoint, int, error) {
 	return &checkpoint{UpdatedAt: updatedAt, ID: id}, limit, nil
 }
 
-// pullRecords returns the records of a pot that changed after the checkpoint,
-// oldest first, at most limit of them. Soft-deleted records are included on
-// purpose: the local replica needs them as deletion events.
+// pullRecords returns the records of a pot (of the whole collection, when it
+// is global) that changed after the checkpoint, oldest first, at most limit of
+// them. Soft-deleted records are included on purpose: the local replica needs
+// them as deletion events.
 func pullRecords(app core.App, c replica.Collection, potID string, after *checkpoint, limit int) ([]*core.Record, error) {
-	filter := c.PotField + " = {:pot}"
-	params := dbx.Params{"pot": potID}
+	var clauses []string
+	params := dbx.Params{}
+	if c.PotField != "" {
+		clauses = append(clauses, c.PotField+" = {:pot}")
+		params["pot"] = potID
+	}
 	if after != nil {
-		filter += " && (updated > {:updatedAt} || (updated = {:updatedAt} && id > {:id}))"
+		clauses = append(clauses, "(updated > {:updatedAt} || (updated = {:updatedAt} && id > {:id}))")
 		params["updatedAt"] = after.UpdatedAt
 		params["id"] = after.ID
 	}
-	return app.FindRecordsByFilter(c.Name, filter, "updated,id", limit, 0, params)
+	return app.FindRecordsByFilter(c.Name, strings.Join(clauses, " && "), "updated,id", limit, 0, params)
 }
 
-// pullHandler serves GET /api/pages/{potId}/<collection>/pull.
+// pullHandler serves GET /api/pages/{potId}/<collection>/pull, or
+// GET /api/pages/<collection>/pull for a global collection.
 func pullHandler(c replica.Collection) func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		after, limit, err := parsePullQuery(e.Request.URL.Query())

@@ -85,9 +85,14 @@ func registerRoutes(e *core.ServeEvent) error {
 	pages.GET("/{pot}/{slug}/links2hop", relatedCardsHandler("links2hop", links2Hop))
 	// Checkpoint-based pull for the frontend's Dexie replication (see
 	// replication.go), one route per replicated collection. {potId} is a
-	// pot's id, unlike {pot} above.
+	// pot's id, unlike {pot} above. A global collection (e.g. pots) has no
+	// pot segment.
 	for _, c := range replica.Collections {
-		pages.GET("/{potId}/"+c.Name+"/pull", pullHandler(c))
+		if c.PotField == "" {
+			pages.GET("/"+c.Name+"/pull", pullHandler(c))
+		} else {
+			pages.GET("/{potId}/"+c.Name+"/pull", pullHandler(c))
+		}
 	}
 
 	// Serves the whole Vite build output (index.html, hashed JS/CSS

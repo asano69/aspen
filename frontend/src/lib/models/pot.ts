@@ -13,6 +13,8 @@ export interface PotRecord {
   // Ids of the pots this pot links to (a multiple relation to "pots").
   // Backlinks are not stored: derive them by scanning the pots store.
   links: string[];
+  // Soft-delete timestamp; an empty string while the pot is live.
+  deleted: string;
   created: string;
   updated: string;
 }

@@ -1,7 +1,8 @@
 import { subscribeToCollection } from "../api/realtime";
-import type { ReplicaRecord } from "../api/replication";
+import { GLOBAL_SCOPE, type ReplicaRecord } from "../api/replication";
 import { refreshLinkAlive } from "../stores/linkAliveStore";
 import { db } from "./db";
+import { potsReplica } from "./potsCollection";
 import {
   applyRecords,
   syncReplica,
@@ -10,13 +11,19 @@ import {
 } from "./replica";
 
 // Replicated collections that have no UI store of their own: they are only
-// kept current in IndexedDB. A collection with a UI store (cards, see
-// cardsStore.ts) uses the same building blocks from replica.ts itself.
+// kept current in IndexedDB (pots are read from there by potsStore.ts, which
+// has no write path of its own into it). A collection with a UI store (cards,
+// see cardsStore.ts) uses the same building blocks from replica.ts itself.
 // Adding a collection here, plus its table in db.ts and its line in
 // internal/replica on the server, is all it takes to replicate it.
-const dataReplicas: Replica<ReplicaRecord>[] = [
+//
+// Pot-scoped replicas are pulled per open pot; global ones (not scoped to a
+// pot, see internal/replica) are pulled once at startup.
+const potScopedReplicas: Replica<ReplicaRecord>[] = [
   tableReplica("card_links", db.card_links),
 ];
+const globalReplicas: Replica<ReplicaRecord>[] = [potsReplica];
+const dataReplicas = [...potScopedReplicas, ...globalReplicas];
 
 // Pots opened in this session. A pot is pulled when it opens (which also
 // covers everything missed while it was closed) and again after a realtime
@@ -25,10 +32,10 @@ const openPots = new Set<string>();
 
 async function syncSafely(
   replica: Replica<ReplicaRecord>,
-  potId: string,
+  scope: string,
 ): Promise<void> {
   try {
-    await syncReplica(replica, potId);
+    await syncReplica(replica, scope);
   } catch (err) {
     console.error(`[${replica.name}] failed to sync replica:`, err);
   }
@@ -46,8 +53,19 @@ export function closePotReplicas(potId: string): void {
   openPots.delete(potId);
 }
 
+// Brings every global replica up to date. A failure is only logged; the next
+// start (or gap) retries from the same checkpoint.
+export async function syncGlobalReplicas(): Promise<void> {
+  await Promise.all(
+    globalReplicas.map((replica) => syncSafely(replica, GLOBAL_SCOPE)),
+  );
+}
+
 async function resync(replica: Replica<ReplicaRecord>): Promise<void> {
-  for (const potId of openPots) await syncSafely(replica, potId);
+  const scopes = globalReplicas.includes(replica)
+    ? [GLOBAL_SCOPE]
+    : [...openPots];
+  for (const scope of scopes) await syncSafely(replica, scope);
   refreshLinkAlive();
 }
 

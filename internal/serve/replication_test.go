@@ -37,7 +37,7 @@ func newPullTestApp(t *testing.T) core.App {
 	t.Helper()
 	app := newLinksTestApp(t)
 
-	for _, name := range []string{"cards", "card_links"} {
+	for _, name := range []string{"cards", "card_links", "pots"} {
 		collection, err := app.FindCollectionByNameOrId(name)
 		if err != nil {
 			t.Fatalf("find %s collection: %v", name, err)
@@ -149,6 +149,21 @@ func TestPullRecords_FiltersByTheCollectionsPotField(t *testing.T) {
 	}
 	if len(records) != 1 || records[0].GetString("target_title") != "A" {
 		t.Errorf("got %d records, want only the link to A", len(records))
+	}
+}
+
+func TestPullRecords_GlobalCollectionReturnsEveryRecord(t *testing.T) {
+	// pots has no pot field: the pot id of the request is ignored.
+	app := newPullTestApp(t)
+	createPot(t, app, "a")
+	createPot(t, app, "b")
+
+	records, err := pullRecords(app, mustCollection(t, "pots"), "", nil, 100)
+	if err != nil {
+		t.Fatalf("pullRecords: %v", err)
+	}
+	if len(records) != 2 {
+		t.Errorf("got %d records, want 2", len(records))
 	}
 }
 

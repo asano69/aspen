@@ -22,6 +22,10 @@ export interface Checkpoint {
   id: string;
 }
 
+// The scope of a global collection (e.g. pots), which is not pulled per pot.
+// Also the "potId" half of its checkpoint key (see lib/dexie/checkpoints.ts).
+export const GLOBAL_SCOPE = "";
+
 // Matches the server's maxPullLimit (see replication.go), so a full
 // page always means "there might be more" and a short page always
 // means "this was the last one".
@@ -43,10 +47,11 @@ async function pullPage<T>(
     query.updatedAt = after.updatedAt;
     query.id = after.id;
   }
-  const res = await pb.send<PullResponse<T>>(
-    `/api/pages/${potId}/${collection}/pull`,
-    { method: "GET", query },
-  );
+  const path =
+    potId === GLOBAL_SCOPE
+      ? `/api/pages/${collection}/pull`
+      : `/api/pages/${potId}/${collection}/pull`;
+  const res = await pb.send<PullResponse<T>>(path, { method: "GET", query });
   return res.records;
 }
 
