@@ -1,6 +1,6 @@
 import { createEffect, createSignal, on, Show } from "solid-js";
 import { A, useNavigate } from "@solidjs/router";
-import { Plus, Menu } from "@/lib/icons";
+import { Plus, Menu, DatabasePlus } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
 import { suggestTitles } from "@/lib/dexie/titleIndex";
 import { addPot, orderedPots } from "@/lib/stores/potsStore";
@@ -153,6 +153,7 @@ export default function TopBar(props: TopBarProps) {
               useTopBarActions, e.g. CardForm's pin/delete buttons.
               Empty on pages that register nothing. */}
           {topBarActions()}
+          <DatabasePlus />
           <Show when={topBarPotLink()}>
             <PotMenu id={topBarPotLink()!.id} title={topBarPotLink()!.name} />
           </Show>

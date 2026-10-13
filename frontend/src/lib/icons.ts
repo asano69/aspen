@@ -8,6 +8,7 @@ export { default as ChevronDown } from "lucide-solid/icons/chevron-down";
 export { default as ChevronsLeft } from "lucide-solid/icons/chevrons-left";
 export { default as ChevronsRight } from "lucide-solid/icons/chevrons-right";
 export { default as ChevronRight } from "lucide-solid/icons/chevron-right";
+export { default as DatabasePlus } from "lucide-solid/icons/database-plus";
 
 export { default as Wrench } from "lucide-solid/icons/wrench";
 export { default as Amphora } from "lucide-solid/icons/amphora";
@@ -17,7 +18,6 @@ export { default as SunMoon } from "lucide-solid/icons/sun-moon";
 export { default as EllipsisVertical } from "lucide-solid/icons/ellipsis-vertical";
 export { default as Ellipsis } from "lucide-solid/icons/ellipsis";
 export { default as LogOut } from "lucide-solid/icons/log-out";
-export { default as LayersArrowUp } from "lucide-solid/icons/layers-arrow-up";
 export { default as Cone } from "lucide-solid/icons/cone";
 export { default as Notebook } from "lucide-solid/icons/notebook";
 export { default as Network } from "lucide-solid/icons/network";
