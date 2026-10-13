@@ -24,5 +24,5 @@ export default function PotGraph() {
     if (pot) navigate(`/${pot.name}`);
   };
 
-  return <GraphView data={data()} onNodeClick={open} />;
+  return <GraphView data={data()} onNodeOpen={open} />;
 }
