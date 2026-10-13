@@ -177,5 +177,15 @@
     "links": [
       { "title": "@/abc123def456ghi/a.pdf", "titleLc": "@/abc123def456ghi/a.pdf" }
     ]
+  },
+  {
+    "name": "bracket-containing-code-is-plain",
+    "text": "T\n[`a`] [* `b`] [[`c`]] [a [`x`] b] [d]",
+    "links": [{ "title": "d", "titleLc": "d" }]
+  },
+  {
+    "name": "code-after-the-bracket-does-not-affect-it",
+    "text": "T\n[a] `b`",
+    "links": [{ "title": "a", "titleLc": "a" }]
   }
 ]

@@ -1,5 +1,7 @@
 import type { InlineContext } from "@lezer/markdown";
 
+import { bracketContainsCode } from "./bracketCode";
+
 // The characters Scrapbox accepts as decoration marks. The parser only
 // recognizes the notation; what each character means (bold, italic, ...) is
 // decided by decoClasses (plugins/decorations/decoClasses.ts). Keep in sync
@@ -20,7 +22,8 @@ export function parseDecoration(
   next: number,
   pos: number,
 ): number {
-  if (next !== 91 /* [ */) return -1;
+  // A bracket containing a code span is plain text (see bracketCode.ts).
+  if (next !== 91 /* [ */ || bracketContainsCode(cx, pos)) return -1;
 
   let i = pos + 1;
   while (i < cx.end && DECO_CODES.has(cx.char(i))) i++;

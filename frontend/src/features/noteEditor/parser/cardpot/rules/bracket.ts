@@ -1,5 +1,7 @@
 import type { InlineContext } from "@lezer/markdown";
 
+import { bracketContainsCode } from "./bracketCode";
+
 // This is deliberately a structural dispatcher, modelled after cosy's
 // parser/bracket.rs.  In particular, finding the matching bracket happens
 // before deciding what its content means; adding another bracket notation
@@ -212,7 +214,8 @@ export function parseBracket(
   next: number,
   pos: number,
 ): number {
-  if (next !== 91) return -1;
+  // A bracket containing a code span is plain text (see bracketCode.ts).
+  if (next !== 91 || bracketContainsCode(cx, pos)) return -1;
   return cx.char(pos + 1) === 91
     ? parseStrong(cx, pos)
     : parseSingleBracket(cx, pos);

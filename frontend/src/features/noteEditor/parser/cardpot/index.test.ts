@@ -48,6 +48,29 @@ describe("Cardpot Lezer syntax", () => {
     expect(tree("# →#notTag←")).toBe("Document(Paragraph)");
   });
 
+  it("parses a bracket containing a code span as plain text", () => {
+    const codeOnly = "Document(Paragraph(code(codeMark,codeMark)))";
+    for (const input of [
+      "[* `]`",
+      "[* `]`]",
+      "[`a`]",
+      "[[`a`]]",
+      "[a [`x`] b]",
+      "[a `b] c`",
+    ]) {
+      expect(tree(input)).toBe(codeOnly);
+    }
+  });
+
+  it("keeps a bracket whose code span is not inside it, or is unclosed", () => {
+    expect(tree("[a] `b`")).toBe(
+      "Document(Paragraph(link(linkMark,linkMark),code(codeMark,codeMark)))",
+    );
+    expect(tree("[* a `b]")).toBe(
+      "Document(Paragraph(deco(decoMark,decoMark)))",
+    );
+  });
+
   it("makes the mark on the URL's side cover the URL of a labelled link", () => {
     const markRanges = (input: string) => {
       const ranges: { from: number; to: number }[] = [];

@@ -170,6 +170,7 @@ parse 関数の契約（`(cx: InlineContext, next: number, pos: number) => numbe
 - `-1` の場合、Lezer は1文字進めて次の位置から再試行する（例: `[[unterminated]` は先頭の `[` が失敗しても、2つ目の `[` から WikiLink として拾われる）。
 - 子要素は位置の昇順・非重複で渡す。`cx.parser.parseInline(text, offset)` の `offset` は `text[0]` の**ドキュメント上の絶対位置**。
 - 角括弧系は同一行内のみ（改行に到達したら `-1`）。
+- 対応する `]` より前にインラインコード（閉じの `` ` `` があるもの）が始まる角括弧は、装飾・リンクを含めすべてプレーン文字列として扱う（`decoration.ts` と `bracket.ts` が `rules/bracketCode.ts` の `bracketContainsCode` で `-1` を返す）。例: ``[* `]` `` は `[* ` と code(`]`)。Go 側 `internal/parser/bracket.go` も同じ規則。
 
 ### 6.2 Decoration（`rules/decoration.ts`）
 
