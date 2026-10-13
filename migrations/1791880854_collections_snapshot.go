@@ -1218,8 +1218,8 @@ func init() {
 				],
 				"id": "pbc_575754128",
 				"indexes": [
-					"CREATE UNIQUE INDEX ` + "`" + `idx_1zt5k21ybq` + "`" + `\nON ` + "`" + `pots` + "`" + ` (` + "`" + `name` + "`" + ` COLLATE NOCASE);",
-					"CREATE UNIQUE INDEX ` + "`" + `idx_8nhmy9s1sd` + "`" + ` ON ` + "`" + `pots` + "`" + ` (` + "`" + `position` + "`" + `)"
+					"CREATE UNIQUE INDEX ` + "`" + `idx_1zt5k21ybq` + "`" + `\nON ` + "`" + `pots` + "`" + ` (` + "`" + `name` + "`" + ` COLLATE NOCASE)\nWHERE ` + "`" + `deleted` + "`" + ` = '';",
+					"CREATE UNIQUE INDEX ` + "`" + `idx_8nhmy9s1sd` + "`" + ` ON ` + "`" + `pots` + "`" + ` (` + "`" + `position` + "`" + `) WHERE ` + "`" + `deleted` + "`" + ` = ''"
 				],
 				"listRule": "@request.auth.id != \"\"",
 				"name": "pots",
