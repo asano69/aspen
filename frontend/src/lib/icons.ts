@@ -17,6 +17,7 @@ export { default as SunMoon } from "lucide-solid/icons/sun-moon";
 export { default as EllipsisVertical } from "lucide-solid/icons/ellipsis-vertical";
 export { default as Ellipsis } from "lucide-solid/icons/ellipsis";
 export { default as LogOut } from "lucide-solid/icons/log-out";
+export { default as LayersArrowUp } from "lucide-solid/icons/layers-arrow-up";
 export { default as Cone } from "lucide-solid/icons/cone";
 export { default as Notebook } from "lucide-solid/icons/notebook";
 export { default as Network } from "lucide-solid/icons/network";

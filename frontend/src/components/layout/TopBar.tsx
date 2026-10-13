@@ -1,12 +1,11 @@
 import { createEffect, createSignal, on, Show } from "solid-js";
 import { A, useNavigate } from "@solidjs/router";
-import { Plus, Menu  } from "@/lib/icons";
+import { Plus, Menu } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
 import { suggestTitles } from "@/lib/dexie/titleIndex";
 import { addPot, orderedPots } from "@/lib/stores/potsStore";
 import { normalizeForSearch, searchTitles } from "@/lib/search/titleSearch";
 import PotIcon from "../PotIcon";
-
 
 import TitleSearch from "./TitleSearch";
 
@@ -89,7 +88,6 @@ export default function TopBar(props: TopBarProps) {
             class="icon-btn"
           >
             <Menu src={topBarPotLink()?.cover} />
-
           </button>
 
           {/* Current pot, when the active page registered one (see
@@ -101,7 +99,6 @@ export default function TopBar(props: TopBarProps) {
               <PotIcon src={topBarPotLink()!.cover} />
               <span class="title">{topBarPotLink()!.name}</span>
             </A>
-       
           </Show>
         </div>
 
@@ -143,9 +140,7 @@ export default function TopBar(props: TopBarProps) {
             <TitleSearch
               suggest={(text) => suggestTitles(topBarPotLink()!.id, text)}
               onSelect={(title) =>
-                navigate(
-                  `/${topBarPotLink()!.slug}/${titleToSegment(title)}`,
-                )
+                navigate(`/${topBarPotLink()!.slug}/${titleToSegment(title)}`)
               }
               onQueryChange={setQuery}
             />
@@ -159,7 +154,7 @@ export default function TopBar(props: TopBarProps) {
               Empty on pages that register nothing. */}
           {topBarActions()}
           <Show when={topBarPotLink()}>
-                       <PotMenu id={topBarPotLink()!.id} title={topBarPotLink()!.name} />
+            <PotMenu id={topBarPotLink()!.id} title={topBarPotLink()!.name} />
           </Show>
 
           <UserMenu />

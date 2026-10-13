@@ -211,7 +211,6 @@
     opacity: 0.4;
   }
 
-
   /* Invisible row-spanning marker at the end of the grid: loading the next
    * page when it scrolls into view drives the infinite scroll (see
    * CardList.tsx). */
