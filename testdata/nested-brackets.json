@@ -42,5 +42,15 @@
   { "name": "triple-close-after-quad-open", "text": "[[[[a]]]", "nodes": ["strong:[[[a]]]"] },
   { "name": "deco-inside-strong-wins", "text": "[[x [* a]]]", "nodes": ["deco:[* a]"] },
   { "name": "deco-closes-before-strong", "text": "[[* a] b]]", "nodes": ["deco:[* a]"] },
-  { "name": "quad-open-quad-close", "text": "[[[[a]]]]", "nodes": ["strong:[[[a]]]]"] }
+  { "name": "quad-open-quad-close", "text": "[[[[a]]]]", "nodes": ["strong:[[[a]]]]"] },
+  { "name": "strong-with-stray-close", "text": "[[a] b]]", "nodes": ["strong:[[a] b]]"] },
+  { "name": "labelled-url-label-keeps-extra-close", "text": "[https://e.com label]]", "nodes": ["urlLink:[https://e.com label]]"] },
+  { "name": "deco-closes-at-last-link-with-unclosed-bracket", "text": "[* a [b] c [d] e", "nodes": ["deco:[* a [b] c [d]"] },
+  { "name": "strong-with-hashtag", "text": "[[a #b]]", "nodes": ["strong:[[a #b]]"] },
+  { "name": "strong-containing-code-is-plain", "text": "[[a `b`]]", "nodes": ["code:`b`"] },
+  { "name": "deco-keeps-extra-leading-space", "text": "[*  a]", "nodes": ["deco:[*  a]"] },
+  { "name": "deco-needs-a-half-width-space", "text": "[*\u3000a]", "nodes": ["link:[*\u3000a]"] },
+  { "name": "empty-deco-is-a-link", "text": "[* ]", "nodes": ["link:[* ]"] },
+  { "name": "empty-deco-with-extra-close", "text": "[* ]]", "nodes": ["link:[* ]"] },
+  { "name": "strong-with-empty-deco-form", "text": "[[* ]]", "nodes": ["strong:[[* ]]"] }
 ]

@@ -309,6 +309,12 @@ describe("Cardpot Lezer syntax", () => {
     expect(tree(">no separating space")).toBe("Document(quote(quoteMark))");
   });
 
+  it("parses a nested bracket inside a quote", () => {
+    expect(tree("> [x [y]]")).toBe(
+      "Document(quote(quoteMark,link(linkMark,linkMark)))",
+    );
+  });
+
   it("recognizes quote prefixes after any supported indentation", () => {
     expect(tree("  > indented quote")).toBe(
       "Document(quote(indent,quoteMark))",

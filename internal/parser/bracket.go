@@ -155,8 +155,9 @@ func parseStrong(s string, pos int) (*Node, int) {
 		return nil, 0
 	}
 	content := s[from:end]
-	// "[[* a]]" is a decoration inside brackets, not a strong.
-	if decoMarkEnd(content, 0) >= 0 {
+	// "[[* a]]" is a decoration inside brackets, not a strong. An empty
+	// body ("[[* ]]") is not a decoration, so it stays a strong.
+	if end := decoMarkEnd(content, 0); end >= 0 && end < len(content) {
 		return nil, 0
 	}
 	decision := DecideBracket(content)

@@ -19,12 +19,13 @@ export function decoContentStart(cx: InlineContext, pos: number): number {
   return i > pos + 1 && cx.char(i) === 32 ? i + 1 : -1;
 }
 
-// True when `text` starts with "<deco chars>+ ", i.e. "[" + text would open a
-// decoration.
+// True when `text` starts with "<deco chars>+ " followed by at least one
+// character, i.e. "[" + text + "]" would open a decoration. An empty body
+// ("[* ]") is not a decoration, so it must not stop a strong either.
 export function startsWithDeco(text: string): boolean {
   let i = 0;
   while (i < text.length && DECO_CODES.has(text.charCodeAt(i))) i++;
-  return i > 0 && text.charCodeAt(i) === 32;
+  return i > 0 && text.charCodeAt(i) === 32 && i + 1 < text.length;
 }
 
 // Returns the "]" that closes a decoration whose content starts at `from`, or
