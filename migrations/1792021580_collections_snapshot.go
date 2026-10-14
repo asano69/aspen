@@ -1012,16 +1012,6 @@ func init() {
 						"type": "number"
 					},
 					{
-						"help": "",
-						"hidden": false,
-						"id": "bool3045404147",
-						"name": "pinold",
-						"presentable": false,
-						"required": false,
-						"system": false,
-						"type": "bool"
-					},
-					{
 						"hidden": false,
 						"id": "autodate2990389176",
 						"name": "created",
