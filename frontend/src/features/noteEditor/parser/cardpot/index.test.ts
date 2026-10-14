@@ -184,8 +184,9 @@ describe("Cardpot Lezer syntax", () => {
     ).toBe(
       "Document(Paragraph(urlLink(urlLinkMark,urlLinkMark),image,imageLink,urlLink(urlLinkMark,urlLinkMark),urlLink(urlLinkMark,urlLinkMark)))",
     );
+    // The label is plain text: the "[page]" in it is not a link.
     expect(tree("[https://example.com/ label [page]]")).toBe(
-      "Document(Paragraph(urlLink(urlLinkMark,link(linkMark,linkMark),urlLinkMark)))",
+      "Document(Paragraph(urlLink(urlLinkMark,urlLinkMark)))",
     );
   });
 

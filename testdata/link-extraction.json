@@ -66,9 +66,9 @@
     "links": []
   },
   {
-    "name": "link-inside-labelled-external-link",
+    "name": "label-of-external-link-is-plain",
     "text": "T\n[https://e.com label [x]]",
-    "links": [{ "title": "x", "titleLc": "x" }]
+    "links": []
   },
   {
     "name": "non-http-scheme-is-a-wikilink",
@@ -104,9 +104,9 @@
     "links": [{ "title": "tag", "titleLc": "tag" }]
   },
   {
-    "name": "hashtag-inside-link-label",
+    "name": "hashtag-inside-link-label-is-plain",
     "text": "T\n[https://e.com #tag]",
-    "links": [{ "title": "tag", "titleLc": "tag" }]
+    "links": []
   },
   {
     "name": "hashtag-after-full-width-space",

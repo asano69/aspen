@@ -1,11 +1,14 @@
 import type { InlineContext } from "@lezer/markdown";
 
+import { BARE_URL_RE } from "./bareUrl";
 import { bracketContainsCode } from "./bracketCode";
+import { decoContentStart, startsWithDeco } from "./decoration";
+import { inNested, parseNested } from "./nested";
 
-// This is deliberately a structural dispatcher, modelled after cosy's
-// parser/bracket.rs.  In particular, finding the matching bracket happens
-// before deciding what its content means; adding another bracket notation
-// therefore cannot change how nested brackets are paired.
+// A single bracket closes at its first "]": "[x [y]]" is the plain "[x "
+// followed by the link "y". Classifying the content (decideBracketNodeType)
+// is separate from pairing, so adding a notation cannot change how brackets
+// pair. Keep in sync with internal/parser/bracket.go.
 export type BracketKind =
   | "Math"
   | "icon"
@@ -54,8 +57,8 @@ function inferUrl(value: string): UrlKind | undefined {
     ? "image"
     : "link";
 }
-// Classifies the already-paired content of a single bracket. Keep this pure:
-// it is the ambiguity boundary and is independently testable without Lezer.
+// Classifies the content of a single bracket. Keep this pure: it is the
+// ambiguity boundary and is independently testable without Lezer.
 export function decideBracketNodeType(content: string): BracketDecision {
   if (content.startsWith("$ ")) return { kind: "Math" };
   if (ICON_RE.test(content)) return { kind: "icon" };
@@ -109,6 +112,8 @@ export function decideBracketNodeType(content: string): BracketDecision {
   return { kind: "link" };
 }
 
+// The "]" that closes a formula ("[$ ...]") whose content starts at `from`,
+// counting nested brackets. Every other notation closes at its first "]".
 function matchingBracket(cx: InlineContext, from: number): number {
   let depth = 0;
   for (let at = from; at < cx.end; at++) {
@@ -121,6 +126,59 @@ function matchingBracket(cx: InlineContext, from: number): number {
     }
   }
   return -1;
+}
+
+// The first "]" at or after `from` on this line, or -1.
+function firstClose(cx: InlineContext, from: number): number {
+  for (let at = from; at < cx.end; at++) {
+    const ch = cx.char(at);
+    if (ch === 10) return -1;
+    if (ch === 93) return at;
+  }
+  return -1;
+}
+
+// The last "]" of the run of "]" that contains `at`.
+function lastOfRun(cx: InlineContext, at: number): number {
+  while (at + 1 < cx.end && cx.char(at + 1) === 93) at++;
+  return at;
+}
+
+interface SingleSpan {
+  decision: BracketDecision;
+  // The "]" that closes the bracket.
+  close: number;
+}
+
+// Finds the "]" that closes the single bracket opening at `pos` and classifies
+// its content. Returns undefined when the bracket is plain text.
+//
+// A single bracket closes at its first "]", so its content has no "[". The
+// exception is an external link, whose label is plain text and may hold "[":
+// "[https://e.com a [b]]". When its URL comes first, the link closes at the
+// last "]" of the run.
+function singleSpan(cx: InlineContext, pos: number): SingleSpan | undefined {
+  const isMath = cx.char(pos + 1) === 36 /* $ */ && cx.char(pos + 2) === 32;
+  let close = isMath ? matchingBracket(cx, pos + 1) : firstClose(cx, pos + 1);
+  if (close < 0 || close === pos + 1) return undefined;
+
+  let decision = decideBracketNodeType(cx.slice(pos + 1, close));
+  if (
+    !isMath &&
+    cx.slice(pos + 1, close).includes("[") &&
+    decision.kind !== "urlLink"
+  ) {
+    return undefined;
+  }
+  if (
+    decision.kind === "urlLink" &&
+    decision.label !== undefined &&
+    cx.slice(pos + 1, close).startsWith(decision.href!)
+  ) {
+    close = lastOfRun(cx, close);
+    decision = decideBracketNodeType(cx.slice(pos + 1, close));
+  }
+  return { decision, close };
 }
 
 // `openEnd`/`closeStart` let a mark cover more than its bracket: a
@@ -143,13 +201,10 @@ function marks(
 }
 
 function parseSingleBracket(cx: InlineContext, pos: number): number {
-  const end = matchingBracket(cx, pos + 1);
-  if (end < 0) return -1;
-  const contentFrom = pos + 1;
-  const content = cx.slice(contentFrom, end);
-  if (content === "") return -1;
-  const decision = decideBracketNodeType(content);
-  const to = end + 1;
+  const span = singleSpan(cx, pos);
+  if (!span) return -1;
+  const { decision, close } = span;
+  const to = close + 1;
 
   if (decision.kind === "link" || decision.kind === "ProjectLink") {
     return cx.addElement(marks(cx, decision.kind, pos, to));
@@ -163,32 +218,56 @@ function parseSingleBracket(cx: InlineContext, pos: number): number {
   ) {
     return cx.addElement(cx.elt(decision.kind, pos, to));
   }
-  const label = decision.label;
-  let children = [];
+
+  // An external link. Its label is plain text: nothing inside it is parsed.
   let openEnd = pos + 1;
-  let closeStart = end;
-  if (label !== undefined) {
-    const urlFirst = content.startsWith(decision.href!);
-    const labelFrom = urlFirst
-      ? contentFrom + decision.href!.length + 1
-      : contentFrom;
-    children = cx.parser.parseInline(label, labelFrom);
+  let closeStart = close;
+  if (decision.label !== undefined) {
+    const urlFirst = cx.slice(pos + 1, close).startsWith(decision.href!);
     // The mark on the URL's side also covers the URL and its space.
-    if (urlFirst) openEnd = labelFrom;
-    else closeStart = labelFrom + label.length;
+    if (urlFirst) openEnd = pos + 1 + decision.href!.length + 1;
+    else closeStart = pos + 1 + decision.label.length;
   }
-  return cx.addElement(
-    marks(cx, "urlLink", pos, to, children, openEnd, closeStart),
-  );
+  return cx.addElement(marks(cx, "urlLink", pos, to, [], openEnd, closeStart));
+}
+
+// Returns the first "]" of the "]]" that closes a strong whose content starts
+// at `from`, or -1. The closing "]]" is the last two "]" of a run of "]", so
+// "[[a]]]" is the strong "a]". The content may hold links but no stray "["
+// and no decoration.
+function strongClose(cx: InlineContext, from: number): number {
+  let i = from;
+  while (i < cx.end) {
+    const ch = cx.char(i);
+    if (ch === 10) return -1;
+    if (ch === 91) {
+      if (decoContentStart(cx, i) >= 0) return -1;
+      const span = singleSpan(cx, i);
+      if (!span) return -1;
+      i = span.close + 1;
+    } else if (ch === 93) {
+      const last = lastOfRun(cx, i);
+      if (last > i) return last - 1;
+      i++;
+    } else if (ch === 104 /* h */) {
+      // A URL may hold "[".
+      const url = BARE_URL_RE.exec(cx.slice(i, cx.end));
+      i += url ? url[0].length : 1;
+    } else {
+      i++;
+    }
+  }
+  return -1;
 }
 
 function parseStrong(cx: InlineContext, pos: number): number {
-  // Pair the inner `[` with nested-depth tracking, then require the outer ].
-  const innerEnd = matchingBracket(cx, pos + 2);
-  if (innerEnd < 0 || cx.char(innerEnd + 1) !== 93 || innerEnd === pos + 2)
-    return -1;
   const contentFrom = pos + 2;
-  const content = cx.slice(contentFrom, innerEnd);
+  const close = strongClose(cx, contentFrom);
+  if (close <= contentFrom) return -1;
+  const content = cx.slice(contentFrom, close);
+  // "[[* a]]" is a decoration inside brackets, not a strong.
+  if (startsWithDeco(content)) return -1;
+
   const kind = decideBracketNodeType(content).kind;
   const child =
     kind === "image"
@@ -197,14 +276,14 @@ function parseStrong(cx: InlineContext, pos: number): number {
         ? "StrongIcon"
         : undefined;
   const children = child
-    ? [cx.elt(child, contentFrom, innerEnd)]
-    : cx.parser.parseInline(content, contentFrom);
-  const to = innerEnd + 2;
+    ? [cx.elt(child, contentFrom, close)]
+    : parseNested(cx, content, contentFrom);
+  const to = close + 2;
   return cx.addElement(
     cx.elt("strong", pos, to, [
       cx.elt("strongMark", pos, contentFrom),
       ...children,
-      cx.elt("strongMark", innerEnd, to),
+      cx.elt("strongMark", close, to),
     ]),
   );
 }
@@ -216,7 +295,9 @@ export function parseBracket(
 ): number {
   // A bracket containing a code span is plain text (see bracketCode.ts).
   if (next !== 91 || bracketContainsCode(cx, pos)) return -1;
-  return cx.char(pos + 1) === 91
-    ? parseStrong(cx, pos)
-    : parseSingleBracket(cx, pos);
+  if (!inNested() && cx.char(pos + 1) === 91) {
+    const strong = parseStrong(cx, pos);
+    if (strong >= 0) return strong;
+  }
+  return parseSingleBracket(cx, pos);
 }

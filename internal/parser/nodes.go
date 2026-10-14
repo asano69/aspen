@@ -36,7 +36,7 @@ const (
 )
 
 // Node is a notation found in a card. Only Line, Quote, Table, Decoration,
-// Strong, and a labelled ExternalLink have children (a Table's children are
+// and Strong have children (a Table's children are
 // the inline nodes of all its cells). Text holds the raw title, wiki-link
 // title, hashtag title (without the leading "#"), image source, raw bracket
 // content, or a code block's declaration after "code:" (for example

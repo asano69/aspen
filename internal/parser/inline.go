@@ -6,9 +6,15 @@ import "unicode/utf8"
 type inlineRule func(s string, pos int) (n *Node, end int)
 
 func parseInline(s string) []*Node {
+	return parseInlineIn(s, false)
+}
+
+// parseInlineIn parses s. nested is true inside a decoration or a strong,
+// where neither can start again (see parseBracket).
+func parseInlineIn(s string, nested bool) []*Node {
 	var nodes []*Node
 	for pos := 0; pos < len(s); {
-		n, end := parseAt(s, pos)
+		n, end := parseAt(s, pos, nested)
 		if n == nil || end <= pos {
 			pos++
 			continue
@@ -20,10 +26,10 @@ func parseInline(s string) []*Node {
 	return nodes
 }
 
-func parseAt(s string, pos int) (*Node, int) {
+func parseAt(s string, pos int, nested bool) (*Node, int) {
 	switch s[pos] {
 	case '[':
-		return parseBracket(s, pos)
+		return parseBracket(s, pos, nested)
 	case '`':
 		return parseInlineCode(s, pos)
 	case '#':
@@ -68,7 +74,6 @@ func setLine(nodes []*Node, line int) {
 }
 
 var (
-	_ inlineRule = parseBracket
 	_ inlineRule = parseInlineCode
 	_ inlineRule = parseHashTag
 	_ inlineRule = parseBareURL

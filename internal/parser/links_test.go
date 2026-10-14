@@ -16,7 +16,7 @@ func TestLinksPositions(t *testing.T) {
 			{"tag", true, 1, 9, 13},
 		}},
 		{"inside a decoration", testTitle + "[* [page]]", []Link{{"page", false, 1, 3, 9}}},
-		{"inside a labelled external link", testTitle + "[https://e.com [page]]", []Link{{"page", false, 1, 15, 21}}},
+		{"the label of an external link is plain", testTitle + "[https://e.com [page]]", nil},
 		{"inside a quote", testTitle + "> [page]", []Link{{"page", false, 1, 2, 8}}},
 		{"inside a table cell", testTitle + "table:t\n\ta\t[page]", []Link{{"page", false, 2, 3, 9}}},
 		{"multibyte text before the link", testTitle + "日本 [語]", []Link{{"語", false, 1, 7, 12}}},

@@ -4,7 +4,7 @@ import type { InlineContext } from "@lezer/markdown";
 // scrapbox-parser's httpRegExp (ExternalLinkNode.ts), except that it
 // also stops at "]" so a URL inside "[* see https://e.com]" never
 // swallows the closing bracket.
-const BARE_URL_RE = /^https?:\/\/[^\s\]]+/;
+export const BARE_URL_RE = /^https?:\/\/[^\s\]]+/;
 
 export function parseBareUrl(
   cx: InlineContext,
