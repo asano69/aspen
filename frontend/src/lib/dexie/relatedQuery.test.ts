@@ -36,7 +36,7 @@ function cardRow(
   id: string,
   pot: string,
   title: string,
-  pin: 0 | 1 = 0,
+  pin = 0,
 ): CachedCard {
   return {
     id,
@@ -154,7 +154,7 @@ describe("computeRelated", () => {
     });
 
     expect(result.oneHop).toEqual([
-      { id: "b", title: "B", description: ["line"], image: "i.png", pin: true },
+      { id: "b", title: "B", description: ["line"], image: "i.png", pin: 1 },
     ]);
   });
 

@@ -43,7 +43,10 @@ export interface LinkedCard {
    */
   description: string[] | null;
   image: string;
-  pin: boolean;
+  /**
+   * 0 for an unpinned card; pinned cards are listed by descending Pin.
+   */
+  pin: number /* float64 */;
   target_titleLc: string[];
 }
 /**

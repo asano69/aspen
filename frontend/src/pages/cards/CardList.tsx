@@ -15,7 +15,7 @@ import CardGrid from "./CardGrid";
 import {
   cardsById,
   loadNextCardsPage,
-  moveCard,
+  movePinnedCard,
   moveCardsToPot,
   potWindow,
 } from "@/lib/stores/cardsStore";
@@ -53,22 +53,22 @@ export default function CardList() {
     }
   });
 
-  // Sorted descending by the fractional-indexing "position" column
-  // (see lib/position.ts), with id as a tie-breaker for equal
-  // positions -- new cards get the highest position (see CardForm),
-  // so this puts the newest card first. Only the loaded window is
-  // sorted, and the store keeps it live through realtime
-  // create/update/delete events.
+  // Pinned cards come first, by descending pin (an unpinned card has pin 0,
+  // so it falls behind them). Unpinned cards follow by descending position
+  // (see lib/position.ts): new cards get the highest position, so the newest
+  // card is first. id is the final tie-breaker. Only the loaded window is
+  // sorted, and the store keeps it live through realtime create/update/delete
+  // events.
   const cards = createMemo(() =>
     (potWindow(pot()?.id)?.ids ?? [])
       .map((id) => cardsById[id])
       .filter((card) => card !== undefined)
-      // Pinned cards always sort before unpinned ones; within each
-      // group the existing position/id ordering is unchanged.
-      .sort((a, b) => {
-        if (a.pin !== b.pin) return a.pin ? -1 : 1;
-        return b.position - a.position || a.id.localeCompare(b.id);
-      }),
+      .sort(
+        (a, b) =>
+          b.pin - a.pin ||
+          b.position - a.position ||
+          a.id.localeCompare(b.id),
+      ),
   );
 
   // Footer's status-bar slot: this pot's total card count as reported
@@ -117,11 +117,9 @@ export default function CardList() {
     }
   };
 
-  // Persists a drag-to-reorder drop: only the moved card's own
-  // position changes (see lib/position.ts), computed from whichever
-  // two cards now sit on either side of it -- this works the same way
-  // whether `cards()` holds all 10 cards an pot has or one page of a
-  // filtered, paginated view of 3000.
+  // Persists a drag-to-reorder drop. Only a pinned card can be reordered, and
+  // only its own pin changes (see lib/position.ts), computed from whichever
+  // two pinned cards now sit on either side of it.
   //
   // dnd-kit reports the drop via event.operation.source rather than
   // SortableJS's oldIndex/newIndex; isSortable narrows that source so
@@ -142,56 +140,27 @@ export default function CardList() {
 
     if (!isSortable(source)) return;
 
-    const { initialIndex, index: newIndex } = source;
-    if (initialIndex === newIndex) return;
-
+    // Pinned cards sort first, so an index into the pinned cards is also an
+    // index into `cards()`.
     const ordered = cards();
-    const moved = ordered[initialIndex];
-    if (!moved) return;
+    const pinned = ordered.filter((card) => card.pin > 0);
+    const moved = ordered[source.initialIndex];
+    if (!moved || moved.pin <= 0) return;
 
-    // Pinned cards always sort before unpinned ones (see `cards`
-    // above), but their positions are on a completely separate scale
-    // from unpinned ones (each new pin gets half of the lowest
-    // existing pinned position -- see nextPinnedPosition in
-    // cardsStore.ts). So neighbor lookups below must never cross into
-    // the other pin group: averaging a pinned card's (tiny) position
-    // with an unpinned card's (much larger) one could produce a value
-    // that isn't actually above every other unpinned card, landing
-    // the dragged card second or later instead of first.
-    const group = ordered.filter((card) => card.pin === moved.pin);
-    const groupStart = moved.pin ? 0 : ordered.length - group.length;
-    // While more cards remain unloaded, the card that would sit below
-    // the window's last card is unknown, so a drop cannot go past that
-    // last card: there is no neighbor position to place it against.
-    const win = potWindow(pot()?.id);
-    const moreUnloaded = win !== undefined && win.ids.length < win.total;
-    const isWindowTail = groupStart + group.length === ordered.length;
-    const groupEnd = Math.max(
-      groupStart,
-      groupStart + group.length - 1 - (moreUnloaded && isWindowTail ? 1 : 0),
-    );
-    const clampedIndex = Math.min(Math.max(newIndex, groupStart), groupEnd);
-    if (initialIndex === clampedIndex) return;
+    // A pinned card cannot be dropped among the unpinned ones.
+    const newIndex = Math.min(source.index, pinned.length - 1);
+    if (source.initialIndex === newIndex) return;
 
-    // Index of the drop target within its own group, and that group's
-    // cards with `moved` removed -- restricting computePosition's
-    // neighbors to this same-group list is what keeps the boundary
-    // case above from mixing in the other group's positions.
-    const indexInGroup = clampedIndex - groupStart;
-    const restInGroup = group.filter((card) => card.id !== moved.id);
-    // The grid is sorted by descending position (see `cards` above),
-    // so the card displayed above has the larger position and the
-    // card displayed below has the smaller one -- the opposite of
-    // computePosition's (prev, next) argument order, so they're
+    // The grid is sorted by descending pin, so the card displayed above has
+    // the larger pin and the card displayed below has the smaller one -- the
+    // opposite of computePosition's (prev, next) argument order, so they're
     // swapped here.
-    const position = computePosition(
-      restInGroup[indexInGroup]?.position,
-      restInGroup[indexInGroup - 1]?.position,
-    );
+    const rest = pinned.filter((card) => card.id !== moved.id);
+    const pin = computePosition(rest[newIndex]?.pin, rest[newIndex - 1]?.pin);
 
     // The optimistic update and the delayed persist both live in the
-    // store (see moveCard in lib/stores/cardsStore.ts).
-    moveCard(moved, position);
+    // store (see movePinnedCard in lib/stores/cardsStore.ts).
+    movePinnedCard(moved, pin);
   };
 
   useDragEnd(handleDragEnd);

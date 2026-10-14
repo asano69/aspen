@@ -371,7 +371,7 @@ export function watchCards(): () => void {
 }
 
 // How long to wait, after the local optimistic reorder is applied,
-// before sending the new position to PocketBase. This client is also
+// before sending the new pin to PocketBase. This client is also
 // subscribed to its own realtime "cards" updates (see
 // watchPot above), and that handler always runs the FLIP
 // animation, which sets the same element's `transform` that dnd-kit's
@@ -384,58 +384,49 @@ export function watchCards(): () => void {
 // matter.
 const PERSIST_DELAY_MS = 300;
 
-// Moves `card` to `position` (see lib/position.ts).
+// Moves the pinned `card` to `pin` (see lib/position.ts). Only pinned cards
+// are reordered: an unpinned card's place is fixed by its position.
 //
-// The new position is applied immediately, in step with dnd-kit's own
+// The new pin is applied immediately, in step with dnd-kit's own
 // drop animation settling the dragged card into this same slot.
 // skipFlip: true since this is the local dragger's own move -- there's
 // nothing left to FLIP-animate once dnd-kit has already shown the card
 // moving there itself. Only the PocketBase round-trip (and the
 // realtime echo it triggers) is deferred -- see PERSIST_DELAY_MS.
-export function moveCard(card: CardRecord, position: number): void {
-  const previousPosition = card.position;
-  mergeCards([{ ...card, position }], { skipFlip: true });
+export function movePinnedCard(card: CardRecord, pin: number): void {
+  const previousPin = card.pin;
+  mergeCards([{ ...card, pin }], { skipFlip: true });
 
   setTimeout(async () => {
     try {
-      const updated = await updateCard(card.id, { position });
+      const updated = await updateCard(card.id, { pin });
       mergeCards([updated], { skipFlip: true });
     } catch (err) {
       console.error("[cards] failed to reorder card:", err);
-      mergeCards([{ ...card, position: previousPosition }], {
-        skipFlip: true,
-      });
+      mergeCards([{ ...card, pin: previousPin }], { skipFlip: true });
     }
   }, PERSIST_DELAY_MS);
 }
 
-// Position for a card that is being pinned: half of the lowest
-// existing pinned position in its pot, so it sorts first among the
-// pinned cards (CardList sorts by descending position) without
-// renumbering any of them. Pinned cards sort first on the server too,
-// so they all sit in the loaded window's first pages.
-function nextPinnedPosition(excludeId: string): number {
+// Pin value for a card that is being pinned: one step above the highest pin
+// in its pot, so it sorts first among the pinned cards (CardList sorts by
+// descending pin) without renumbering any of them. Pinned cards sort first on
+// the server too, so they all sit in the loaded window's first pages.
+function nextPin(excludeId: string): number {
   const potId = cardsById[excludeId]?.pot;
-  const positions = Object.values(cardsById)
-    .filter((card) => card.pot === potId && card.pin && card.id !== excludeId)
-    .map((card) => card.position);
-  return computePosition(
-    undefined,
-    positions.length ? Math.min(...positions) : undefined,
-  );
+  const pins = Object.values(cardsById)
+    .filter((card) => card.pot === potId && card.id !== excludeId)
+    .map((card) => card.pin);
+  return computePosition(Math.max(0, ...pins), undefined);
 }
 
-// Pins or unpins a card. Pinning also gives it a fresh position on the
-// pinned scale (see nextPinnedPosition). Rejects on failure, leaving
-// the store unchanged.
+// Pins or unpins a card (unpinned is pin 0). Rejects on failure, leaving the
+// store unchanged.
 export async function setCardPinned(
   id: string,
   pinned: boolean,
 ): Promise<void> {
-  const changes = pinned
-    ? { pin: true, position: nextPinnedPosition(id) }
-    : { pin: false };
-  mergeCards([await updateCard(id, changes)]);
+  mergeCards([await updateCard(id, { pin: pinned ? nextPin(id) : 0 })]);
 }
 
 // Saves a card's datalog query text. Rejects on failure, leaving the

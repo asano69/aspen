@@ -171,7 +171,7 @@ export async function searchCards(
 // in this list: it only ever changes via updateCardTitle above.
 export async function updateCard(
   id: string,
-  changes: Partial<Pick<CardRecord, "pin" | "position" | "deleted" | "query">>,
+  changes: Partial<Pick<CardRecord, "pin" | "deleted" | "query">>,
 ): Promise<CardRecord> {
   return await pb.collection("cards").update<CardRecord>(id, changes);
 }

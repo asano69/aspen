@@ -39,7 +39,7 @@ export default function PageMenu(props: PageMenuProps) {
   const [queryOpen, setQueryOpen] = createSignal(false);
 
   const card = () => (props.cardId ? cardsById[props.cardId] : undefined);
-  const pinned = () => card()?.pin ?? false;
+  const pinned = () => (card()?.pin ?? 0) > 0;
   const query = () => card()?.query ?? "";
 
   const togglePin = async () => {

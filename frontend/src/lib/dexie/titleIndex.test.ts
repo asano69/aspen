@@ -14,7 +14,7 @@ function card(id: string, pot: string, title: string): CardRecord {
     image: "",
     pot,
     position: 0,
-    pin: false,
+    pin: 0,
     deleted: "",
     created: "",
     updated: "",

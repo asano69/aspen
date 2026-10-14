@@ -192,7 +192,7 @@ export default function RelatedCards(props: RelatedCardsProps) {
               title: asCardTitle(link.target_title),
               description: [],
               image: "",
-              pin: false,
+              pin: 0,
             },
       );
     }

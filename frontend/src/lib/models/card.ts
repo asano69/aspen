@@ -53,8 +53,13 @@ export interface CardRecord {
   description: string[] | null;
   image: string;
   pot: string;
+  // Creation order: unpinned cards are listed by descending position, and it
+  // never changes after creation.
   position: number;
-  pin: boolean;
+  // 0 for an unpinned card. A pinned card has a value above 0, and pinned
+  // cards are listed by descending pin. Only pinned cards can be reordered,
+  // by changing this value.
+  pin: number;
   // Datalog query text (not evaluated yet). Optional because cards cached
   // in Dexie before this field existed do not have it.
   query?: string;

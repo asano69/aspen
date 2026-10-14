@@ -239,7 +239,7 @@ func relatedCards(app core.App, card *core.Record, condition string) ([]linkedCa
 			TitleLc:       record.GetString("titleLc"),
 			Description:   types.JSONRaw(record.GetString("description")),
 			Image:         record.GetString("image"),
-			Pin:           record.GetBool("pin"),
+			Pin:           record.GetFloat("pin"),
 			TargetTitleLc: linkTargets,
 		}
 	}

@@ -32,7 +32,8 @@ type LinkedCard struct {
 	// Raw JSON as stored in the "description" field (a list of lines).
 	Description   types.JSONRaw `json:"description" tstype:"string[] | null"`
 	Image         string        `json:"image"`
-	Pin           bool          `json:"pin"`
+	// 0 for an unpinned card; pinned cards are listed by descending Pin.
+	Pin           float64       `json:"pin"`
 	TargetTitleLc []string      `json:"target_titleLc" tstype:"string[]"`
 }
 

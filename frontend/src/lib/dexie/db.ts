@@ -3,11 +3,9 @@ import type { CardRecord } from "../models/card";
 import type { CardLinkRecord } from "../models/cardLink";
 import type { PotRecord } from "../models/pot";
 
-// pin is stored as 0/1 rather than a real boolean, since whether
-// IndexedDB indexes can key on booleans varies by browser.
-export interface CachedCard extends Omit<CardRecord, "pin"> {
-  pin: 0 | 1;
-}
+// A card is cached exactly as the server sends it: pin is a number, which
+// IndexedDB can index.
+export type CachedCard = CardRecord;
 
 // Where the next pull of one collection in one pot resumes (see Checkpoint
 // in api/replication.ts).

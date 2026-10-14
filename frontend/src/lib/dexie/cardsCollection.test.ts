@@ -10,7 +10,7 @@ function card(
   id: string,
   pot: string,
   position: number,
-  pin = false,
+  pin = 0,
 ): CardRecord {
   return {
     id,
@@ -50,8 +50,8 @@ describe("Dexie cards cache", () => {
 
   it("sorts pinned cards before unpinned ones regardless of position", async () => {
     await cardsReplica.put([
-      card("x", "pot-2", 5000, false),
-      card("y", "pot-2", 100, true),
+      card("x", "pot-2", 5000, 0),
+      card("y", "pot-2", 100, 1),
     ]);
 
     expect((await queryCardsPage("pot-2", 0, 10)).map((c) => c.id)).toEqual([
@@ -60,17 +60,29 @@ describe("Dexie cards cache", () => {
     ]);
   });
 
+  it("sorts pinned cards by descending pin, not by position", async () => {
+    await cardsReplica.put([
+      card("lo", "pot-5", 9000, 1),
+      card("hi", "pot-5", 1, 2),
+    ]);
+
+    expect((await queryCardsPage("pot-5", 0, 10)).map((c) => c.id)).toEqual([
+      "hi",
+      "lo",
+    ]);
+  });
+
   it("pages across the pinned/unpinned index-range boundary without gaps or duplicates", async () => {
-    // 3 pinned cards (positions 0-2) and 5 unpinned cards (positions
-    // 0-4) in the same pot -- large enough that page boundaries fall
-    // both inside the pinned range and inside the unpinned range,
-    // exercising queryPinRange's split for both of queryCardsPage's
-    // branches (skip < pinnedCount and skip >= pinnedCount).
+    // 3 pinned cards (pins 1-3) and 5 unpinned cards (positions 0-4) in the
+    // same pot -- large enough that page boundaries fall both inside the
+    // pinned range and inside the unpinned range, exercising
+    // queryCardsPage's split for both of its branches (skip < pinnedCount
+    // and skip >= pinnedCount).
     const pinned = Array.from({ length: 3 }, (_, i) =>
-      card(`pin-${i}`, "pot-3", i, true),
+      card(`pin-${i}`, "pot-3", 0, i + 1),
     );
     const unpinned = Array.from({ length: 5 }, (_, i) =>
-      card(`unp-${i}`, "pot-3", i, false),
+      card(`unp-${i}`, "pot-3", i, 0),
     );
     await cardsReplica.put([...pinned, ...unpinned]);
 
@@ -97,11 +109,8 @@ describe("Dexie cards cache", () => {
   });
 
   it("keeps every pinned card ahead of every unpinned card across a page split", async () => {
-    const pinned = [card("p1", "pot-4", 1, true), card("p2", "pot-4", 2, true)];
-    const unpinned = [
-      card("u1", "pot-4", 100, false),
-      card("u2", "pot-4", 200, false),
-    ];
+    const pinned = [card("p1", "pot-4", 0, 1), card("p2", "pot-4", 0, 2)];
+    const unpinned = [card("u1", "pot-4", 100, 0), card("u2", "pot-4", 200, 0)];
     await cardsReplica.put([...pinned, ...unpinned]);
 
     // A page starting inside the pinned range and ending inside the
