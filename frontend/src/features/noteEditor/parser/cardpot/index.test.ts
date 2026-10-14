@@ -135,15 +135,33 @@ describe("Cardpot Lezer syntax", () => {
 
   it("parses whitespace-only brackets as blanks before WikiLinks", () => {
     expect(tree("[ ] [　] [\t] [ 　 \t　\t ] [page]")).toBe(
-      "Document(Paragraph(blank,blank,blank,blank,link(linkMark,linkMark)))",
+      "Document(Paragraph(blank(blankMark,blankMark),blank(blankMark,blankMark),blank(blankMark,blankMark),blank(blankMark,blankMark),link(linkMark,linkMark)))",
     );
-    // "[*** [ ]]" is now correctly recognized as a Bold decoration
-    // wrapping a nested Blank, since parseDecoration tracks bracket
-    // depth and recurses into its content (see the "recursively
-    // parses a decoration's content" test above). The bare "[]" still
-    // matches nothing (empty content) and stays as plain text.
+    // The bare "[]" matches nothing (empty content) and stays as plain
+    // text. A bracket containing a Blank is plain text too, so "[*** [ ]]"
+    // is just the Blank (see the next test).
     expect(tree("[] [*** [ ]]")).toBe(
-      "Document(Paragraph(deco(decoMark,blank,decoMark)))",
+      "Document(Paragraph(blank(blankMark,blankMark)))",
+    );
+  });
+
+  it("parses a bracket containing a blank as plain text around the blank", () => {
+    const blank = "blank(blankMark,blankMark)";
+    expect(tree("[ ]")).toBe(`Document(Paragraph(${blank}))`);
+    expect(tree("[  ]")).toBe(`Document(Paragraph(${blank}))`);
+    expect(tree("[[ ]]")).toBe(`Document(Paragraph(${blank}))`);
+    expect(tree("[x[ ]]")).toBe(`Document(Paragraph(${blank}))`);
+    expect(tree("[a [ ] b] [c]")).toBe(
+      `Document(Paragraph(${blank},link(linkMark,linkMark)))`,
+    );
+  });
+
+  it("lets a code span win over a blank inside it", () => {
+    expect(tree("`code [ ]`")).toBe(
+      "Document(Paragraph(code(codeMark,codeMark)))",
+    );
+    expect(tree("[a `[ ]` b]")).toBe(
+      "Document(Paragraph(code(codeMark,codeMark)))",
     );
   });
 

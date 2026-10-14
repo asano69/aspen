@@ -63,12 +63,15 @@ function walk(node: SyntaxNode, doc: string, out: DescriptionSegment[]) {
       push(out, { kind: "external-link", text: url });
     } else if (name === "hashTag") {
       push(out, { kind: "hashtag", text: doc.slice(child.from, child.to) });
+    } else if (name === "blank") {
+      // Like in the editor, only the whitespace shows, not the brackets.
+      push(out, { kind: "text", text: inner(doc, child) });
     } else if (IMAGES.has(name) || child.type.prop(isMark)) {
       // Dropped.
     } else if (CONTAINERS.has(name)) {
       walk(child, doc, out);
     } else {
-      // Unsupported notation (Math, Icon, Blank, ...) stays as source text.
+      // Unsupported notation (Math, Icon, ...) stays as source text.
       push(out, { kind: "text", text: doc.slice(child.from, child.to) });
     }
   }

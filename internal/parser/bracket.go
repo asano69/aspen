@@ -7,12 +7,16 @@ import "strings"
 const decoChars = `!"#%&'()*+,-./{|}<>_~`
 
 // bracketContainsCode mirrors frontend rules/bracketCode.ts: it reports
-// whether a code span starts before the bracket opening at pos closes.
+// whether a code span or a blank starts before the bracket opening at pos
+// closes. Whichever starts first wins.
 func bracketContainsCode(s string, pos int) bool {
 	depth := 0
 	for i := pos + 1; i < len(s); i++ {
 		switch s[i] {
 		case '[':
+			if n, _ := parseBlank(s, i); n != nil {
+				return true
+			}
 			depth++
 		case ']':
 			if depth == 0 {
@@ -29,7 +33,7 @@ func bracketContainsCode(s string, pos int) bool {
 }
 
 // parseBracket mirrors the frontend decoration, blank, and bracket rules.
-// A bracket containing a code span is plain text.
+// A bracket containing a code span or a blank is plain text.
 func parseBracket(s string, pos int) (*Node, int) {
 	if bracketContainsCode(s, pos) {
 		return nil, 0

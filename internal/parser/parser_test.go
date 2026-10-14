@@ -21,6 +21,7 @@ func TestParseLinkTitles(t *testing.T) {
 		{"bracket kinds are not links", testTitle + "[ ] [$ x] [me.icon] [/project/a] [N35.6,E139.7] [https://example.com/] [https://example.com/a.png]", nil},
 		{"nested and malformed brackets", testTitle + "[a [b] c] [unterminated [page]", []string{"a [b] c", "page"}},
 		{"bracket containing code is plain", testTitle + "[`a`] [* `b`] [[`c`]] [a [`x`] b] [d]", []string{"d"}},
+		{"bracket containing blank is plain", testTitle + "[a [ ] b] [[ ]] [* [ ]] [c]", []string{"c"}},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {

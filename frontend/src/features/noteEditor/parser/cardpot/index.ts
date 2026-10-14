@@ -86,6 +86,7 @@ const cardpotParser = parser.configure({
     "hashTag",
     "url",
     "blank",
+    "blankMark",
     "indent",
   ],
   props: [
@@ -104,6 +105,8 @@ const cardpotParser = parser.configure({
       hashTag: "page-link",
       // No marks, so nothing is ever hidden: this only styles the URL.
       url: "link",
+      // Its marks are the brackets, so only the whitespace shows (the class
+      // has no styling of its own).
       blank: "blank",
       // Whole-line node, not a delimiter pair: only the leading ">"
       // is an isMark child (see rules/quote.ts), so syntaxReveal
@@ -126,6 +129,7 @@ const cardpotParser = parser.configure({
       ProjectLinkMark: true,
       strongMark: true,
       quoteMark: true,
+      blankMark: true,
     }),
     isIndent.add({
       indent: true,

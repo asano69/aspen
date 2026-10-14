@@ -423,14 +423,6 @@ export const editorTheme = EditorView.theme({
     color: "var(--empty-page-link-color)",
   },
 
-  // HashTag shares ".page-link" above. Blank is an always visible syntax
-  // node: its background makes it scannable without opting it into
-  // syntaxReveal's hidden-mark flow.
-  ".blank": {
-    backgroundColor:
-      "light-dark(rgba(234, 179, 8, 0.18), rgba(250, 204, 21, 0.24))",
-    borderRadius: "3px",
-  },
 
   // Quote (see parser/cardpot's Quote node and rules/quote.ts).
   // Italic + a muted color is enough to distinguish a quoted line

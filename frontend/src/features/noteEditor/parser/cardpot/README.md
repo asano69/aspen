@@ -171,6 +171,7 @@ parse 関数の契約（`(cx: InlineContext, next: number, pos: number) => numbe
 - 子要素は位置の昇順・非重複で渡す。`cx.parser.parseInline(text, offset)` の `offset` は `text[0]` の**ドキュメント上の絶対位置**。
 - 角括弧系は同一行内のみ（改行に到達したら `-1`）。
 - 対応する `]` より前にインラインコード（閉じの `` ` `` があるもの）が始まる角括弧は、装飾・リンクを含めすべてプレーン文字列として扱う（`decoration.ts` と `bracket.ts` が `rules/bracketCode.ts` の `bracketContainsCode` で `-1` を返す）。例: ``[* `]` `` は `[* ` と code(`]`)。Go 側 `internal/parser/bracket.go` も同じ規則。
+- 同様に、対応する `]` より前に Blank（`[ ]`）が現れる角括弧もプレーン文字列として扱い、Blank だけがノードになる（`[x[ ]]` は `[x` + Blank + `]`）。先に始まった方が勝つので、コード内の Blank はコードのまま。Blank の mark は両端の括弧で、カーソルが触れていない間は括弧が隠れて空白だけが見える。CSS 装飾はない。
 
 ### 6.2 Decoration（`rules/decoration.ts`）
 
@@ -222,7 +223,7 @@ parse 関数の契約（`(cx: InlineContext, next: number, pos: number) => numbe
 
 | rule | 仕様 |
 | --- | --- |
-| `blank.ts` | `[` と `]` の間が空白のみ（1文字以上）→ `Blank`（mark なし） |
+| `blank.ts` | `[` と `]` の間が空白のみ（1文字以上）→ `Blank(BlankMark, BlankMark)` |
 | `inlineCode.ts` | 同一行内の `` ` `` のペア。中身は空でも可 → `Code(CodeMark, CodeMark)` |
 | `hashTag.ts` | インライン範囲の先頭か空白の直後の `#` から、次の空白まで → `HashTag`（葉）。`#` 単体・単語途中の `#` は対象外 |
 
@@ -254,7 +255,8 @@ parse 関数の契約（`(cx: InlineContext, next: number, pos: number) => numbe
 | `Image` / `LinkedImage` | なし | `image` | `hideContent`。`imageWidget` が画像を描画 |
 | `StrongImage` | なし | — | 範囲は括弧を含まない URL のみ |
 | `StrongIcon` / `Icon` / `GoogleMap` / `Math` | なし | — | 現状は見た目の特別扱いなし |
-| `HashTag` / `Blank` | なし | `page-link` / `blank` | mark を持たないので常に表示 |
+| `HashTag` | なし | `page-link` | mark を持たないので常に表示 |
+| `Blank` | `BlankMark` ×2 | `blank` | 括弧が mark。触れていない間は空白だけが見える |
 | `BareUrl` | なし | `link` | 括弧なしの URL。クリックで新規タブ。`]` の手前で終わる |
 
 ## 8. NodeProp と表示層（`nodeProps.ts`）

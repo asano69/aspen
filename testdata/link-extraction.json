@@ -187,5 +187,10 @@
     "name": "code-after-the-bracket-does-not-affect-it",
     "text": "T\n[a] `b`",
     "links": [{ "title": "a", "titleLc": "a" }]
+  },
+  {
+    "name": "bracket-containing-blank-is-plain",
+    "text": "T\n[a [ ] b] [[ ]] [* [ ]] [c]",
+    "links": [{ "title": "c", "titleLc": "c" }]
   }
 ]
