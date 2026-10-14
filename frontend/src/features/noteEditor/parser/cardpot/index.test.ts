@@ -292,7 +292,7 @@ describe("Cardpot Lezer syntax", () => {
     expect(
       tree("table:links\n\t[* bold]\t[page]\t`code`\n\t#tag\t[ ]\t\noutside"),
     ).toBe(
-      "Document(Table(TableMark,TableRow(indent,TableCell(deco(decoMark,decoMark)),TableCell(link(linkMark,linkMark)),TableCell(code(codeMark,codeMark))),TableRow(indent,TableCell(hashTag),TableCell(blank),TableCell)),Paragraph)",
+      "Document(Table(TableMark,TableRow(indent,TableCell(deco(decoMark,decoMark)),TableCell(link(linkMark,linkMark)),TableCell(code(codeMark,codeMark))),TableRow(indent,TableCell(hashTag),TableCell(blank(blankMark,blankMark)),TableCell)),Paragraph)",
     );
   });
 
