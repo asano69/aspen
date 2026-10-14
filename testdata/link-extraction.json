@@ -104,6 +104,11 @@
     "links": [{ "title": "tag", "titleLc": "tag" }]
   },
   {
+    "name": "hashtag-in-decoration-stops-at-the-closing-bracket",
+    "text": "T\n[* #a] [https://e.com [b]]",
+    "links": [{ "title": "a", "titleLc": "a" }]
+  },
+  {
     "name": "hashtag-inside-link-label-is-plain",
     "text": "T\n[https://e.com #tag]",
     "links": []

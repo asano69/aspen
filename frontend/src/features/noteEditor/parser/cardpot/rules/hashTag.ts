@@ -1,9 +1,12 @@
 import type { InlineContext } from "@lezer/markdown";
 
+import { inNested } from "./nested";
+
 // A hashtag starts at the beginning of a line or immediately after whitespace,
 // and continues through the next whitespace character. This mirrors Scrapbox's
 // `(?:^|\\s)#\\S+` rule while keeping the preceding whitespace outside the
-// syntax node.
+// syntax node. Inside a decoration or a strong it also stops at "]", which
+// belongs to the enclosing bracket. Keep in sync with internal/parser/hashtag.go.
 export function parseHashTag(
   cx: InlineContext,
   next: number,
@@ -20,7 +23,13 @@ export function parseHashTag(
     return -1;
   }
 
+  const nested = inNested();
   let end = pos + 1;
-  while (end < cx.end && !/\s/.test(cx.slice(end, end + 1))) end++;
+  while (end < cx.end) {
+    const ch = cx.slice(end, end + 1);
+    if (/\s/.test(ch) || (nested && ch === "]")) break;
+    end++;
+  }
+  if (end === pos + 1) return -1;
   return cx.addElement(cx.elt("hashTag", pos, end));
 }

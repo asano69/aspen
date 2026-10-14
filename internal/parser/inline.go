@@ -33,7 +33,7 @@ func parseAt(s string, pos int, nested bool) (*Node, int) {
 	case '`':
 		return parseInlineCode(s, pos)
 	case '#':
-		return parseHashTag(s, pos)
+		return parseHashTag(s, pos, nested)
 	case 'h':
 		return parseBareURL(s, pos)
 	default:
@@ -75,6 +75,5 @@ func setLine(nodes []*Node, line int) {
 
 var (
 	_ inlineRule = parseInlineCode
-	_ inlineRule = parseHashTag
 	_ inlineRule = parseBareURL
 )
