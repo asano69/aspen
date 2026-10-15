@@ -37,8 +37,46 @@ type importFile struct {
 }
 
 type importPage struct {
-	Title string   `json:"title"`
-	Lines []string `json:"lines"`
+	Title string      `json:"title"`
+	Lines importLines `json:"lines"`
+}
+
+// importLines is the "lines" array of a page. Each entry is either a plain
+// string (the simple format) or an object with a "text" field (the Scrapbox
+// export format, whose other fields are ignored).
+type importLines []string
+
+func (l *importLines) UnmarshalJSON(data []byte) error {
+	var raw []json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	lines := make(importLines, len(raw))
+	for i, entry := range raw {
+		text, err := lineText(entry)
+		if err != nil {
+			return fmt.Errorf("lines[%d]: %w", i, err)
+		}
+		lines[i] = text
+	}
+	*l = lines
+	return nil
+}
+
+// lineText reads one entry of "lines": a JSON string, or an object with a
+// "text" string.
+func lineText(entry json.RawMessage) (string, error) {
+	var text string
+	if err := json.Unmarshal(entry, &text); err == nil {
+		return text, nil
+	}
+	var object struct {
+		Text *string `json:"text"`
+	}
+	if err := json.Unmarshal(entry, &object); err != nil || object.Text == nil {
+		return "", errors.New(`must be a string or an object with a "text" string`)
+	}
+	return *object.Text, nil
 }
 
 // ImportResult counts what an import did.

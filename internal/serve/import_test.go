@@ -89,6 +89,40 @@ func TestParseImportFile(t *testing.T) {
 	}
 }
 
+func TestParseImportFile_ObjectLines(t *testing.T) {
+	file, err := parseImportFile(strings.NewReader(`{
+		"name": "x",
+		"pages": [{"title": "a", "id": "1", "lines": [
+			{"text": "a", "created": 1, "userId": "u"},
+			{"text": "line2", "updated": 2}
+		]}]
+	}`))
+	if err != nil {
+		t.Fatalf("parseImportFile: %v", err)
+	}
+	if got := pageText(file.Pages[0]); got != "a\nline2" {
+		t.Errorf("pageText = %q, want %q", got, "a\nline2")
+	}
+
+	// A mix of both formats is accepted too.
+	file, err = parseImportFile(strings.NewReader(`{"pages":[{"title":"a","lines":["a",{"text":"b"}]}]}`))
+	if err != nil {
+		t.Fatalf("parseImportFile (mixed): %v", err)
+	}
+	if got := pageText(file.Pages[0]); got != "a\nb" {
+		t.Errorf("pageText (mixed) = %q, want %q", got, "a\nb")
+	}
+
+	for _, bad := range []string{
+		`{"pages":[{"title":"a","lines":[{"created":1}]}]}`,
+		`{"pages":[{"title":"a","lines":[1]}]}`,
+	} {
+		if _, err := parseImportFile(strings.NewReader(bad)); err == nil {
+			t.Errorf("parseImportFile(%q) succeeded, want an error", bad)
+		}
+	}
+}
+
 func TestImport_CreatesCardsInFileOrder(t *testing.T) {
 	app := newImportTestApp(t)
 	pot := createPot(t, app, "pot1")
