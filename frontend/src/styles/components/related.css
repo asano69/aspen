@@ -9,8 +9,9 @@
       opacity: 0;
       transform: translateY(8px);
     }
+    /* No opacity here: the animation must end at the element's own
+     * opacity, or it would override .card-grid-item.empty's 0.5. */
     to {
-      opacity: 1;
       transform: none;
     }
   }
