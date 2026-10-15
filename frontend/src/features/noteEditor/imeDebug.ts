@@ -15,10 +15,12 @@ import {
 // in the browser console and reloading. Everything is prefixed "[ime-debug]".
 //
 // What the log tells:
-// - "switch key" + "key after switch": the keys the browser really received.
-//   After Convert with the IME on, the next keys arrive as key "Process"
-//   (keyCode 229). If they arrive as plain letters instead, the IME was never
-//   switched on at the OS level, so the cause is outside CodeMirror.
+// - "trace before blur": the recent history of everything that can disturb the
+//   browser's input context (updates, DOM mutations, selection changes,
+//   pastes), printed when the editor loses focus. When the bug happens, click
+//   outside the editor and back: the trace printed by that blur shows what
+//   happened before. The Convert key itself never reaches the page while the
+//   editor has focus, so it is not a clue.
 // - "created" / "destroyed": the editor's lifetime. "destroyed during
 //   composition" means the editor was torn down while the IME was converting
 //   (e.g. a draft turning into an existing card).
@@ -30,9 +32,10 @@ import {
 // - "composition did not end": a composition stuck for too long.
 
 const PREFIX = "[ime-debug]";
+// How many recent events the idle trace keeps. It is dumped on blur, which is
+// when the user recovers from the bug by clicking outside and back.
+const TRACE_SIZE = 200;
 const SWITCH_KEYS = new Set(["Convert", "NonConvert"]);
-// How many key presses after a switch key are logged.
-const KEYS_AFTER_SWITCH = 3;
 const STUCK_MS = 10_000;
 
 // Key names (event.key or event.code) of keys that can switch the IME.
@@ -63,9 +66,9 @@ class ImeDebug implements PluginValue {
   private readonly createdAt = performance.now();
   // Composition state as seen from DOM events, to compare with view.composing.
   private composing = false;
-  private keysToWatch = 0;
   private stuckTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly observer: MutationObserver;
+  private readonly trace: string[] = [];
   private readonly listeners: [EventTarget, string, EventListener, boolean][] =
     [];
 
@@ -78,6 +81,11 @@ class ImeDebug implements PluginValue {
     this.listen(dom, "compositionend", (e) => this.onCompositionEnd(e));
     this.listen(dom, "beforeinput", (e) => {
       const input = e as InputEvent;
+      this.note("beforeinput", {
+        inputType: input.inputType,
+        defaultPrevented: input.defaultPrevented,
+      });
+      if (!this.composing && !this.view.composing) return;
       this.log("beforeinput", {
         inputType: input.inputType,
         isComposing: input.isComposing,
@@ -85,22 +93,40 @@ class ImeDebug implements PluginValue {
       });
     });
     this.listen(dom, "keydown", (e) => this.onKeyDown(e as KeyboardEvent));
-    // A paste is the suspected trigger, so log it with the focus state.
-    this.listen(dom, "paste", (e) => {
-      const data = (e as ClipboardEvent).clipboardData;
-      this.log("paste", {
-        types: Array.from(data?.types ?? []),
-        files: data?.files.length ?? 0,
-        ...this.snapshot(),
-      });
-    });
     this.listen(dom, "focus", () => this.log("focus", this.snapshot()));
-    this.listen(dom, "blur", (e) =>
+    this.listen(dom, "blur", (e) => {
       this.log("blur", {
         ...this.snapshot(),
         movedTo: describe((e as FocusEvent).relatedTarget),
-      }),
-    );
+      });
+      this.dumpTrace();
+    });
+    // Selection changes the browser reports for the page. A change that
+    // CodeMirror did not make shows up as "selectionchange" without a
+    // matching "update" just before it.
+    this.listen(document, "selectionchange", () => {
+      const sel = document.getSelection();
+      this.note("selectionchange", {
+        anchor: describe(sel?.anchorNode ?? null),
+        offset: sel?.anchorOffset,
+        inEditor: !!sel?.anchorNode && dom.contains(sel.anchorNode),
+      });
+    });
+    // Whether a paste was taken over (preventDefault) matters: a replaced
+    // paste never goes through the browser's own insertion. The check runs in
+    // a microtask, after the editor's own paste handlers have run.
+    this.listen(dom, "paste", (e) => {
+      const data = (e as ClipboardEvent).clipboardData;
+      const types = Array.from(data?.types ?? []);
+      const files = data?.files.length ?? 0;
+      queueMicrotask(() =>
+        this.note("paste", {
+          defaultPrevented: e.defaultPrevented,
+          types,
+          files,
+        }),
+      );
+    });
     // Raw IME-related keys, seen at the window in the capture phase: this does
     // not depend on where the focus is or on what the editor does with the key.
     this.listen(
@@ -131,9 +157,17 @@ class ImeDebug implements PluginValue {
 
   update(update: ViewUpdate) {
     if (update.focusChanged) this.log("focusChanged", this.snapshot());
-    // Also logged while idle with focus: an update at the caret can reset
-    // the browser's IME state without any composition being active.
-    if (!update.view.hasFocus && !this.composing) return;
+    // Every update is traced, also idle ones: an effect-only update (no
+    // document change) at the caret is the main suspect.
+    this.note("update", {
+      docChanged: update.docChanged,
+      selectionSet: update.selectionSet,
+      effects: update.transactions.reduce((n, tr) => n + tr.effects.length, 0),
+      events: update.transactions
+        .map((tr) => tr.annotation(Transaction.userEvent))
+        .filter(Boolean),
+    });
+    if (!update.view.composing && !this.composing) return;
     this.log("update during composition", {
       docChanged: update.docChanged,
       selectionSet: update.selectionSet,
@@ -262,8 +296,15 @@ class ImeDebug implements PluginValue {
   }
 
   private onMutations(records: MutationRecord[]) {
-    // Same reason as in update(): idle DOM rewrites matter too.
-    if (!this.view.hasFocus && !this.composing) return;
+    // Traced always, also while idle: a DOM rewrite near the caret is a
+    // suspect even without a composition. The full log below is only for
+    // compositions.
+    this.note("mutation", {
+      added: records.reduce((n, r) => n + r.addedNodes.length, 0),
+      removed: records.reduce((n, r) => n + r.removedNodes.length, 0),
+      targets: [...new Set(records.slice(0, 3).map((r) => describe(r.target)))],
+    });
+    if (!this.composing && !this.view.composing) return;
     let added = 0;
     let removed = 0;
     const targets = new Set<string>();
