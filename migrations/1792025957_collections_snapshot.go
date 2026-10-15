@@ -1893,6 +1893,108 @@ func init() {
 				"type": "base",
 				"updateRule": null,
 				"viewRule": null
+			},
+			{
+				"createRule": null,
+				"deleteRule": null,
+				"fields": [
+					{
+						"autogeneratePattern": "[a-z0-9]{15}",
+						"help": "",
+						"hidden": false,
+						"id": "text3208210256",
+						"max": 15,
+						"min": 15,
+						"name": "id",
+						"pattern": "^[a-z0-9]+$",
+						"presentable": false,
+						"primaryKey": true,
+						"required": true,
+						"system": true,
+						"type": "text"
+					},
+					{
+						"cascadeDelete": false,
+						"collectionId": "pbc_575754128",
+						"help": "",
+						"hidden": false,
+						"id": "relation515732239",
+						"maxSelect": 0,
+						"minSelect": 0,
+						"name": "pot",
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "relation"
+					},
+					{
+						"cascadeDelete": false,
+						"collectionId": "pbc_2527524235",
+						"help": "",
+						"hidden": false,
+						"id": "relation370448595",
+						"maxSelect": 0,
+						"minSelect": 0,
+						"name": "card",
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "relation"
+					},
+					{
+						"help": "",
+						"hidden": false,
+						"id": "number1177347317",
+						"max": 9007199254740991,
+						"min": null,
+						"name": "position",
+						"onlyInt": false,
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "number"
+					},
+					{
+						"help": "",
+						"hidden": false,
+						"id": "date3946532403",
+						"max": "",
+						"min": "",
+						"name": "deleted",
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "date"
+					},
+					{
+						"hidden": false,
+						"id": "autodate2990389176",
+						"name": "created",
+						"onCreate": true,
+						"onUpdate": false,
+						"presentable": false,
+						"system": false,
+						"type": "autodate"
+					},
+					{
+						"hidden": false,
+						"id": "autodate3332085495",
+						"name": "updated",
+						"onCreate": true,
+						"onUpdate": true,
+						"presentable": false,
+						"system": false,
+						"type": "autodate"
+					}
+				],
+				"id": "pbc_3071741370",
+				"indexes": [],
+				"listRule": null,
+				"name": "card_pins",
+				"system": false,
+				"type": "base",
+				"updateRule": null,
+				"viewRule": null
 			}
 		]`
 
