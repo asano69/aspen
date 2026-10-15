@@ -85,6 +85,15 @@ class ImeDebug implements PluginValue {
       });
     });
     this.listen(dom, "keydown", (e) => this.onKeyDown(e as KeyboardEvent));
+    // A paste is the suspected trigger, so log it with the focus state.
+    this.listen(dom, "paste", (e) => {
+      const data = (e as ClipboardEvent).clipboardData;
+      this.log("paste", {
+        types: Array.from(data?.types ?? []),
+        files: data?.files.length ?? 0,
+        ...this.snapshot(),
+      });
+    });
     this.listen(dom, "focus", () => this.log("focus", this.snapshot()));
     this.listen(dom, "blur", (e) =>
       this.log("blur", {
@@ -122,7 +131,9 @@ class ImeDebug implements PluginValue {
 
   update(update: ViewUpdate) {
     if (update.focusChanged) this.log("focusChanged", this.snapshot());
-    if (!update.view.composing && !this.composing) return;
+    // Also logged while idle with focus: an update at the caret can reset
+    // the browser's IME state without any composition being active.
+    if (!update.view.hasFocus && !this.composing) return;
     this.log("update during composition", {
       docChanged: update.docChanged,
       selectionSet: update.selectionSet,
@@ -251,7 +262,8 @@ class ImeDebug implements PluginValue {
   }
 
   private onMutations(records: MutationRecord[]) {
-    if (!this.composing && !this.view.composing) return;
+    // Same reason as in update(): idle DOM rewrites matter too.
+    if (!this.view.hasFocus && !this.composing) return;
     let added = 0;
     let removed = 0;
     const targets = new Set<string>();

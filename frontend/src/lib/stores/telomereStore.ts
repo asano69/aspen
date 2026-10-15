@@ -1,8 +1,9 @@
 import { createSignal } from "solid-js";
 
-// How often the clock ticks. Thickness only changes at minute boundaries, so
-// a few seconds is precise enough.
-const CLOCK_INTERVAL_MS = 5_000;
+// How often the clock ticks. Thickness only changes at hour boundaries, so a
+// minute is precise enough. Every tick dispatches to the editor, so a slower
+// clock also means fewer idle updates at the caret.
+const CLOCK_INTERVAL_MS = 60_000;
 
 // The current time, ticking (see startTelomereClock). Reactive. The edit
 // history itself is per card and lives in its Y.Doc (see lineMetaStore.ts).
