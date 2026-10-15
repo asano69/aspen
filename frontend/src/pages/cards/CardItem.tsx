@@ -1,5 +1,5 @@
 // frontend/src/pages/cards/CardItem.tsx
-import { Match, onCleanup, Show, Switch } from "solid-js";
+import { Match, onCleanup, Switch } from "solid-js";
 import { A } from "@solidjs/router";
 import { useSortable } from "@dnd-kit/solid/sortable";
 import { registerCardElement } from "@/lib/stores/cardsStore";
@@ -53,11 +53,6 @@ export function CardItemView(props: CardItemViewProps) {
       data-dragging={props.dragging ? "" : undefined}
     >
       <A ref={ripple} href={props.href}>
-        {/* Folded-corner indicator for pinned cards (see
-            styles/components.css's .card-grid-item .pin). */}
-        <Show when={props.card.pin}>
-          <div class="pin" aria-hidden="true" />
-        </Show>
         <div class="content">
           <div class="header">
             <h3 class="title">{deriveCardGridTitle(props.card)}</h3>

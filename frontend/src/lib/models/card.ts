@@ -53,17 +53,13 @@ export interface CardRecord {
   description: string[] | null;
   image: string;
   pot: string;
-  // 0 for an unpinned card. A pinned card has a value above 0, and pinned
-  // cards are listed by descending pin. Only pinned cards can be reordered,
-  // by changing this value.
-  pin: number;
   // Datalog query text (not evaluated yet). Optional because cards cached
   // in Dexie before this field existed do not have it.
   query?: string;
   // Soft-delete timestamp; an empty string while the card is live. The
   // frontend never lists or opens a card that has one.
   deleted: string;
-  // Unpinned cards are listed by descending creation time.
+  // Cards are listed by descending creation time.
   created: string;
   updated: string;
 }
@@ -71,10 +67,7 @@ export interface CardRecord {
 // The fields a card grid item displays. Cards that come from the links1hop /
 // links2hop routes carry only these, so the grid view accepts this subset
 // instead of a full CardRecord.
-export type CardGridCard = Pick<
-  CardRecord,
-  "title" | "description" | "image" | "pin"
->;
+export type CardGridCard = Pick<CardRecord, "title" | "description" | "image">;
 
 // A related card of the open card (see lib/dexie/relatedQuery.ts). The id is
 // the key the grid is reconciled by.

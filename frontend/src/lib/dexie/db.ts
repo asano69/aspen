@@ -63,6 +63,11 @@ class ReplicaDB extends Dexie {
     this.version(6).stores({
       cards: "id, pot, [pot+pin+created], [pot+titleLc]",
     });
+    // Version 7 dropped pin from the paging index: cards are listed by
+    // creation time only.
+    this.version(7).stores({
+      cards: "id, pot, [pot+created], [pot+titleLc]",
+    });
   }
 }
 

@@ -10,7 +10,6 @@ import {
 } from "../api/cardApi";
 import { subscribeToCollection, type CollectionEvent } from "../api/realtime";
 import type { CardRecord } from "../models/card";
-import { computePosition } from "../position";
 import { withCardsFlip, registerCardElement } from "../cardFlip";
 import {
   cardsReplica,
@@ -65,11 +64,8 @@ export function potWindow(potId: string | undefined): PotWindow | undefined {
 // another user's drag) animates every affected card into its new grid
 // slot instead of snapping there instantly.
 //
-// `skipFlip` opts out of that animation. dnd-kit already animates the
-// dragged card into place during the gesture itself, so replaying our
-// own FLIP animation on top of that (when the local dragger's own
-// optimistic update lands) makes the card jump/stutter instead of
-// looking smooth -- see moveCard below.
+// `skipFlip` opts out of that animation, for merges that only load cards
+// (a page load, a card opened by URL) instead of reordering them.
 //
 // Every merge also writes through into the IndexedDB replica (see
 // lib/dexie/cardsCollection.ts), fire-and-forget: that cache is what
@@ -368,65 +364,6 @@ export function watchCards(): () => void {
   return subscribeToCollection<CardRecord>("cards", handleCardEvent, () => {
     for (const potId of Object.keys(windows)) void resyncPot(potId);
   });
-}
-
-// How long to wait, after the local optimistic reorder is applied,
-// before sending the new pin to PocketBase. This client is also
-// subscribed to its own realtime "cards" updates (see
-// watchPot above), and that handler always runs the FLIP
-// animation, which sets the same element's `transform` that dnd-kit's
-// own drop animation is still settling right after a drag ends.
-// Delaying only the network request (not the local store update in
-// moveCard) means the resulting echo arrives once dnd-kit's animation
-// has long finished, so the FLIP handler measures identical
-// before/after rects and animates nothing. Realtime propagation to
-// other users isn't latency-sensitive enough for this brief delay to
-// matter.
-const PERSIST_DELAY_MS = 300;
-
-// Moves the pinned `card` to `pin` (see lib/position.ts). Only pinned cards
-// are reordered: an unpinned card's place is fixed by its position.
-//
-// The new pin is applied immediately, in step with dnd-kit's own
-// drop animation settling the dragged card into this same slot.
-// skipFlip: true since this is the local dragger's own move -- there's
-// nothing left to FLIP-animate once dnd-kit has already shown the card
-// moving there itself. Only the PocketBase round-trip (and the
-// realtime echo it triggers) is deferred -- see PERSIST_DELAY_MS.
-export function movePinnedCard(card: CardRecord, pin: number): void {
-  const previousPin = card.pin;
-  mergeCards([{ ...card, pin }], { skipFlip: true });
-
-  setTimeout(async () => {
-    try {
-      const updated = await updateCard(card.id, { pin });
-      mergeCards([updated], { skipFlip: true });
-    } catch (err) {
-      console.error("[cards] failed to reorder card:", err);
-      mergeCards([{ ...card, pin: previousPin }], { skipFlip: true });
-    }
-  }, PERSIST_DELAY_MS);
-}
-
-// Pin value for a card that is being pinned: one step above the highest pin
-// in its pot, so it sorts first among the pinned cards (CardList sorts by
-// descending pin) without renumbering any of them. Pinned cards sort first on
-// the server too, so they all sit in the loaded window's first pages.
-function nextPin(excludeId: string): number {
-  const potId = cardsById[excludeId]?.pot;
-  const pins = Object.values(cardsById)
-    .filter((card) => card.pot === potId && card.id !== excludeId)
-    .map((card) => card.pin);
-  return computePosition(Math.max(0, ...pins), undefined);
-}
-
-// Pins or unpins a card (unpinned is pin 0). Rejects on failure, leaving the
-// store unchanged.
-export async function setCardPinned(
-  id: string,
-  pinned: boolean,
-): Promise<void> {
-  mergeCards([await updateCard(id, { pin: pinned ? nextPin(id) : 0 })]);
 }
 
 // Saves a card's datalog query text. Rejects on failure, leaving the

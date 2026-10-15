@@ -13,7 +13,6 @@ function card(id: string, pot: string, titleLc: string): CachedCard {
     description: [],
     image: "",
     position: 0,
-    pin: 0,
     deleted: "",
     created: "",
     updated: "",

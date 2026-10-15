@@ -38,7 +38,6 @@ function toRelatedCard(card: CachedCard): RelatedCard {
     title: card.title,
     description: card.description,
     image: card.image,
-    pin: card.pin,
   };
 }
 

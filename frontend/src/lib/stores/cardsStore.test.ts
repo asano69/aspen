@@ -65,7 +65,6 @@ function card(id: string, pot: string, position = 1): CardRecord {
     title: id as CardRecord["title"],
     description: [],
     image: "",
-    pin: 0,
     deleted: "",
     created: "",
     updated: "",

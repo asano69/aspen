@@ -7,7 +7,6 @@ import {
   untrack,
 } from "solid-js";
 import { useParams } from "@solidjs/router";
-import { isSortable } from "@dnd-kit/solid/sortable";
 
 import Loading from "@/components/Loading";
 import CardItem from "./CardItem";
@@ -15,11 +14,9 @@ import CardGrid from "./CardGrid";
 import {
   cardsById,
   loadNextCardsPage,
-  movePinnedCard,
   moveCardsToPot,
   potWindow,
 } from "@/lib/stores/cardsStore";
-import { computePosition } from "@/lib/position";
 import { useDragEnd } from "@/lib/dragEnd";
 import { useTitle } from "@/lib/useTitle";
 import { useFooterSlot } from "@/lib/footerSlot";
@@ -53,22 +50,18 @@ export default function CardList() {
     }
   });
 
-  // Pinned cards come first, by descending pin (an unpinned card has pin 0,
-  // so it falls behind them). Unpinned cards follow by descending creation
-  // time, so the newest card is first. "created" is a fixed-format string, so
-  // it compares correctly as text. id is the final tie-breaker. Only the
-  // loaded window is
-  // sorted, and the store keeps it live through realtime create/update/delete
-  // events.
+  // Newest card first. "created" is a fixed-format string, so it compares
+  // correctly as text. id breaks ties, in the same (descending) direction as
+  // the replica's [pot+created] index. Only the loaded window is sorted, and
+  // the store keeps it live through realtime create/update/delete events.
   const cards = createMemo(() =>
     (potWindow(pot()?.id)?.ids ?? [])
       .map((id) => cardsById[id])
       .filter((card) => card !== undefined)
       .sort(
         (a, b) =>
-          b.pin - a.pin ||
           (a.created < b.created ? 1 : a.created > b.created ? -1 : 0) ||
-          a.id.localeCompare(b.id),
+          b.id.localeCompare(a.id),
       ),
   );
 
@@ -118,50 +111,18 @@ export default function CardList() {
     }
   };
 
-  // Persists a drag-to-reorder drop. Only a pinned card can be reordered, and
-  // only its own pin changes (see lib/position.ts), computed from whichever
-  // two pinned cards now sit on either side of it.
-  //
-  // dnd-kit reports the drop via event.operation.source rather than
-  // SortableJS's oldIndex/newIndex; isSortable narrows that source so
-  // its initialIndex/index can be read instead.
+  // A card dropped on a pot of the sidebar (see SidebarPotList's droppable)
+  // is moved there. Moving several cards later only needs more ids here.
+  // Reordering inside the grid is not implemented yet.
   const handleDragEnd = (event) => {
     if (event.canceled) return;
     const { source, target } = event.operation;
     if (source?.type !== "card") return;
 
-    // Dropped on a pot of the sidebar (see SidebarPotList's droppable):
-    // move instead of reorder. Moving several cards later only needs more
-    // ids here.
     const destPot = target?.data?.potId;
-    if (destPot) {
-      if (destPot !== pot()?.id) void moveToPot([String(source.id)], destPot);
-      return;
+    if (destPot && destPot !== pot()?.id) {
+      void moveToPot([String(source.id)], destPot);
     }
-
-    if (!isSortable(source)) return;
-
-    // Pinned cards sort first, so an index into the pinned cards is also an
-    // index into `cards()`.
-    const ordered = cards();
-    const pinned = ordered.filter((card) => card.pin > 0);
-    const moved = ordered[source.initialIndex];
-    if (!moved || moved.pin <= 0) return;
-
-    // A pinned card cannot be dropped among the unpinned ones.
-    const newIndex = Math.min(source.index, pinned.length - 1);
-    if (source.initialIndex === newIndex) return;
-
-    // The grid is sorted by descending pin, so the card displayed above has
-    // the larger pin and the card displayed below has the smaller one -- the
-    // opposite of computePosition's (prev, next) argument order, so they're
-    // swapped here.
-    const rest = pinned.filter((card) => card.id !== moved.id);
-    const pin = computePosition(rest[newIndex]?.pin, rest[newIndex - 1]?.pin);
-
-    // The optimistic update and the delayed persist both live in the
-    // store (see movePinnedCard in lib/stores/cardsStore.ts).
-    movePinnedCard(moved, pin);
   };
 
   useDragEnd(handleDragEnd);

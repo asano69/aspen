@@ -32,12 +32,7 @@ const fixture: GraphCase[] = JSON.parse(
 
 const DEFAULT_POT = "p1";
 
-function cardRow(
-  id: string,
-  pot: string,
-  title: string,
-  pin = 0,
-): CachedCard {
+function cardRow(id: string, pot: string, title: string): CachedCard {
   return {
     id,
     pot,
@@ -46,7 +41,6 @@ function cardRow(
     description: [],
     image: "",
     position: 0,
-    pin,
     deleted: "",
     created: "",
     updated: "",
@@ -143,7 +137,7 @@ describe("computeRelated", () => {
   it("maps a card to the shape the grid draws", async () => {
     await db.cards.bulkPut([
       cardRow("a", "p", "A"),
-      { ...cardRow("b", "p", "B", 1), description: ["line"], image: "i.png" },
+      { ...cardRow("b", "p", "B"), description: ["line"], image: "i.png" },
     ]);
 
     const result = await computeRelated({
@@ -154,7 +148,7 @@ describe("computeRelated", () => {
     });
 
     expect(result.oneHop).toEqual([
-      { id: "b", title: "B", description: ["line"], image: "i.png", pin: 1 },
+      { id: "b", title: "B", description: ["line"], image: "i.png" },
     ]);
   });
 

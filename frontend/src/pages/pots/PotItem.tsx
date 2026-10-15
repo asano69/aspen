@@ -38,7 +38,6 @@ export default function PotItem(props: PotItemProps) {
     title: asCardTitle(props.pot.title),
     description: [],
     image: potCoverURL(props.pot) ?? "",
-    pin: 0,
   });
 
   return (

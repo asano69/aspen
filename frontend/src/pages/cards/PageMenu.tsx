@@ -3,13 +3,8 @@ import { useNavigate } from "@solidjs/router";
 import ActionsMenu from "@/components/menus/ActionsMenu";
 import QueryDialog from "@/components/dialogs/QueryDialog";
 import { getSyntaxTreeJson } from "@/features/noteEditor/debug";
-import { Trash2, Pin, PinOff, Wrench, Funnel } from "@/lib/icons";
-import {
-  cardsById,
-  removeCard,
-  setCardPinned,
-  setCardQuery,
-} from "@/lib/stores/cardsStore";
+import { Trash2, Pin, Wrench, Funnel } from "@/lib/icons";
+import { cardsById, removeCard, setCardQuery } from "@/lib/stores/cardsStore";
 
 export interface PageMenuProps {
   // Id of the open card. Undefined for a draft, which has no record to
@@ -39,18 +34,7 @@ export default function PageMenu(props: PageMenuProps) {
   const [queryOpen, setQueryOpen] = createSignal(false);
 
   const card = () => (props.cardId ? cardsById[props.cardId] : undefined);
-  const pinned = () => (card()?.pin ?? 0) > 0;
   const query = () => card()?.query ?? "";
-
-  const togglePin = async () => {
-    const id = props.cardId;
-    if (!id) return;
-    try {
-      await setCardPinned(id, !pinned());
-    } catch {
-      // A failed pin mutation leaves the shared store unchanged.
-    }
-  };
 
   const handleDelete = async () => {
     const id = props.cardId;
@@ -89,14 +73,9 @@ export default function PageMenu(props: PageMenuProps) {
 
   return (
     <div class="page-menu" data-hidden={props.hidden ? "" : undefined}>
-      <button
-        type="button"
-        aria-label={pinned() ? "Unpin" : "Pin"}
-        class="tool-btn"
-        disabled={!props.cardId}
-        onClick={togglePin}
-      >
-        {pinned() ? <PinOff size={22} /> : <Pin size={22} />}
+      {/* Pinning is not implemented yet; the button only keeps its place. */}
+      <button type="button" aria-label="Pin" class="tool-btn" disabled>
+        <Pin size={22} />
       </button>
       <button
         type="button"
