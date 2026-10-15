@@ -130,16 +130,11 @@ func moveCard(tx core.App, cards, ydocs *core.Collection, old *core.Record, doc 
 	if err != nil {
 		return fmt.Errorf("resolve title: %w", err)
 	}
-	position, err := nextCardPosition(tx, destPot)
-	if err != nil {
-		return fmt.Errorf("compute card position: %w", err)
-	}
 
 	card := core.NewRecord(cards)
 	card.Set("pot", destPot)
 	card.Set("title", string(title))
 	card.Set("titleLc", slug.ToLowerKey(string(title)))
-	card.Set("position", position)
 	if err := tx.Save(card); err != nil {
 		return fmt.Errorf("save card: %w", err)
 	}

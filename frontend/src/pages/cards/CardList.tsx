@@ -54,9 +54,10 @@ export default function CardList() {
   });
 
   // Pinned cards come first, by descending pin (an unpinned card has pin 0,
-  // so it falls behind them). Unpinned cards follow by descending position
-  // (see lib/position.ts): new cards get the highest position, so the newest
-  // card is first. id is the final tie-breaker. Only the loaded window is
+  // so it falls behind them). Unpinned cards follow by descending creation
+  // time, so the newest card is first. "created" is a fixed-format string, so
+  // it compares correctly as text. id is the final tie-breaker. Only the
+  // loaded window is
   // sorted, and the store keeps it live through realtime create/update/delete
   // events.
   const cards = createMemo(() =>
@@ -66,7 +67,7 @@ export default function CardList() {
       .sort(
         (a, b) =>
           b.pin - a.pin ||
-          b.position - a.position ||
+          (a.created < b.created ? 1 : a.created > b.created ? -1 : 0) ||
           a.id.localeCompare(b.id),
       ),
   );

@@ -11,18 +11,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/asano69/cardpot/internal/api"
 	"github.com/asano69/cardpot/internal/slug"
 )
 
-// positionStep matches the frontend's own POSITION_STEP (see
-// frontend/src/lib/position.ts): a new card starts POSITION_STEP past
-// its pot's current highest position, so it sorts first in
-// CardList's descending grid without needing a full renumber later.
-const positionStep = 1000
 
 // maxTitleRetries bounds how many times a create/update retries after
 // a database-level unique constraint violation on (pot, title) -- the
@@ -35,20 +29,6 @@ const maxTitleRetries = 3
 // so every lookup that must not see deleted cards adds this clause.
 const notDeleted = `deleted = ""`
 
-// nextCardPosition returns the position for a new card in `pot`.
-func nextCardPosition(app core.App, pot string) (float64, error) {
-	records, err := app.FindRecordsByFilter(
-		"cards", "pot = {:pot}", "-position", 1, 0,
-		dbx.Params{"pot": pot},
-	)
-	if err != nil {
-		return 0, err
-	}
-	if len(records) == 0 {
-		return positionStep, nil
-	}
-	return records[0].GetFloat("position") + positionStep, nil
-}
 
 // createCardHandler creates a new "cards" record with a title resolved
 // from the client-supplied candidate (falling back to "Untitled" when
@@ -70,10 +50,6 @@ func createCardHandler(e *core.RequestEvent) error {
 		return e.InternalServerError("load cards collection", err)
 	}
 
-	position, err := nextCardPosition(e.App, req.Pot)
-	if err != nil {
-		return e.InternalServerError("compute card position", err)
-	}
 
 	candidate := req.TitleCandidate
 	for attempt := 0; attempt < maxTitleRetries; attempt++ {
@@ -92,7 +68,6 @@ func createCardHandler(e *core.RequestEvent) error {
 		// segment itself is derived from title on demand (see
 		// internal/slug.FromTitle) rather than stored.
 		record.Set("titleLc", slug.ToLowerKey(string(title)))
-		record.Set("position", position)
 		if err := e.App.Save(record); err != nil {
 			if attempt < maxTitleRetries-1 {
 				// A concurrent request may have taken this title between

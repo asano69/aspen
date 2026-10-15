@@ -177,16 +177,11 @@ func createImportedCard(app core.App, pot, title string) (*core.Record, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolve title: %w", err)
 	}
-	position, err := nextCardPosition(app, pot)
-	if err != nil {
-		return nil, fmt.Errorf("compute card position: %w", err)
-	}
 
 	record := core.NewRecord(collection)
 	record.Set("pot", pot)
 	record.Set("title", string(resolved))
 	record.Set("titleLc", slug.ToLowerKey(string(resolved)))
-	record.Set("position", position)
 	if err := app.Save(record); err != nil {
 		return nil, fmt.Errorf("save card: %w", err)
 	}

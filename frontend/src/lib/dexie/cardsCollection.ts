@@ -20,12 +20,12 @@ import { indexCards, unindexCard } from "./titleIndex";
 // into the Solid store itself (see mergeCards there).
 
 // Returns the cards of potId that are pinned (pin > 0) or unpinned (pin = 0),
-// read straight from the [pot+pin+position] compound index instead of
+// read straight from the [pot+pin+created] compound index instead of
 // scanning the whole table. Dexie.minKey/Dexie.maxKey open the last index
-// field on both ends, so the range covers every stored position. For the
+// field on both ends, so the range covers every stored creation time. For the
 // pinned range the lower bound is exclusive, which leaves out pin = 0.
 function pinRange(potId: string, pinned: boolean) {
-  const cards = db.cards.where("[pot+pin+position]");
+  const cards = db.cards.where("[pot+pin+created]");
   return pinned
     ? cards.between(
         [potId, 0, Dexie.maxKey],
@@ -38,7 +38,7 @@ function pinRange(potId: string, pinned: boolean) {
 
 // Reads one range in the order the grid displays it: .reverse() flips the
 // index's ascending order into descending pin (pinned cards) or descending
-// position (unpinned cards, which all have pin = 0).
+// creation time (unpinned cards, which all have pin = 0).
 function queryRange(
   potId: string,
   pinned: boolean,
@@ -55,12 +55,13 @@ function queryRange(
 
 // Returns up to `limit` cards from potId's cache, starting after `skip`
 // cards, sorted the same way the UI grid displays them (pinned cards first by
-// descending pin, then unpinned cards by descending position). Used by
+// cards first by
+// descending pin, then unpinned cards by descending creation time). Used by
 // cardsStore.ts's loadNextCardsPage to page through the cache locally instead
 // of over the network.
 //
 // Pinned and unpinned cards live on separate ranges of the
-// [pot+pin+position] compound index (see pinRange above). A requested page is
+// [pot+pin+created] compound index (see pinRange above). A requested page is
 // split across those two ranges instead of sorting the pot's full row set in
 // JS: the pinned range's count decides how much of `skip`/`limit` falls on
 // each side, then each side is read with its own offset/limit straight from

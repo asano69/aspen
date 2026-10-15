@@ -53,9 +53,6 @@ export interface CardRecord {
   description: string[] | null;
   image: string;
   pot: string;
-  // Creation order: unpinned cards are listed by descending position, and it
-  // never changes after creation.
-  position: number;
   // 0 for an unpinned card. A pinned card has a value above 0, and pinned
   // cards are listed by descending pin. Only pinned cards can be reordered,
   // by changing this value.
@@ -66,6 +63,7 @@ export interface CardRecord {
   // Soft-delete timestamp; an empty string while the card is live. The
   // frontend never lists or opens a card that has one.
   deleted: string;
+  // Unpinned cards are listed by descending creation time.
   created: string;
   updated: string;
 }

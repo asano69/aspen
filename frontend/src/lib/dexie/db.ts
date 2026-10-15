@@ -57,6 +57,12 @@ class ReplicaDB extends Dexie {
     this.version(5).stores({
       pots: "id, position",
     });
+    // Version 6 replaced cards' "position" with "created" in the paging
+    // index: cards no longer have a position, and IndexedDB leaves a record
+    // out of a compound index when one of its keys is missing.
+    this.version(6).stores({
+      cards: "id, pot, [pot+pin+created], [pot+titleLc]",
+    });
   }
 }
 
