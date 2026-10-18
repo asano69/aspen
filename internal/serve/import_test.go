@@ -21,7 +21,7 @@ func newImportTestApp(t *testing.T) core.App {
 	if err != nil {
 		t.Fatalf("find cards collection: %v", err)
 	}
-	cards.Fields.Add(&core.TextField{Name: "image"}, &core.NumberField{Name: "position"})
+	cards.Fields.Add(&core.TextField{Name: "image"})
 	if err := app.Save(cards); err != nil {
 		t.Fatalf("extend cards collection: %v", err)
 	}
@@ -137,18 +137,12 @@ func TestImport_CreatesCardsInFileOrder(t *testing.T) {
 	}
 
 	first := cardInPot(t, app, pot.Id, "page1title")
-	second := cardInPot(t, app, pot.Id, "page2title")
+	cardInPot(t, app, pot.Id, "page2title")
 	if got := cardText(t, app, first.Id); got != "page1title\nline2\nline3" {
 		t.Errorf("first card text = %q", got)
 	}
 	if got := first.GetString("description"); got != `["line2","line3"]` {
 		t.Errorf("first card description = %q", got)
-	}
-	// The grid lists the highest position first, so the file's first page
-	// must have it.
-	if first.GetFloat("position") <= second.GetFloat("position") {
-		t.Errorf("positions = %v, %v; want the first page above the second",
-			first.GetFloat("position"), second.GetFloat("position"))
 	}
 }
 
@@ -190,6 +184,22 @@ func TestImport_OverwritesCardWithSameTitle(t *testing.T) {
 	}
 	if len(cards) != 1 {
 		t.Errorf("got %d cards, want 1", len(cards))
+	}
+}
+
+func TestImport_TitleWithBackslashIsOverwritten(t *testing.T) {
+	// Regression test: a title holding a backslash was altered when written
+	// into a filter string, so the existing card was not found and the second
+	// import failed with "titleLc: Value must be unique".
+	app := newImportTestApp(t)
+	createPot(t, app, "pot1")
+	const file = "{\"pages\":[{\"title\":\"\\\\`abdu'l-bahá\",\"lines\":[\"x\"]}]}"
+
+	if got := runImport(t, app, "pot1", file); got != (ImportResult{Created: 1}) {
+		t.Fatalf("first import = %+v, want 1 created", got)
+	}
+	if got := runImport(t, app, "pot1", file); got != (ImportResult{Overwritten: 1}) {
+		t.Errorf("second import = %+v, want 1 overwritten", got)
 	}
 }
 

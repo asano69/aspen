@@ -48,12 +48,7 @@ const defaultTitle = "Untitled"
 func resolveUniqueTitleInPot(app core.App, pot, base, excludeID string) (string, error) {
 	value := base
 	for suffix := 2; ; suffix++ {
-		candidateTitleLc := slug.ToLowerKey(value)
-		_, err := app.FindFirstRecordByFilter(
-			"cards",
-			"pot = {:pot} && id != {:id} && titleLc = {:titleLc} && "+notDeleted,
-			dbx.Params{"pot": pot, "titleLc": candidateTitleLc, "id": excludeID},
-		)
+		_, err := findLiveCardByTitleLc(app, pot, slug.ToLowerKey(value), excludeID)
 		if errors.Is(err, sql.ErrNoRows) {
 			return value, nil
 		}
@@ -62,6 +57,21 @@ func resolveUniqueTitleInPot(app core.App, pot, base, excludeID string) (string,
 		}
 		value = fmt.Sprintf("%s_%d", base, suffix)
 	}
+}
+
+// findLiveCardByTitleLc returns the live card of pot whose titleLc is
+// titleLc, other than excludeID, or sql.ErrNoRows. The values are bound as
+// query parameters instead of being written into a PocketBase filter string:
+// a filter string is parsed, and a title holding a backslash was altered by
+// that parse, so the lookup missed a card that exists.
+func findLiveCardByTitleLc(app core.App, pot, titleLc, excludeID string) (*core.Record, error) {
+	record := &core.Record{}
+	err := app.RecordQuery("cards").
+		AndWhere(dbx.HashExp{"pot": pot, "titleLc": titleLc, "deleted": ""}).
+		AndWhere(dbx.NewExp("id != {:id}", dbx.Params{"id": excludeID})).
+		Limit(1).
+		One(record)
+	return record, err
 }
 
 // resolveTitle returns a title derived from candidate that is unique

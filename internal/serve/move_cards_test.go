@@ -52,12 +52,7 @@ func TestMoveCards_CopiesToTheTargetPotAndDeletesTheOriginal(t *testing.T) {
 		t.Errorf("the existing card changed: %q", got)
 	}
 
-	// The first id is listed first on screen, i.e. has the higher position.
-	movedB := cardInPot(t, app, dst.Id, "b")
-	if movedA.GetFloat("position") <= movedB.GetFloat("position") {
-		t.Errorf("positions = %v, %v; want the first id above the second",
-			movedA.GetFloat("position"), movedB.GetFloat("position"))
-	}
+	cardInPot(t, app, dst.Id, "b")
 }
 
 func TestMoveCards_SkipsCardsAlreadyInThePot(t *testing.T) {

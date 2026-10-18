@@ -200,10 +200,7 @@ func pageText(page importPage) string {
 // other title lookup. Soft-deleted cards are ignored.
 func findCardByTitle(app core.App, pot, title string) (*core.Record, error) {
 	titleLc := slug.ToLowerKey(titleBase(TitleCandidate(title)))
-	card, err := app.FindFirstRecordByFilter(
-		"cards", "pot = {:pot} && titleLc = {:titleLc} && "+notDeleted,
-		dbx.Params{"pot": pot, "titleLc": titleLc},
-	)
+	card, err := findLiveCardByTitleLc(app, pot, titleLc, "")
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
