@@ -107,7 +107,10 @@ func parseImportFile(r io.Reader) (*importFile, error) {
 // Import reads a JSON export from r and imports its pages into the pot named
 // potName. A page whose title matches an existing card in that pot
 // overwrites the card's body; any other page becomes a new card.
-func Import(app core.App, potName string, r io.Reader) (ImportResult, error) {
+//
+// progress, when not nil, is called after each page with the number of pages
+// done so far and the total.
+func Import(app core.App, potName string, r io.Reader, progress func(done, total int)) (ImportResult, error) {
 	var result ImportResult
 
 	file, err := parseImportFile(r)
@@ -149,6 +152,9 @@ func Import(app core.App, potName string, r io.Reader) (ImportResult, error) {
 			result.Created++
 		} else {
 			result.Overwritten++
+		}
+		if progress != nil {
+			progress(result.Created+result.Overwritten, len(file.Pages))
 		}
 	}
 	return result, nil

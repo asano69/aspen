@@ -92,3 +92,8 @@ migrate-collections:
 	ls -1 migrations/*.go | sort | head -n -1 | xargs rm -f
 	yes | go run ./cmd/cardpot migrate collections
 	ls -1 migrations/*.go | sort | head -n -1 | xargs rm -f
+
+install: build
+	go install ./cmd/$(BINARY)
+
+

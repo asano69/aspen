@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -39,7 +40,7 @@ func newImportTestApp(t *testing.T) core.App {
 
 func runImport(t *testing.T, app core.App, pot, json string) ImportResult {
 	t.Helper()
-	result, err := Import(app, pot, strings.NewReader(json))
+	result, err := Import(app, pot, strings.NewReader(json), nil)
 	if err != nil {
 		t.Fatalf("Import: %v", err)
 	}
@@ -236,10 +237,27 @@ func TestImport_IgnoresDeletedCardWithSameTitle(t *testing.T) {
 	}
 }
 
+func TestImport_ReportsProgress(t *testing.T) {
+	app := newImportTestApp(t)
+	createPot(t, app, "pot1")
+
+	var got [][2]int
+	_, err := Import(app, "pot1", strings.NewReader(`{"pages":[
+		{"title":"a","lines":["a"]},
+		{"title":"b","lines":["b"]}
+	]}`), func(done, total int) { got = append(got, [2]int{done, total}) })
+	if err != nil {
+		t.Fatalf("Import: %v", err)
+	}
+	if want := [][2]int{{1, 2}, {2, 2}}; !slices.Equal(got, want) {
+		t.Errorf("progress = %v, want %v", got, want)
+	}
+}
+
 func TestImport_UnknownPot(t *testing.T) {
 	app := newImportTestApp(t)
 
-	_, err := Import(app, "missing", strings.NewReader(`{"pages":[]}`))
+	_, err := Import(app, "missing", strings.NewReader(`{"pages":[]}`), nil)
 	if err == nil || !strings.Contains(err.Error(), `pot "missing" not found`) {
 		t.Errorf("err = %v, want a pot-not-found error", err)
 	}

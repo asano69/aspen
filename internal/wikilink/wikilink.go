@@ -15,6 +15,7 @@ package wikilink
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/pocketbase/dbx"
@@ -94,15 +95,17 @@ func Sync(app core.App, cardID, text string) error {
 	}
 
 	return app.RunInTransaction(func(tx core.App) error {
+		// PocketBase's validation errors do not name the value they reject,
+		// so each failure is wrapped with the link it belongs to.
 		for _, record := range stale {
 			record.Set("deleted", types.NowDateTime())
 			if err := tx.Save(record); err != nil {
-				return err
+				return fmt.Errorf("delete link to %q: %w", record.GetString("target_title"), err)
 			}
 		}
 		for _, record := range toSave {
 			if err := tx.Save(record); err != nil {
-				return err
+				return fmt.Errorf("save link to %q: %w", record.GetString("target_title"), err)
 			}
 		}
 		return nil
@@ -149,6 +152,11 @@ func orderedTargets(titles []string) []target {
 			continue
 		}
 		seen[key] = true
+		// target_title must not contain brackets (see the card_links schema),
+		// so they are stripped the same way linkKey strips them.
+		if strings.ContainsAny(title, "[]") {
+			title = slug.StripBracketLinks(title)
+		}
 		targets = append(targets, target{titleLc: key, title: title})
 	}
 	return targets

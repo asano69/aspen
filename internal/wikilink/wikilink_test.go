@@ -128,6 +128,15 @@ func TestSync_KeepsSelfLinks(t *testing.T) {
 	}
 }
 
+func TestOrderedTargets_TitleHasNoBrackets(t *testing.T) {
+	// Regression test: a hashtag such as "#a[b]c" runs to the next space and
+	// keeps its brackets, but card_links.target_title forbids them.
+	got := orderedTargets([]string{"a[b]c"})
+	if len(got) != 1 || got[0].title != "a b c" || got[0].titleLc != "a_b_c" {
+		t.Errorf("orderedTargets = %+v, want title %q and titleLc %q", got, "a b c", "a_b_c")
+	}
+}
+
 func TestSync_SkipsLinksWithEmptyTitleLc(t *testing.T) {
 	// A link made only of brackets and spaces derives no usable titleLc,
 	// which the schema cannot store.

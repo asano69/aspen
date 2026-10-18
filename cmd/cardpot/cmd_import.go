@@ -33,7 +33,14 @@ running this command.`,
 			}
 			defer file.Close()
 
-			result, err := serve.Import(app, args[1], file)
+			// Progress goes to stderr, so stdout keeps only the final summary.
+			// "\r" rewrites the same line instead of printing one per page.
+			progress := func(done, total int) {
+				fmt.Fprintf(cmd.ErrOrStderr(), "\rimporting: %d/%d", done, total)
+			}
+			result, err := serve.Import(app, args[1], file, progress)
+			// Ends the progress line, so the summary or the error starts fresh.
+			fmt.Fprintln(cmd.ErrOrStderr())
 			if err != nil {
 				return err
 			}
