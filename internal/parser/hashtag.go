@@ -16,7 +16,7 @@ func parseHashTag(s string, pos int, nested bool) (*Node, int) {
 	end := scanUntil(s, pos+1, func(r rune) bool {
 		return isJSSpace(r) || (nested && r == ']')
 	})
-	if end == pos+1 {
+	if end == pos+1 || tooLongForLink(s[pos+1:end]) {
 		return nil, 0
 	}
 	return &Node{Kind: KindHashTag, Text: s[pos+1 : end]}, end

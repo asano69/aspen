@@ -2,10 +2,36 @@ package parser
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
 const testTitle = "T\n"
+
+func TestLongLinkTitleIsPlain(t *testing.T) {
+	// The database cannot store a link title longer than 240 characters.
+	// Characters are counted as code points, not bytes or UTF-16 units.
+	for _, char := range []string{"a", "あ", "😀"} {
+		ok := strings.Repeat(char, 240)
+		long := strings.Repeat(char, 241)
+		for _, form := range []string{"[%]", "#%"} {
+			link := func(title string) []string {
+				return Parse(testTitle + strings.Replace(form, "%", title, 1)).LinkTitles()
+			}
+			if got := link(ok); !slices.Equal(got, []string{ok}) {
+				t.Errorf("%s x240: got %d titles, want 1", form, len(got))
+			}
+			if got := link(long); got != nil {
+				t.Errorf("%s x241: got %d titles, want none", form, len(got))
+			}
+		}
+	}
+	// A URL link has no stored title, so it is not limited.
+	line := Parse(testTitle + "[https://e.com/" + strings.Repeat("a", 300) + "]").Nodes[1]
+	if len(line.Children) != 1 || line.Children[0].Kind != KindExternalLink {
+		t.Errorf("long URL link = %v, want one external link", line.Children)
+	}
+}
 
 func TestParseLinkTitles(t *testing.T) {
 	cases := []struct {

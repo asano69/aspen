@@ -228,6 +228,9 @@ func singleSpan(s string, pos int) (d Decision, close int, ok bool) {
 	if !isMath && strings.Contains(content, "[") && d.Kind != KindExternalLink {
 		return d, 0, false
 	}
+	if d.Kind == KindWikiLink && tooLongForLink(content) {
+		return d, 0, false
+	}
 	if d.URLFirst {
 		close = lastOfRun(s, close)
 		d = DecideBracket(s[pos+1 : close])

@@ -3,6 +3,7 @@ import type { InlineContext } from "@lezer/markdown";
 import { BARE_URL_RE } from "./bareUrl";
 import { bracketContainsCode } from "./bracketCode";
 import { decoContentStart, startsWithDeco } from "./decoration";
+import { isLinkTitleTooLong } from "./linkTitle";
 import { inNested, parseNested } from "./nested";
 
 // A single bracket closes at its first "]": "[x [y]]" is the plain "[x "
@@ -167,6 +168,12 @@ function singleSpan(cx: InlineContext, pos: number): SingleSpan | undefined {
     !isMath &&
     cx.slice(pos + 1, close).includes("[") &&
     decision.kind !== "urlLink"
+  ) {
+    return undefined;
+  }
+  if (
+    decision.kind === "link" &&
+    isLinkTitleTooLong(cx.slice(pos + 1, close))
   ) {
     return undefined;
   }

@@ -309,6 +309,25 @@ describe("Cardpot Lezer syntax", () => {
     expect(tree(">no separating space")).toBe("Document(quote(quoteMark))");
   });
 
+  it("treats a wiki link or hashtag longer than 240 characters as plain text", () => {
+    // The database cannot store a longer link title. Characters are counted
+    // as code points, so 240 emoji (480 UTF-16 units) are still a link.
+    for (const char of ["a", "あ", "😀"]) {
+      expect(tree(`[${char.repeat(240)}]`)).toBe(
+        "Document(Paragraph(link(linkMark,linkMark)))",
+      );
+      expect(tree(`[${char.repeat(241)}]`)).toBe("Document(Paragraph)");
+      expect(tree(`#${char.repeat(240)}`)).toBe(
+        "Document(Paragraph(hashTag))",
+      );
+      expect(tree(`#${char.repeat(241)}`)).toBe("Document(Paragraph)");
+    }
+    // Only wiki links and hashtags are limited: a URL link has no stored title.
+    expect(tree(`[https://e.com/${"a".repeat(300)}]`)).toBe(
+      "Document(Paragraph(urlLink(urlLinkMark,urlLinkMark)))",
+    );
+  });
+
   it("parses a nested bracket inside a quote", () => {
     expect(tree("> [x [y]]")).toBe(
       "Document(quote(quoteMark,link(linkMark,linkMark)))",

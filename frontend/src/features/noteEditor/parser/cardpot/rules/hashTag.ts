@@ -1,5 +1,6 @@
 import type { InlineContext } from "@lezer/markdown";
 
+import { isLinkTitleTooLong } from "./linkTitle";
 import { inNested } from "./nested";
 
 // A hashtag starts at the beginning of a line or immediately after whitespace,
@@ -30,6 +31,6 @@ export function parseHashTag(
     if (/\s/.test(ch) || (nested && ch === "]")) break;
     end++;
   }
-  if (end === pos + 1) return -1;
+  if (end === pos + 1 || isLinkTitleTooLong(cx.slice(pos + 1, end))) return -1;
   return cx.addElement(cx.elt("hashTag", pos, end));
 }
