@@ -256,19 +256,19 @@ func Import(app core.App, potName string, r io.ReaderAt, progress func(done, tot
 // record was created leaves an empty card behind; re-running the import
 // fills it in.
 func importImportedPage(app core.App, p *ydocPersistence, pot string, page importPage) (created bool, err error) {
+	text := pageText(page)
 	card, err := findCardByTitle(app, pot, page.Title)
 	if err != nil {
 		return false, err
 	}
 	if card == nil {
-		card, err = createImportedCard(app, pot, page.Title)
+		card, err = createImportedCard(app, pot, page.Title, text)
 		if err != nil {
 			return false, err
 		}
 		created = true
 	}
 
-	text := pageText(page)
 	if err := p.replaceContent(card.Id, text); err != nil {
 		return created, err
 	}
@@ -298,9 +298,10 @@ func findCardByTitle(app core.App, pot, title string) (*core.Record, error) {
 	return card, err
 }
 
-// createImportedCard saves a new, empty "cards" record, mirroring
-// createCardHandler.
-func createImportedCard(app core.App, pot, title string) (*core.Record, error) {
+// createImportedCard saves a new "cards" record, mirroring createCardHandler.
+// Its preview (description and image) is derived from text and stored right
+// away, so syncDerived does not have to write the record a second time.
+func createImportedCard(app core.App, pot, title, text string) (*core.Record, error) {
 	collection, err := app.FindCollectionByNameOrId("cards")
 	if err != nil {
 		return nil, fmt.Errorf("load cards collection: %w", err)
@@ -310,10 +311,17 @@ func createImportedCard(app core.App, pot, title string) (*core.Record, error) {
 		return nil, fmt.Errorf("resolve title: %w", err)
 	}
 
+	description, image, err := previewFields(app, text)
+	if err != nil {
+		return nil, fmt.Errorf("make preview: %w", err)
+	}
+
 	record := core.NewRecord(collection)
 	record.Set("pot", pot)
 	record.Set("title", string(resolved))
 	record.Set("titleLc", slug.ToLowerKey(string(resolved)))
+	record.Set("description", description)
+	record.Set("image", image)
 	if err := app.Save(record); err != nil {
 		return nil, fmt.Errorf("save card: %w", err)
 	}

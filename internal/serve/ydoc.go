@@ -263,19 +263,29 @@ func (p *ydocPersistence) updatePreview(room, text string) error {
 		return nil // card may have been deleted concurrently -- skip
 	}
 
-	description, err := json.Marshal(descriptionLines(text))
+	description, image, err := previewFields(p.app, text)
 	if err != nil {
 		return err
 	}
-	image := thumbnailSrc(p.app, parser.Parse(text))
 	// GetString on a JSON field returns its raw JSON text, so it is compared
 	// with the JSON text that is about to be stored.
 	if record.GetString("description") == string(description) && record.GetString("image") == image {
 		return nil // unchanged -- avoid a no-op write and its "updated" bump
 	}
-	record.Set("description", types.JSONRaw(description))
+	record.Set("description", description)
 	record.Set("image", image)
 	return p.app.Save(record)
+}
+
+// previewFields computes the values of a card's derived "description" and
+// "image" fields from its text. It is shared by updatePreview and by the
+// importer, which stores them together with the new card record.
+func previewFields(app core.App, text string) (types.JSONRaw, string, error) {
+	description, err := json.Marshal(descriptionLines(text))
+	if err != nil {
+		return nil, "", err
+	}
+	return types.JSONRaw(description), thumbnailSrc(app, parser.Parse(text)), nil
 }
 
 // descriptionLines is the value of a card's "description" JSON field: the
