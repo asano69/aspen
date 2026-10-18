@@ -74,43 +74,70 @@ func cardInPot(t *testing.T, app core.App, pot, titleLc string) *core.Record {
 	return card
 }
 
-func TestParseImportFile(t *testing.T) {
-	file, err := parseImportFile(strings.NewReader(`{"pages":[{"title":"  a  ","lines":["a"]}],"other":1}`))
+// parsePages indexes a JSON export and reads every page back, like Import does.
+func parsePages(data string) ([]importPage, error) {
+	r := strings.NewReader(data)
+	spans, err := indexPages(r)
 	if err != nil {
-		t.Fatalf("parseImportFile: %v", err)
+		return nil, err
 	}
-	if len(file.Pages) != 1 || file.Pages[0].Title != "a" {
-		t.Errorf("pages = %+v, want one page titled %q", file.Pages, "a")
+	pages := make([]importPage, len(spans))
+	for i, span := range spans {
+		if pages[i], err = readPage(r, span); err != nil {
+			return nil, err
+		}
+	}
+	return pages, nil
+}
+
+func TestIndexPages(t *testing.T) {
+	// Several pages, a field before and after "pages", and varied spacing
+	// around the commas: each span must read back as its own page.
+	pages, err := parsePages(`{"name":"x", "pages":[ {"title":"  a  ","lines":["a"]} ,
+		{"title":"b"},{"title":"c"}],"other":1}`)
+	if err != nil {
+		t.Fatalf("parsePages: %v", err)
+	}
+	var titles []string
+	for _, p := range pages {
+		titles = append(titles, p.Title)
+	}
+	if want := []string{"a", "b", "c"}; !slices.Equal(titles, want) {
+		t.Errorf("titles = %q, want %q", titles, want)
 	}
 
-	for _, bad := range []string{`not json`, `{"pages":[{"title":"  ","lines":[]}]}`} {
-		if _, err := parseImportFile(strings.NewReader(bad)); err == nil {
-			t.Errorf("parseImportFile(%q) succeeded, want an error", bad)
+	if pages, err := parsePages(`{}`); err != nil || len(pages) != 0 {
+		t.Errorf(`parsePages("{}") = (%v, %v), want no pages`, pages, err)
+	}
+
+	for _, bad := range []string{`not json`, `[]`, `{"pages":[{"title":"  ","lines":[]}]}`} {
+		if _, err := parsePages(bad); err == nil {
+			t.Errorf("parsePages(%q) succeeded, want an error", bad)
 		}
 	}
 }
 
-func TestParseImportFile_ObjectLines(t *testing.T) {
-	file, err := parseImportFile(strings.NewReader(`{
+func TestIndexPages_ObjectLines(t *testing.T) {
+	pages, err := parsePages(`{
 		"name": "x",
 		"pages": [{"title": "a", "id": "1", "lines": [
 			{"text": "a", "created": 1, "userId": "u"},
 			{"text": "line2", "updated": 2}
 		]}]
-	}`))
+	}`)
 	if err != nil {
-		t.Fatalf("parseImportFile: %v", err)
+		t.Fatalf("parsePages: %v", err)
 	}
-	if got := pageText(file.Pages[0]); got != "a\nline2" {
+	if got := pageText(pages[0]); got != "a\nline2" {
 		t.Errorf("pageText = %q, want %q", got, "a\nline2")
 	}
 
 	// A mix of both formats is accepted too.
-	file, err = parseImportFile(strings.NewReader(`{"pages":[{"title":"a","lines":["a",{"text":"b"}]}]}`))
+	pages, err = parsePages(`{"pages":[{"title":"a","lines":["a",{"text":"b"}]}]}`)
 	if err != nil {
-		t.Fatalf("parseImportFile (mixed): %v", err)
+		t.Fatalf("parsePages (mixed): %v", err)
 	}
-	if got := pageText(file.Pages[0]); got != "a\nb" {
+	if got := pageText(pages[0]); got != "a\nb" {
 		t.Errorf("pageText (mixed) = %q, want %q", got, "a\nb")
 	}
 
@@ -118,8 +145,8 @@ func TestParseImportFile_ObjectLines(t *testing.T) {
 		`{"pages":[{"title":"a","lines":[{"created":1}]}]}`,
 		`{"pages":[{"title":"a","lines":[1]}]}`,
 	} {
-		if _, err := parseImportFile(strings.NewReader(bad)); err == nil {
-			t.Errorf("parseImportFile(%q) succeeded, want an error", bad)
+		if _, err := parsePages(bad); err == nil {
+			t.Errorf("parsePages(%q) succeeded, want an error", bad)
 		}
 	}
 }
