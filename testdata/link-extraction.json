@@ -81,6 +81,44 @@
     "links": []
   },
   {
+    "name": "hashtag-ends-at-a-bracket-link",
+    "text": "T\n#aa[zz]",
+    "links": [
+      { "title": "aa", "titleLc": "aa" },
+      { "title": "zz", "titleLc": "zz" }
+    ]
+  },
+  {
+    "name": "hashtag-with-an-unclosed-bracket-is-plain",
+    "text": "T\n#aa[ b",
+    "links": []
+  },
+  {
+    "name": "hashtag-with-a-stray-close-bracket-is-plain",
+    "text": "T\n#aa]",
+    "links": []
+  },
+  {
+    "name": "hashtag-before-a-nested-bracket-is-plain",
+    "text": "T\n#aa[x [y]]",
+    "links": [{ "title": "y", "titleLc": "y" }]
+  },
+  {
+    "name": "hashtag-ends-at-a-code-span",
+    "text": "T\n#aa`bb` #`cc`",
+    "links": [{ "title": "aa", "titleLc": "aa" }]
+  },
+  {
+    "name": "hashtag-keeps-an-unclosed-backtick",
+    "text": "T\n#aa`bb",
+    "links": [{ "title": "aa`bb", "titleLc": "aa`bb" }]
+  },
+  {
+    "name": "hashtag-before-a-decoration",
+    "text": "T\n#aa[* b]",
+    "links": [{ "title": "aa", "titleLc": "aa" }]
+  },
+  {
     "name": "hashtag-at-start-and-after-space",
     "text": "T\n#a b #c",
     "links": [

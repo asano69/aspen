@@ -227,7 +227,7 @@ parse 関数の契約（`(cx: InlineContext, next: number, pos: number) => numbe
 | --- | --- |
 | `blank.ts` | `[` と `]` の間が空白のみ（1文字以上）→ `Blank(BlankMark, BlankMark)` |
 | `inlineCode.ts` | 同一行内の `` ` `` のペア。中身は空でも可 → `Code(CodeMark, CodeMark)` |
-| `hashTag.ts` | インライン範囲の先頭か空白の直後の `#` から、次の空白まで → `HashTag`（葉）。`#` 単体・単語途中の `#` は対象外 |
+| `hashTag.ts` | インライン範囲の先頭か空白の直後の `#` から → `HashTag`（葉）。空白、ノードになる `[`、閉じのあるコードスパンの `` ` `` で終わる。単独の `]`、ノードにならない `[`、`#` 単体、単語途中の `#` は対象外（行き先はプレーン文字）。decoration/strong の内側では `]` でも終わる |
 
 ## 7. ノード一覧
 

@@ -48,6 +48,10 @@ func TestParseLinkTitles(t *testing.T) {
 		{"nested and malformed brackets", testTitle + "[a [b] c] [unterminated [page]", []string{"b", "page"}},
 		{"bracket containing code is plain", testTitle + "[`a`] [* `b`] [[`c`]] [a [`x`] b] [d]", []string{"d"}},
 		{"bracket containing blank is plain", testTitle + "[a [ ] b] [[ ]] [* [ ]] [c]", []string{"c"}},
+		{"hashtag ends at a bracket node", testTitle + "#aa[zz]bb #cc[* d] #ee[ ]", []string{"aa", "zz", "cc", "ee"}},
+		{"hashtag with an unclosed bracket is plain", testTitle + "#aa[ b", nil},
+		{"hashtag with a stray close bracket is plain", testTitle + "#aa] #dd[x [y]]", []string{"y"}},
+		{"hashtag and code span", testTitle + "#aa`bb` #`cc` #dd`ee", []string{"aa", "dd`ee"}},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {

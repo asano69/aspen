@@ -1,8 +1,9 @@
 import type { InlineContext } from "@lezer/markdown";
 
 import { BARE_URL_RE } from "./bareUrl";
+import { blankEnd } from "./blank";
 import { bracketContainsCode } from "./bracketCode";
-import { decoContentStart, startsWithDeco } from "./decoration";
+import { decoClose, decoContentStart, startsWithDeco } from "./decoration";
 import { isLinkTitleTooLong } from "./linkTitle";
 import { inNested, parseNested } from "./nested";
 
@@ -293,6 +294,27 @@ function parseStrong(cx: InlineContext, pos: number): number {
       cx.elt("strongMark", close, to),
     ]),
   );
+}
+
+// True when the bracket opening at `pos` becomes a node of its own (a
+// decoration, a blank, a strong or a single bracket), i.e. when parseBracket
+// (together with the decoration and blank rules) would accept it. Nothing is
+// added to the tree. The hashtag rule uses it to decide whether a "[" ends
+// the tag. Keep in sync with internal/parser/bracket.go.
+export function bracketStartsNode(cx: InlineContext, pos: number): boolean {
+  if (blankEnd(cx, pos) >= 0) return true;
+  if (bracketContainsCode(cx, pos)) return false;
+  if (!inNested()) {
+    const from = decoContentStart(cx, pos);
+    if (from >= 0 && decoClose(cx, from) > from) return true;
+    if (cx.char(pos + 1) === 91) {
+      const close = strongClose(cx, pos + 2);
+      if (close > pos + 2 && !startsWithDeco(cx.slice(pos + 2, close))) {
+        return true;
+      }
+    }
+  }
+  return singleSpan(cx, pos) !== undefined;
 }
 
 export function parseBracket(

@@ -34,7 +34,7 @@ export function startsWithDeco(text: string): boolean {
 // does. When there is none, the "]" of the last nested notation closes
 // instead ("[* a [b]" is the decoration "a [b"). Keep in sync with
 // internal/parser/bracket.go.
-function decoClose(cx: InlineContext, from: number): number {
+export function decoClose(cx: InlineContext, from: number): number {
   const nodes = parseNested(cx, cx.slice(from, cx.end), from);
 
   let next = 0;

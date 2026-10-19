@@ -48,6 +48,30 @@ describe("Cardpot Lezer syntax", () => {
     expect(tree("# →#notTag←")).toBe("Document(Paragraph)");
   });
 
+  it("ends a hashtag at a bracket node, a code span or whitespace", () => {
+    const tag = "hashTag";
+    const link = "link(linkMark,linkMark)";
+    const cases: [string, string][] = [
+      ["#aa[zz]", `${tag},${link}`],
+      ["#aa[zz]bb", `${tag},${link}`],
+      ["#aa[zz]]", `${tag},${link}`],
+      ["#aa[* b]", `${tag},deco(decoMark,decoMark)`],
+      ["#aa[https://e.com]", `${tag},urlLink(urlLinkMark,urlLinkMark)`],
+      ["#aa[ ]", `${tag},blank(blankMark,blankMark)`],
+      ["#aa[[b]]", `${tag},strong(strongMark,strongMark)`],
+      ["#aa`bb`", `${tag},code(codeMark,codeMark)`],
+      ["#aa`bb", tag],
+      ["#`aa`", "code(codeMark,codeMark)"],
+      ["#aa[x [y]]", link],
+      ["#aa[", ""],
+      ["#aa]", ""],
+      ["#aa[ b", ""],
+    ];
+    for (const [input, nodes] of cases) {
+      expect(tree(input), input).toBe(`Document(Paragraph(${nodes}))`.replace("Paragraph()", "Paragraph"));
+    }
+  });
+
   it("parses a bracket containing a code span as plain text", () => {
     const codeOnly = "Document(Paragraph(code(codeMark,codeMark)))";
     for (const input of [
