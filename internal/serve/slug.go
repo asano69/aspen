@@ -55,7 +55,11 @@ func resolveUniqueTitleInPot(app core.App, pot, base, excludeID string) (string,
 		if err != nil {
 			return "", err
 		}
-		value = fmt.Sprintf("%s_%d", base, suffix)
+		// The suffix must survive the length limit, so the base gives up as
+		// many characters as the suffix needs. A longer suffix ("_10",
+		// "_100") simply cuts the base a little more.
+		tail := fmt.Sprintf("_%d", suffix)
+		value = slug.TruncateRunes(base, slug.MaxTitleRunes-len(tail)) + tail
 	}
 }
 
@@ -104,6 +108,9 @@ func titleBase(candidate TitleCandidate) string {
 	if base == "" {
 		base = defaultTitle
 	}
+	// The "cards" collection cannot store a longer title, so it is cut here.
+	// The document's first line itself stays whole.
+	base = slug.TruncateRunes(base, slug.MaxTitleRunes)
 	// A base that case-insensitively matches a reserved route segment (see
 	// internal/slug.IsReserved) is disambiguated here, before the
 	// uniqueness loop runs. Without this, such a title would only be
