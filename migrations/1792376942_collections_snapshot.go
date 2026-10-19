@@ -1288,7 +1288,9 @@ func init() {
 					}
 				],
 				"id": "pbc_1686311694",
-				"indexes": [],
+				"indexes": [
+					"CREATE INDEX ` + "`" + `idx_nl403oq7pw` + "`" + ` ON ` + "`" + `card_ydocs` + "`" + ` (\n  ` + "`" + `card` + "`" + `,\n  ` + "`" + `created` + "`" + `\n)"
+				],
 				"listRule": null,
 				"name": "card_ydocs",
 				"system": false,

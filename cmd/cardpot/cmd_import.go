@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime/pprof"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/spf13/cobra"
@@ -13,7 +14,7 @@ import (
 // importCmd defines the "cardpot import" cobra command. RunE stays a thin
 // wrapper: open the file, then delegate to internal/serve for the import.
 func importCmd(app *pocketbase.PocketBase) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "import <file> <pot>",
 		Short: "Import cards from a JSON export into a pot",
 		Long: `Import cards from a JSON export into the pot with the given name.
@@ -33,6 +34,14 @@ running this command.`,
 			}
 			defer file.Close()
 
+			if path, _ := cmd.Flags().GetString("cpuprofile"); path != "" {
+				stop, err := startCPUProfile(path)
+				if err != nil {
+					return err
+				}
+				defer stop()
+			}
+
 			// Progress goes to stderr, so stdout keeps only the final summary.
 			// "\r" rewrites the same line instead of printing one per page.
 			progress := func(done, total int) {
@@ -49,4 +58,23 @@ running this command.`,
 			return nil
 		},
 	}
+	cmd.Flags().String("cpuprofile", "", "Write a CPU profile of the import to this file")
+	return cmd
+}
+
+// startCPUProfile starts a CPU profile written to path and returns the
+// function that stops it and closes the file.
+func startCPUProfile(path string) (stop func(), err error) {
+	f, err := os.Create(path)
+	if err != nil {
+		return nil, fmt.Errorf("create %s: %w", path, err)
+	}
+	if err := pprof.StartCPUProfile(f); err != nil {
+		f.Close()
+		return nil, fmt.Errorf("start CPU profile: %w", err)
+	}
+	return func() {
+		pprof.StopCPUProfile()
+		f.Close()
+	}, nil
 }
