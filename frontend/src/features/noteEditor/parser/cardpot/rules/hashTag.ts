@@ -2,10 +2,8 @@ import type { InlineContext } from "@lezer/markdown";
 
 import { bracketStartsNode } from "./bracket";
 import { codeSpanClose } from "./inlineCode";
+import { isLinkTitleTooLong } from "./linkTitle";
 import { inNested } from "./nested";
-
-// Replace with the existing constant of the link length limit, if there is one.
-const MAX_LINK_TITLE_LENGTH = 240;
 
 // A hashtag starts at the beginning of a line or immediately after whitespace,
 // and continues until one of these ends it:
@@ -49,6 +47,6 @@ export function parseHashTag(
   }
   if (end === pos + 1) return -1;
   // The link's title must fit card_links.target_title.
-  if ([...cx.slice(pos + 1, end)].length > MAX_LINK_TITLE_LENGTH) return -1;
+  if (isLinkTitleTooLong(cx.slice(pos + 1, end))) return -1;
   return cx.addElement(cx.elt("hashTag", pos, end));
 }
