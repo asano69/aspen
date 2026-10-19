@@ -5,6 +5,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/asano69/cardpot/internal/wikilink"
 )
 
 // stageTimer accumulates how long each named stage of a job took, so a slow
@@ -22,6 +24,9 @@ var stages = &stageTimer{
 	total: make(map[string]time.Duration),
 	count: make(map[string]int),
 }
+
+// Let the wikilink package report its own stages into the same timer.
+func init() { wikilink.Stage = stages.start }
 
 // start begins timing a stage and returns the function that ends it.
 func (t *stageTimer) start(name string) func() {

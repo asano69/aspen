@@ -26,6 +26,12 @@ import (
 	"github.com/asano69/cardpot/internal/slug"
 )
 
+// Stage starts timing a named stage and returns the function that ends it. It
+// does nothing by default; the serve package replaces it to collect timings
+// (see serve/stage_timer.go). A hook is used because this package cannot
+// import serve.
+var Stage = func(string) func() { return func() {} }
+
 // Sync makes card_links match the wiki links in text for the card cardID:
 // rows for links that disappeared are marked deleted (never removed, so a
 // client that was offline learns about it from its next pull, see
@@ -37,7 +43,9 @@ import (
 // a self link depends on the card's current titleLc, which can change
 // without Sync running again, so it is left to whoever queries the links.
 func Sync(app core.App, cardID, text string) error {
+	stop := Stage("links: load card")
 	source, err := app.FindRecordById("cards", cardID)
+	stop()
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil // card deleted concurrently
 	}
@@ -52,12 +60,16 @@ func Sync(app core.App, cardID, text string) error {
 		text = ""
 	}
 
+	stop = Stage("links: parse")
 	targets := orderedTargets(parser.Parse(text).LinkTitles())
+	stop()
 
+	stop = Stage("links: load existing")
 	existing, err := app.FindRecordsByFilter(
 		"card_links", `source = {:source} && deleted = ""`, "", 0, 0,
 		dbx.Params{"source": cardID},
 	)
+	stop()
 	if err != nil {
 		return err
 	}
@@ -99,12 +111,18 @@ func Sync(app core.App, cardID, text string) error {
 		// so each failure is wrapped with the link it belongs to.
 		for _, record := range stale {
 			record.Set("deleted", types.NowDateTime())
-			if err := tx.Save(record); err != nil {
+			stop := Stage("links: save stale")
+			err := tx.Save(record)
+			stop()
+			if err != nil {
 				return fmt.Errorf("delete link to %q: %w", record.GetString("target_title"), err)
 			}
 		}
 		for _, record := range toSave {
-			if err := tx.Save(record); err != nil {
+			stop := Stage("links: save new")
+			err := tx.Save(record)
+			stop()
+			if err != nil {
 				return fmt.Errorf("save link to %q: %w", record.GetString("target_title"), err)
 			}
 		}
