@@ -17,13 +17,22 @@ import (
 // the other stale.
 func (p *ydocPersistence) syncDerived(room, text string) error {
 	var errs []error
-	if err := p.updatePreview(room, text); err != nil {
+	stop := stages.start("derived: preview")
+	err := p.updatePreview(room, text)
+	stop()
+	if err != nil {
 		errs = append(errs, fmt.Errorf("update card preview: %w", err))
 	}
-	if err := wikilink.Sync(p.app, room, text); err != nil {
+	stop = stages.start("derived: links")
+	err = wikilink.Sync(p.app, room, text)
+	stop()
+	if err != nil {
 		errs = append(errs, fmt.Errorf("sync card links: %w", err))
 	}
-	if err := indexCard(p.app, room, text); err != nil {
+	stop = stages.start("derived: index")
+	err = indexCard(p.app, room, text)
+	stop()
+	if err != nil {
 		errs = append(errs, fmt.Errorf("index card: %w", err))
 	}
 	return errors.Join(errs...)

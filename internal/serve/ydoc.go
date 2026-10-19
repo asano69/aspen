@@ -215,7 +215,7 @@ func (p *ydocPersistence) store(ctx context.Context, room string, update []byte)
 		return err // shutting down -- abort before touching the DB
 	}
 
-	collection, err := p.app.FindCollectionByNameOrId("card_ydocs")
+	collection, err := p.app.FindCachedCollectionByNameOrId("card_ydocs")
 	if err != nil {
 		return err
 	}

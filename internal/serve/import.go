@@ -225,7 +225,9 @@ func Import(app core.App, potName string, r io.ReaderAt, progress func(done, tot
 			// Everything inside the batch must use the transaction's app.
 			batch := &ydocPersistence{app: tx}
 			for i := end - 1; i >= start; i-- {
+				stop := stages.start("read page")
 				page, err := readPage(r, spans[i])
+				stop()
 				if err != nil {
 					return fmt.Errorf("read page %d: %w", i, err)
 				}
@@ -257,19 +259,26 @@ func Import(app core.App, potName string, r io.ReaderAt, progress func(done, tot
 // fills it in.
 func importImportedPage(app core.App, p *ydocPersistence, pot string, page importPage) (created bool, err error) {
 	text := pageText(page)
+	stop := stages.start("find card")
 	card, err := findCardByTitle(app, pot, page.Title)
+	stop()
 	if err != nil {
 		return false, err
 	}
 	if card == nil {
+		stop = stages.start("create card")
 		card, err = createImportedCard(app, pot, page.Title, text)
+		stop()
 		if err != nil {
 			return false, err
 		}
 		created = true
 	}
 
-	if err := p.replaceContent(card.Id, text); err != nil {
+	stop = stages.start("replace content")
+	err = p.replaceContent(card.Id, text)
+	stop()
+	if err != nil {
 		return created, err
 	}
 
@@ -302,7 +311,9 @@ func findCardByTitle(app core.App, pot, title string) (*core.Record, error) {
 // Its preview (description and image) is derived from text and stored right
 // away, so syncDerived does not have to write the record a second time.
 func createImportedCard(app core.App, pot, title, text string) (*core.Record, error) {
-	collection, err := app.FindCollectionByNameOrId("cards")
+	// Cached: the lookup would otherwise re-read and re-parse the schema for
+	// every imported page.
+	collection, err := app.FindCachedCollectionByNameOrId("cards")
 	if err != nil {
 		return nil, fmt.Errorf("load cards collection: %w", err)
 	}

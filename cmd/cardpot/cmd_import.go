@@ -55,10 +55,14 @@ running this command.`,
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "imported into %q: %d created, %d overwritten\n",
 				args[1], result.Created, result.Overwritten)
+			if timings, _ := cmd.Flags().GetBool("timings"); timings {
+				fmt.Fprint(cmd.OutOrStdout(), serve.StageReport())
+			}
 			return nil
 		},
 	}
 	cmd.Flags().String("cpuprofile", "", "Write a CPU profile of the import to this file")
+	cmd.Flags().Bool("timings", false, "Print the total time spent in each stage of the import")
 	return cmd
 }
 

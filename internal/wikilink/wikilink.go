@@ -62,7 +62,7 @@ func Sync(app core.App, cardID, text string) error {
 		return err
 	}
 
-	collection, err := app.FindCollectionByNameOrId("card_links")
+	collection, err := app.FindCachedCollectionByNameOrId("card_links")
 	if err != nil {
 		return err
 	}
