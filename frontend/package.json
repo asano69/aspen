@@ -39,7 +39,6 @@
     "pocketbase": "^0.27.0",
     "remark": "^13.0.0",
     "remark-gfm": "^1.0.0",
-    "ripplet.js": "1.1.0",
     "sigma": "^4.0.0",
     "solid-js": "^1.9.12",
     "svg-pan-zoom": "^3.6.2",

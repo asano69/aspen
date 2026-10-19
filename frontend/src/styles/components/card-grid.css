@@ -53,16 +53,28 @@
     inset: 0;
     z-index: 1;
     opacity: 0;
-    background-color: light-dark(
-      rgba(0, 0, 0, 0.04),
-      rgba(255, 255, 255, 0.06)
-    );
-    transition: opacity 0.1s;
+    background-color: var(--card-hover-bg);
+    transition:
+      opacity 0.1s,
+      background-color 0.1s;
     pointer-events: none;
   }
 
   .card-grid-item a:hover .hover {
     opacity: 1;
+  }
+
+  /* Pressed: the same layer, one step darker than on hover. It also covers
+   * a touch press, where :hover does not apply. */
+  .card-grid-item a:active .hover {
+    opacity: 1;
+    background-color: var(--card-active-bg);
+  }
+
+  /* Keyboard focus ring. */
+  .card-grid-item a:focus-visible {
+    box-shadow: 0 0 0 3px rgba(102, 175, 233, 0.6);
+    transition: box-shadow 0.15s ease-in-out;
   }
 
   /* calc(100% - 5px) matches Cosense's own .content sizing; the 5px

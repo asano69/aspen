@@ -9,7 +9,6 @@ import {
   type CardGridCard,
   type CardRecord,
 } from "@/lib/models/card";
-import { ripple } from "@/lib/directives/ripple";
 import { resolveImageSrc } from "@/lib/models/attachmentPath";
 import { CardDescription } from "@/features/cardDescription";
 import { usePot } from "../pots/PotContext";
@@ -52,7 +51,7 @@ export function CardItemView(props: CardItemViewProps) {
       classList={{ empty: props.empty }}
       data-dragging={props.dragging ? "" : undefined}
     >
-      <A ref={ripple} href={props.href}>
+      <A href={props.href}>
         <div class="content">
           <div class="header">
             <h3 class="title">{deriveCardGridTitle(props.card)}</h3>

@@ -40,6 +40,8 @@
     --card-box-shadow: 0 2px 0 var(--card-box-shadow-color);
     --card-box-hover-shadow: 0 2px 0 rgba(0, 0, 0, 0.23);
     --card-pin-overhang-color: light-dark(#aaaaaa, #545860);
+    --card-hover-bg: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.06));
+    --card-active-bg: light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.14));
 
     --navbar-bg: light-dark(#ccccd1, #1a1b1e);
 
@@ -81,8 +83,6 @@
     /* --- Reserved: declared so presets and user.css can set them, but no
      *     component reads them yet. Move a token up when it gets wired. --- */
     --card-backside: light-dark(#e5e5e5, #545860);
-    --card-hover-bg: light-dark(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
-    --card-active-bg: light-dark(rgba(0, 0, 0, 0.08), rgba(229, 229, 229, 0.1));
     --navbar-icon-color: light-dark(#4a4a4a, #ffffff);
     --navbar-icon-active-color: #338c46;
     --navbar-icon-hovered-color: var(--navbar-icon-active-color);
