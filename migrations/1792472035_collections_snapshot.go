@@ -735,6 +735,21 @@ func init() {
 						"type": "file"
 					},
 					{
+						"help": "",
+						"hidden": false,
+						"id": "select1466534506",
+						"maxSelect": 0,
+						"name": "role",
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "select",
+						"values": [
+							"user",
+							"owner"
+						]
+					},
+					{
 						"hidden": false,
 						"id": "autodate2990389176",
 						"name": "created",
