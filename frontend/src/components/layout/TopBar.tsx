@@ -1,6 +1,6 @@
 import { createEffect, createSignal, on, Show } from "solid-js";
 import { A, useNavigate } from "@solidjs/router";
-import { Plus, Menu, PackageOpen } from "@/lib/icons";
+import { Menu, Plus, PackageOpen } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
 import { suggestTitles } from "@/lib/dexie/titleIndex";
 import { addPot, orderedPots } from "@/lib/stores/potsStore";
@@ -99,7 +99,7 @@ export default function TopBar(props: TopBarProps) {
             aria-expanded={props.sidebarOpen}
             class="icon-btn"
           >
-            <Menu src={topBarPotLink()?.cover} />
+            <Menu />
           </button>
 
           {/* Current pot, when the active page registered one (see

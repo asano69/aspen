@@ -47,15 +47,15 @@ export function LogoIcon(props: { size?: number; class?: string }) {
     />
     <path
       fill="#8DD753"
-      fillRule="evenodd"
+      fill-rule="evenodd"
       d="M30 5a3 3 0 0 1-.794 2.033l.339 1.692a6 6 0 0 1-.739 4.264l-.949 1.582a1 1 0 0 1-1.715 0l-.949-1.582a6 6 0 0 1-.738-4.264l.295-1.475l-1.476.295a6 6 0 0 1-4.263-.738l-1.582-.95a1 1 0 0 1 0-1.714l1.582-.95a6 6 0 0 1 4.263-.738l1.693.338A3 3 0 0 1 30 5"
-      clipRule="evenodd"
+      clip-rule="evenodd"
     />
     <path
       fill="#7DD74E"
-      fillRule="evenodd"
+      fill-rule="evenodd"
       d="M21.377 11.855a4 4 0 1 0-5.355 5.623zm-6.872 7.215a4 4 0 1 0-5.261 5.524z"
-      clipRule="evenodd"
+      clip-rule="evenodd"
     />
   </g>
 </svg> 

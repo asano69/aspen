@@ -1,5 +1,5 @@
 // frontend/src/pages/cards/CardItem.tsx
-import { Match, onCleanup, Switch } from "solid-js";
+import { Match, onCleanup, Show, Switch, type JSX } from "solid-js";
 import { A } from "@solidjs/router";
 import { useSortable } from "@dnd-kit/solid/sortable";
 import { registerCardElement } from "@/lib/stores/cardsStore";
@@ -25,6 +25,8 @@ export interface CardItemViewProps {
   // The card stands for a page that does not exist yet (see
   // styles/components.css's .card-grid-item.empty).
   empty?: boolean;
+  // Controls shown over the card's corner, outside its link (e.g. a menu).
+  actions?: JSX.Element;
 }
 
 // The look of a single card in a card grid, styled to match Cosense's
@@ -102,6 +104,9 @@ export function CardItemView(props: CardItemViewProps) {
             just keeps it grouped with .pin, the other overlay layer. */}
         <div class="hover" aria-hidden="true" />
       </A>
+      <Show when={props.actions}>
+        <div class="actions">{props.actions}</div>
+      </Show>
     </li>
   );
 }

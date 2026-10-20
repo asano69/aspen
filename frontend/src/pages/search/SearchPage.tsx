@@ -7,8 +7,13 @@ import { titleToSegment } from "../../lib/models/slugify";
 export default function SearchPage() {
   const pot = usePot();
   const [params, setParams] = useSearchParams();
+  // A repeated "?q=a&q=b" arrives as an array: only the first value is used.
+  const query = () => {
+    const q = params.q;
+    return (Array.isArray(q) ? q[0] : q) ?? "";
+  };
   const [res] = createResource(
-    () => [pot()?.name, params.q ?? ""] as const,
+    () => [pot()?.name, query()] as const,
     ([name, q]) => (name && q ? searchCards(name, q) : undefined),
   );
 
@@ -21,7 +26,7 @@ export default function SearchPage() {
           setParams({ q });
         }}
       >
-        <input name="q" value={params.q ?? ""} placeholder="Search cards" />
+        <input name="q" value={query()} placeholder="Search cards" />
       </form>
       <Show when={res()}>
         {(r) => (

@@ -40,7 +40,6 @@ function cardRow(id: string, pot: string, title: string): CachedCard {
     titleLc: titleToLowerKey(title),
     description: [],
     image: "",
-    position: 0,
     deleted: "",
     created: "",
     updated: "",

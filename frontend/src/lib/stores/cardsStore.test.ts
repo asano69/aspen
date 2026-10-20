@@ -58,12 +58,12 @@ vi.mock("../dexie/linkAliveQuery", () => ({
 
 // Each test uses its own pot id: the store is module-level state.
 
-function card(id: string, pot: string, position = 1): CardRecord {
+function card(id: string, pot: string): CardRecord {
   return {
     id,
     pot,
-    position,
     title: id as CardRecord["title"],
+    titleLc: id,
     description: [],
     image: "",
     deleted: "",
@@ -196,7 +196,7 @@ describe("realtime events", () => {
     // not loaded yet, and that page is read from the replica, so the
     // replica must not keep a stale copy.
     const { emit } = watch();
-    const updated = card("c-3", "c", 5);
+    const updated = card("c-3", "c");
     emit("update", updated);
     expect(cardsById["c-3"]).toBeUndefined();
     expect(cardsReplica.put).toHaveBeenCalledWith([updated]);
@@ -222,8 +222,8 @@ describe("realtime events", () => {
     nextLocalPage(cards("e", 0, 1), 1);
     await loadNextCardsPage("e");
 
-    emit("update", card("e-0", "e", 5));
-    expect(cardsById["e-0"].position).toBe(5);
+    emit("update", { ...card("e-0", "e"), description: ["changed"] });
+    expect(cardsById["e-0"].description).toEqual(["changed"]);
   });
 
   it("drops a card once an update event marks it deleted", async () => {

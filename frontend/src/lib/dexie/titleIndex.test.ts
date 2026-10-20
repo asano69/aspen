@@ -13,7 +13,6 @@ function card(id: string, pot: string, title: string): CardRecord {
     description: [],
     image: "",
     pot,
-    position: 0,
     deleted: "",
     created: "",
     updated: "",

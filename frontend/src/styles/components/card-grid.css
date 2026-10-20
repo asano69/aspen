@@ -218,6 +218,15 @@
     pointer-events: none;
   }
 
+  /* Controls over the card's corner (see CardItemView's actions prop). They
+   * sit above the card's link, so the menu is not nested inside the <a>. */
+  .card-grid-item .actions {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 3;
+  }
+
   /* Fades the card being dragged (set by CardItem and PotGridItem). */
   .card-grid-item[data-dragging] {
     opacity: 0.4;

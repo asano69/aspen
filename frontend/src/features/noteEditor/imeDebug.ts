@@ -252,6 +252,26 @@ class ImeDebug implements PluginValue {
     console.log(PREFIX, `#${this.id}`, `${time}ms`, message, detail ?? "");
   }
 
+  // Records an event in the idle trace, dropping the oldest entries.
+  private note(message: string, detail?: object) {
+    const time = Math.round(performance.now());
+    this.trace.push(
+      `${time}ms ${message} ${detail ? JSON.stringify(detail) : ""}`,
+    );
+    if (this.trace.length > TRACE_SIZE) this.trace.shift();
+  }
+
+  // Prints the recent trace (see "trace before blur" in the file comment).
+  private dumpTrace() {
+    console.log(
+      PREFIX,
+      `#${this.id}`,
+      "trace before blur",
+      "\n" + this.trace.join("\n"),
+    );
+    this.trace.length = 0;
+  }
+
   private onCompositionStart(e: Event) {
     this.composing = true;
     this.log("compositionstart", {
