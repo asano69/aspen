@@ -1,5 +1,5 @@
 import Dexie from "dexie";
-import type { CardRecord } from "../models/card";
+import type { CardRecord, CardSort } from "../models/card";
 import { db } from "./db";
 import type { Replica } from "./replica";
 import { indexCards, unindexCard } from "./titleIndex";
@@ -17,16 +17,18 @@ import { indexCards, unindexCard } from "./titleIndex";
 // is a one-shot query, and cardsStore.ts is responsible for pushing results
 // into the Solid store itself (see mergeCards there).
 
-// Returns up to `limit` cards from potId's cache, starting after `skip`
-// cards, newest first (descending creation time). The order comes straight
-// from the [pot+created] index, so a page request costs O(skip + limit).
+// cards from potId's cache, starting after `skip`
+// cards, newest first by `sort` (creation or edit time). The order comes
+// straight from the [pot+<sort>] index, so a page request costs
+// O(skip + limit).
 export function queryCardsPage(
   potId: string,
   skip: number,
   limit: number,
+  sort: CardSort = "created",
 ): Promise<CardRecord[]> {
   return db.cards
-    .where("[pot+created]")
+    .where(`[pot+${sort}]`)
     .between([potId, Dexie.minKey], [potId, Dexie.maxKey])
     .reverse()
     .offset(skip)

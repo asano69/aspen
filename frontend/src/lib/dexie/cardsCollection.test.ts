@@ -38,6 +38,22 @@ describe("Dexie cards cache", () => {
     expect(ids(await queryCardsPage("pot-1", 0, 10))).toEqual(["b"]);
   });
 
+  it("orders by edit time when asked to", async () => {
+    await cardsReplica.put([
+      { ...card("u1", "pot-5", "2026-01-01"), updated: "2026-03-01" },
+      { ...card("u2", "pot-5", "2026-01-02"), updated: "2026-02-01" },
+    ]);
+
+    expect(ids(await queryCardsPage("pot-5", 0, 10, "created"))).toEqual([
+      "u2",
+      "u1",
+    ]);
+    expect(ids(await queryCardsPage("pot-5", 0, 10, "updated"))).toEqual([
+      "u1",
+      "u2",
+    ]);
+  });
+
   it("keeps pots apart", async () => {
     await cardsReplica.put([
       card("x", "pot-2", "2026-01-01"),

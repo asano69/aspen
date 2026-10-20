@@ -1,6 +1,7 @@
 /* eslint-disable solid/reactivity --
    These are imperative store functions called from event handlers and
    async code. Reading the store there is deliberately untracked. */
+import { createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import {
   deleteCard,
@@ -9,7 +10,7 @@ import {
   updateCard,
 } from "../api/cardApi";
 import { subscribeToCollection, type CollectionEvent } from "../api/realtime";
-import type { CardRecord } from "../models/card";
+import type { CardRecord, CardSort } from "../models/card";
 import { withCardsFlip, registerCardElement } from "../cardFlip";
 import {
   cardsReplica,
@@ -35,6 +36,11 @@ const PAGE_SIZE = 100;
 const [cardsById, setCardsById] = createStore<Record<string, CardRecord>>({});
 
 export { cardsById };
+
+// How every card list is ordered. Reactive. Change it with setCardSort.
+const [cardSort, setCardSortSignal] = createSignal<CardSort>("created");
+
+export { cardSort };
 
 // The part of one pot's card list loaded so far. `ids` are in load
 // order only -- callers sort what they display (see CardList), since a
@@ -157,15 +163,22 @@ export async function loadNextCardsPage(potId: string): Promise<void> {
   if (win.loading || (win.loaded && win.ids.length >= win.total)) return;
 
   setWindows(potId, "loading", true);
+  const sort = cardSort();
   let items: CardRecord[] = [];
   try {
-    items = await queryCardsPage(potId, win.ids.length, PAGE_SIZE);
+    items = await queryCardsPage(potId, win.ids.length, PAGE_SIZE, sort);
   } catch (err) {
     console.error("[cards] failed to load cards page:", err);
   }
 
   // The user may have left the pot while the query was in flight.
   if (!windows[potId]) return;
+  // The order changed meanwhile: setCardSort rebuilt the window, and this
+  // page belongs to the old order.
+  if (sort !== cardSort()) {
+    setWindows(potId, "loading", false);
+    return;
+  }
 
   mergeCards(items, { skipFlip: true });
   let added = 0;
@@ -266,6 +279,20 @@ function addCreatedCard(record: CardRecord) {
   );
 }
 
+// Under the "updated" sort an edited card moves to the top of the list, so
+// one the window does not hold yet belongs in it. The card count does not
+// change: the card was already counted, it just was not loaded.
+function bringIntoWindow(record: CardRecord) {
+  if (!windows[record.pot]?.loaded) return;
+  setCardsById(record.id, record);
+  setWindows(
+    record.pot,
+    produce((w) => {
+      if (!w.ids.includes(record.id)) w.ids.push(record.id);
+    }),
+  );
+}
+
 // Applies one realtime event to the store. Wrapped in withCardsFlip so
 // a position change from another user's drag animates smoothly into
 // place instead of every card instantly snapping to its new grid slot.
@@ -278,11 +305,13 @@ function handleCardEvent(e: CollectionEvent<CardRecord>) {
     } else if (e.action === "create") {
       addCreatedCard(e.record);
     } else {
-      // The store ignores a card it does not hold, so it never grows
-      // beyond what the UI actually loaded. The replica is written
-      // regardless: the card may sit on a page of the open pot that
-      // is not loaded yet, and that page is read from the replica.
+      // The store ignores a card it does not hold (except under the
+      // "updated" sort, see bringIntoWindow), so it never grows beyond what
+      // the UI actually loaded. The replica is written regardless: the card
+      // may sit on a page of the open pot that is not loaded yet, and that
+      // page is read from the replica.
       if (cardsById[e.record.id]) setCardsById(e.record.id, e.record);
+      else if (cardSort() === "updated") bringIntoWindow(e.record);
       void cardsReplica.put([e.record]);
     }
   });
@@ -323,7 +352,7 @@ export async function resyncPot(potId: string): Promise<void> {
   let items: CardRecord[];
   let total: number;
   try {
-    items = await queryCardsPage(potId, 0, windowSize);
+    items = await queryCardsPage(potId, 0, windowSize, cardSort());
     total = await countCards(potId);
   } catch (err) {
     console.error("[cards] failed to reload cards after resync:", err);
@@ -333,6 +362,12 @@ export async function resyncPot(potId: string): Promise<void> {
   // The user may have left the pot while the reload was in flight.
   if (!windows[potId]) return;
 
+  replaceWindow(potId, items, total);
+  refreshLinkAlive();
+}
+
+// Replaces a pot's window with `items` and its card count with `total`.
+function replaceWindow(potId: string, items: CardRecord[], total: number) {
   const fresh = new Set(items.map((card) => card.id));
   const vanished = windows[potId].ids.filter((id) => !fresh.has(id));
   mergeCards(items, { skipFlip: true });
@@ -344,16 +379,41 @@ export async function resyncPot(potId: string): Promise<void> {
     }),
   );
   // A card that fell out of the window (or was actually deleted --
-  // pullAndApplyDiff above already handled that in the replica itself)
+  // a pull already handled that in the replica itself)
   // is no longer displayed, so it has no reason to still live in the UI
-  // store. Nothing here touches the SignalDB replica: a card that was
+  // store. Nothing here touches the replica: a card that was
   // merely reordered out of the window is still a live card there.
   setCardsById(
     produce((store) => {
       for (const id of vanished) delete store[id];
     }),
   );
-  refreshLinkAlive();
+}
+
+// Rebuilds a pot's window from the replica's first page in the current
+// order. The ids of the old window follow the previous order, so they cannot
+// be reused.
+async function resortPot(potId: string): Promise<void> {
+  if (!windows[potId]?.loaded) return;
+  const sort = cardSort();
+  let items: CardRecord[];
+  try {
+    items = await queryCardsPage(potId, 0, PAGE_SIZE, sort);
+  } catch (err) {
+    console.error("[cards] failed to reorder cards:", err);
+    return;
+  }
+  // The user may have left the pot, or switched the order again.
+  if (!windows[potId] || sort !== cardSort()) return;
+  replaceWindow(potId, items, windows[potId].total);
+}
+
+// Switches how the card lists are ordered. Every loaded window is rebuilt
+// in the new order.
+export function setCardSort(sort: CardSort): void {
+  if (sort === cardSort()) return;
+  setCardSortSignal(sort);
+  for (const potId of Object.keys(windows)) void resortPot(potId);
 }
 
 // Keeps every loaded pot window live through the shared cards channel and

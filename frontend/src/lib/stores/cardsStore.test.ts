@@ -15,6 +15,7 @@ import {
   potWindow,
   releasePot,
   resyncPot,
+  setCardSort,
   watchCards,
 } from "./cardsStore";
 
@@ -147,7 +148,7 @@ describe("loadNextCardsPage", () => {
     nextLocalPage(cards("a", 6, 101), 149);
     await loadNextCardsPage("a");
 
-    expect(queryCardsPage).toHaveBeenLastCalledWith("a", 99, 100);
+    expect(queryCardsPage).toHaveBeenLastCalledWith("a", 99, 100, "created");
     expect(potWindow("a")?.ids).toHaveLength(100);
     expect(cardsById["a-100"]).toBeDefined();
   });
@@ -253,6 +254,44 @@ describe("realtime events", () => {
   });
 });
 
+describe("setCardSort", () => {
+  it("rebuilds a loaded window from the first page in the new order", async () => {
+    nextLocalPage(cards("n", 0, 3), 3);
+    await loadNextCardsPage("n");
+
+    vi.mocked(queryCardsPage).mockResolvedValueOnce([
+      card("n-9", "n"),
+      card("n-0", "n"),
+    ]);
+    setCardSort("updated");
+
+    await vi.waitFor(() =>
+      expect(potWindow("n")?.ids).toEqual(["n-9", "n-0"]),
+    );
+    expect(queryCardsPage).toHaveBeenLastCalledWith("n", 0, 100, "updated");
+    expect(potWindow("n")?.total).toBe(3);
+    expect(cardsById["n-1"]).toBeUndefined();
+
+    releasePot("n");
+    setCardSort("created");
+  });
+
+  it("brings an edited card the window does not hold to the top under the updated sort", async () => {
+    setCardSort("updated");
+    const { emit } = watch();
+    nextLocalPage(cards("o", 0, 2), 3);
+    await loadNextCardsPage("o");
+
+    emit("update", card("o-9", "o"));
+
+    expect(potWindow("o")?.ids).toEqual(["o-0", "o-1", "o-9"]);
+    expect(potWindow("o")?.total).toBe(3);
+
+    releasePot("o");
+    setCardSort("created");
+  });
+});
+
 describe("releasePot", () => {
   it("drops the window and every card of the pot", async () => {
     nextLocalPage(cards("f", 0, 3), 3);
@@ -311,7 +350,7 @@ describe("resyncPot", () => {
     await resyncPot("i");
 
     expect(queryCardsPage).toHaveBeenCalledTimes(1);
-    expect(queryCardsPage).toHaveBeenCalledWith("i", 0, 200);
+    expect(queryCardsPage).toHaveBeenCalledWith("i", 0, 200, "created");
     expect(potWindow("i")?.total).toBe(251);
   });
 

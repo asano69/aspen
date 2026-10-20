@@ -68,6 +68,10 @@ class ReplicaDB extends Dexie {
     this.version(7).stores({
       cards: "id, pot, [pot+created], [pot+titleLc]",
     });
+    // Version 8 added [pot+updated], for listing a pot's cards by edit time.
+    this.version(8).stores({
+      cards: "id, pot, [pot+created], [pot+updated], [pot+titleLc]",
+    });
   }
 }
 

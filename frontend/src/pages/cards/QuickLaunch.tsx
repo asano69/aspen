@@ -5,6 +5,8 @@ import PotIcon from "@/components/PotIcon";
 import { potCoverURL } from "@/lib/api/pots";
 import { Check, ChevronDown } from "@/lib/icons";
 import { orderedPots } from "@/lib/stores/potsStore";
+import { cardSort, setCardSort } from "@/lib/stores/cardsStore";
+import type { CardSort } from "@/lib/models/card";
 import {
   DISPLAY_MODES,
   potsDisplayMode,
@@ -12,6 +14,25 @@ import {
   type DisplayMode,
 } from "@/lib/stores/displayModeStore";
 import { usePot } from "../pots/PotContext";
+
+// The orders a pot's card list supports, by the label the menu shows.
+const CARD_SORTS: Record<string, CardSort> = {
+  Modified: "updated",
+  Created: "created",
+};
+
+const sortLabel = (sort: CardSort) =>
+  sort === "updated" ? "Modified" : "Created";
+
+// Outside a pot (the root page) the sort menu is still a dummy.
+const DUMMY_SORT_OPTIONS = [
+  "Modified",
+  "Created",
+  "Last visited",
+  "Most linked",
+  "Most viewed",
+  "Title",
+];
 
 interface QuickMenuProps {
   // Class naming this particular menu (e.g. "page-sort-menu"). Applied to
@@ -111,14 +132,11 @@ export default function QuickLaunch() {
           <QuickMenu
             menuClass="page-sort-menu"
             header="Sort by"
-            options={[
-              "Modified",
-              "Created",
-              "Last visited",
-              "Most linked",
-              "Most viewed",
-              "Title",
-            ]}
+            options={pot() ? Object.keys(CARD_SORTS) : DUMMY_SORT_OPTIONS}
+            value={pot() ? sortLabel(cardSort()) : undefined}
+            onChange={(label) => {
+              if (pot()) setCardSort(CARD_SORTS[label]);
+            }}
           />
           <QuickMenu
             menuClass="page-filter-menu"

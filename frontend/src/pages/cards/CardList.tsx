@@ -12,11 +12,13 @@ import Loading from "@/components/Loading";
 import CardItem from "./CardItem";
 import CardGrid from "./CardGrid";
 import {
+  cardSort,
   cardsById,
   loadNextCardsPage,
   moveCardsToPot,
   potWindow,
 } from "@/lib/stores/cardsStore";
+import { compareCards } from "@/lib/models/card";
 import { useDragEnd } from "@/lib/dragEnd";
 import { useTitle } from "@/lib/useTitle";
 import { useFooterSlot } from "@/lib/footerSlot";
@@ -50,19 +52,15 @@ export default function CardList() {
     }
   });
 
-  // Newest card first. "created" is a fixed-format string, so it compares
-  // correctly as text. id breaks ties, in the same (descending) direction as
-  // the replica's [pot+created] index. Only the loaded window is sorted, and
-  // the store keeps it live through realtime create/update/delete events.
+  // Newest card first by the chosen timestamp (see compareCards, which
+  // orders like the replica's [pot+<sort>] index). Only the loaded window is
+  // sorted, and the store keeps it live through realtime
+  // create/update/delete events.
   const cards = createMemo(() =>
     (potWindow(pot()?.id)?.ids ?? [])
       .map((id) => cardsById[id])
       .filter((card) => card !== undefined)
-      .sort(
-        (a, b) =>
-          (a.created < b.created ? 1 : a.created > b.created ? -1 : 0) ||
-          b.id.localeCompare(a.id),
-      ),
+      .sort(compareCards(cardSort())),
   );
 
   // Footer's status-bar slot: this pot's total card count as reported

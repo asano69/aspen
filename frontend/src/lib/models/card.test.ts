@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   collapseGridTitleWhitespace,
+  compareCards,
   deriveCardGridTitle,
   type CardRecord,
 } from "./card";
@@ -56,6 +57,27 @@ describe("collapseGridTitleWhitespace (phase 3: title -> cardGridTitle)", () => 
     ]) {
       expect(collapseGridTitleWhitespace(title)).toBe(title);
     }
+  });
+});
+
+describe("compareCards", () => {
+  const a = { id: "a", created: "2026-01-01", updated: "2026-03-01" };
+  const b = { id: "b", created: "2026-02-01", updated: "2026-02-01" };
+  const cards = [a, b] as CardRecord[];
+
+  it("orders newest first by the chosen timestamp", () => {
+    const ids = (sort: "created" | "updated") =>
+      [...cards].sort(compareCards(sort)).map((c) => c.id);
+    expect(ids("created")).toEqual(["b", "a"]);
+    expect(ids("updated")).toEqual(["a", "b"]);
+  });
+
+  it("breaks ties by descending id", () => {
+    const tied = [a, { ...a, id: "z" }] as CardRecord[];
+    expect(tied.sort(compareCards("created")).map((c) => c.id)).toEqual([
+      "z",
+      "a",
+    ]);
   });
 });
 

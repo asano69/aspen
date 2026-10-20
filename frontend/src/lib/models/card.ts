@@ -113,3 +113,17 @@ export function deriveCardGridTitle(
 ): CardGridTitle {
   return collapseGridTitleWhitespace(card.title) as CardGridTitle;
 }
+
+// The timestamp a card list is ordered by. Both are fixed-format strings
+// sent by the server, so they compare correctly as text.
+export type CardSort = "created" | "updated";
+
+// Orders cards newest first by `sort`. The id breaks ties in the same
+// (descending) direction as the replica's [pot+<sort>] index.
+export function compareCards(
+  sort: CardSort,
+): (a: CardRecord, b: CardRecord) => number {
+  return (a, b) =>
+    (a[sort] < b[sort] ? 1 : a[sort] > b[sort] ? -1 : 0) ||
+    b.id.localeCompare(a.id);
+}
