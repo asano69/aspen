@@ -37,8 +37,16 @@ const [cardsById, setCardsById] = createStore<Record<string, CardRecord>>({});
 
 export { cardsById };
 
-// How every card list is ordered. Reactive. Change it with setCardSort.
-const [cardSort, setCardSortSignal] = createSignal<CardSort>("created");
+const SORT_KEY = "cardSort";
+
+// Falls back to "created" for a missing or unknown stored value.
+function readStoredSort(): CardSort {
+  return localStorage.getItem(SORT_KEY) === "updated" ? "updated" : "created";
+}
+
+// How every card list is ordered. Reactive. Change it with setCardSort. The
+// choice is kept in localStorage, so it survives a reload.
+const [cardSort, setCardSortSignal] = createSignal<CardSort>(readStoredSort());
 
 export { cardSort };
 
@@ -412,6 +420,7 @@ async function resortPot(potId: string): Promise<void> {
 // in the new order.
 export function setCardSort(sort: CardSort): void {
   if (sort === cardSort()) return;
+  localStorage.setItem(SORT_KEY, sort);
   setCardSortSignal(sort);
   for (const potId of Object.keys(windows)) void resortPot(potId);
 }
