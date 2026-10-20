@@ -33,7 +33,7 @@ export default function Login() {
     <div class="login">
       <form onSubmit={handleSubmit} class="login-form">
         <div class="login-logo">
-          <Logo size={40} showTitle />
+          <Logo size={40} showTitle showVersion />
         </div>
         <input
           type="email"
