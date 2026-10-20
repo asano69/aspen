@@ -1,6 +1,6 @@
 import { createEffect, createSignal, on, Show } from "solid-js";
 import { A, useNavigate } from "@solidjs/router";
-import { Plus, Menu, DatabasePlus } from "@/lib/icons";
+import { Plus, Menu, PackageOpen } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
 import { suggestTitles } from "@/lib/dexie/titleIndex";
 import { addPot, orderedPots } from "@/lib/stores/potsStore";
@@ -172,7 +172,7 @@ export default function TopBar(props: TopBarProps) {
             class="icon-btn"
             onClick={addLinkedPot}
           >
-            <DatabasePlus />
+            <PackageOpen />
           </button>
           <Show when={topBarPotLink()}>
             <PotMenu id={topBarPotLink()!.id} title={topBarPotLink()!.name} />
