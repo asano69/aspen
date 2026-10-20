@@ -1,6 +1,6 @@
-// Cardpot syntax is parsed by @lezer/markdown's line-oriented block
+// Cardpod syntax is parsed by @lezer/markdown's line-oriented block
 // pipeline. Its CommonMark parsers are all removed below: we retain only the
-// incremental block/inline infrastructure and install Cardpot's own grammar.
+// incremental block/inline infrastructure and install Cardpod's own grammar.
 import {
   Language,
   LanguageSupport,
@@ -26,7 +26,7 @@ import { parseTitle } from "./rules/title";
 
 export { hideContent, isIndent, isMark, revealStyle };
 
-// Names of @lezer/markdown's own parsers, which are not Cardpot node names.
+// Names of @lezer/markdown's own parsers, which are not Cardpod node names.
 // They must stay exactly as the library spells them (e.g. "InlineCode",
 // "Image"), or `remove` silently stops removing them.
 const defaultParsers = [
@@ -51,8 +51,8 @@ const defaultParsers = [
 ] as const;
 
 // `Paragraph` deliberately remains. It is the neutral leaf block provided by
-// the markdown infrastructure and is where Cardpot's inline parsers run.
-const cardpotParser = parser.configure({
+// the markdown infrastructure and is where Cardpod's inline parsers run.
+const cardpodParser = parser.configure({
   remove: defaultParsers,
   defineNodes: [
     { name: "Title", block: true },
@@ -146,27 +146,27 @@ const cardpotParser = parser.configure({
   parseBlock: [
     // Must stay first: the title line is plain text, so no other block rule
     // may see it (see rules/title.ts).
-    { name: "CardpotTitle", parse: parseTitle },
+    { name: "CardpodTitle", parse: parseTitle },
     {
-      name: "CardpotCodeBlock",
+      name: "CardpodCodeBlock",
       parse: parseCodeBlock,
       endLeaf: (_, line) => startsIndentedBlock(line, "code:") !== null,
     },
     {
-      name: "CardpotTable",
+      name: "CardpodTable",
       parse: parseTable,
       endLeaf: (_, line) => startsIndentedBlock(line, "table:") !== null,
     },
-    { name: "CardpotQuote", parse: parseQuote },
-    { name: "CardpotParagraph", parse: parseParagraph },
+    { name: "CardpodQuote", parse: parseQuote },
+    { name: "CardpodParagraph", parse: parseParagraph },
   ],
   parseInline: [
-    { name: "CardpotDecoration", parse: parseDecoration },
-    { name: "CardpotBlank", parse: parseBlank },
-    { name: "CardpotBracket", parse: parseBracket },
-    { name: "CardpotInlineCode", parse: parseInlineCode },
-    { name: "CardpotHashTag", parse: parseHashTag },
-    { name: "CardpotBareUrl", parse: parseBareUrl },
+    { name: "CardpodDecoration", parse: parseDecoration },
+    { name: "CardpodBlank", parse: parseBlank },
+    { name: "CardpodBracket", parse: parseBracket },
+    { name: "CardpodInlineCode", parse: parseInlineCode },
+    { name: "CardpodHashTag", parse: parseHashTag },
+    { name: "CardpodBareUrl", parse: parseBareUrl },
   ],
   // Nests a `code:` block's content in whatever language its metadata
   // (e.g. "code:ts") resolves to, loaded on demand -- see
@@ -175,10 +175,10 @@ const cardpotParser = parser.configure({
 });
 
 function node(name: string): NodeType {
-  const type = cardpotParser.nodeSet.types.find(
+  const type = cardpodParser.nodeSet.types.find(
     (candidate) => candidate.name === name,
   );
-  if (!type) throw new Error(`Cardpot parser is missing its ${name} node type`);
+  if (!type) throw new Error(`Cardpod parser is missing its ${name} node type`);
   return type;
 }
 
@@ -215,15 +215,15 @@ export const TableCell = node("TableCell");
 export const Indent = node("indent");
 export const Title = node("Title");
 
-const cardpotLanguageData = defineLanguageFacet({});
+const cardpodLanguageData = defineLanguageFacet({});
 
-export const cardpotSyntaxLanguage = new Language(
-  cardpotLanguageData,
-  cardpotParser,
+export const cardpodSyntaxLanguage = new Language(
+  cardpodLanguageData,
+  cardpodParser,
   [],
-  "cardpot",
+  "cardpod",
 );
 
-export function cardpotSyntax(): LanguageSupport {
-  return new LanguageSupport(cardpotSyntaxLanguage);
+export function cardpodSyntax(): LanguageSupport {
+  return new LanguageSupport(cardpodSyntaxLanguage);
 }

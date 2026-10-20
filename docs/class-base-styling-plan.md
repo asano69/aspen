@@ -1,6 +1,6 @@
 # Tailwind → プレーンCSS 移行計画
 
-Cardpotでは、Cosenseのスタイルを参考にするためにTailwindとは相性が悪い。CosenseのスタイルはSCSSで作られており、BEMのような命名規則を持たず、素の短い名前を親クラスの下にネストして使う流儀。現在は、バニラCSSでもネストが使える。
+Cardpodでは、Cosenseのスタイルを参考にするためにTailwindとは相性が悪い。CosenseのスタイルはSCSSで作られており、BEMのような命名規則を持たず、素の短い名前を親クラスの下にネストして使う流儀。現在は、バニラCSSでもネストが使える。
 
 ## 前提と方針
 
@@ -23,7 +23,7 @@ Cardpotでは、Cosenseのスタイルを参考にするためにTailwindとは�
 
 ```shell
 
-asano@spica:~/projects/cardpot/frontend (main *%)
+asano@spica:~/projects/cardpod/frontend (main *%)
 19:51 % cd .. && scripts/tailwind_inventory.sh | head
    47 src/components/layout/Sidebar.tsx
    46 src/components/layout/TopBar.tsx

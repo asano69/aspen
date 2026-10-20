@@ -8,10 +8,10 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/spf13/cobra"
 
-	"github.com/asano69/cardpot/internal/serve"
+	"github.com/asano69/cardpod/internal/serve"
 )
 
-// importCmd defines the "cardpot import" cobra command. RunE stays a thin
+// importCmd defines the "cardpod import" cobra command. RunE stays a thin
 // wrapper: open the file, then delegate to internal/serve for the import.
 func importCmd(app *pocketbase.PocketBase) *cobra.Command {
 	cmd := &cobra.Command{

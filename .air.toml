@@ -8,7 +8,7 @@ tmp_dir = "tmp"
 [build]
 args_bin = ["serve", "--dir=${CARDPOT_DATA_DIR}", "--dev"]
 bin = "./tmp/main"
-cmd = "go build -o ./tmp/main ./cmd/cardpot"
+cmd = "go build -o ./tmp/main ./cmd/cardpod"
 clean_on_exit = true
 delay = 1000
 entrypoint = ["./tmp/main"]

@@ -4,7 +4,7 @@ import { consumeIndentedLines, startsIndentedBlock } from "./indentedBlock";
 
 // A table's rows are indented relative to its `table:` declaration, and
 // cells are separated by literal tab characters. Cell contents are parsed by
-// Cardpot's normal inline parser, matching Scrapbox's table-node behavior.
+// Cardpod's normal inline parser, matching Scrapbox's table-node behavior.
 export function parseTable(cx: BlockContext, line: Line): boolean {
   const indent = startsIndentedBlock(line, "table:");
   if (indent === null) return false;

@@ -14,7 +14,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpot/internal/auth"
+	"github.com/asano69/cardpod/internal/auth"
 )
 
 // yjsAuth lets a request through to next only when its token is valid and the

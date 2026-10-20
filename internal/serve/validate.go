@@ -14,7 +14,7 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpot/internal/slug"
+	"github.com/asano69/cardpod/internal/slug"
 )
 
 // registerValidationHooks wires up every OnRecordValidate hook this

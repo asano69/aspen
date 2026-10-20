@@ -10,7 +10,7 @@
 
 ### フロントエンド
 
-- `parser/cardpot/codeLanguages.ts` が、`parseMixed` で `CodeBlock` の本文を入れ子パースしている。
+- `parser/cardpod/codeLanguages.ts` が、`parseMixed` で `CodeBlock` の本文を入れ子パースしている。
   - 宣言行(`code:ts`、`code:main.rs(rust)`)の言語名を `@codemirror/language-data` の catalog で引く。
   - 言語は初回使用時に動的 import する。読み込み完了までは `ParseContext.getSkippingParser(promise)` を返す。これは木を作らない(素のテキストのまま表示される)パーサで、Promise の解決後に再パースが予約される。
   - **言語指定がなければハイライトしない。**
@@ -294,13 +294,13 @@ POST /api/admin/code-langs
 
 前提の `readInfo` / `codeRange` は、`firstChild` の代わりに `getChild("CodeBlockMark")` で宣言行を探す。修正しないと、`\tcode:ts` の明示指定が「言語なし」扱いになり、ハッシュ参照に流れてしまう。
 
-回帰テストを先に書く。`readInfo` を export し、`cardpotSyntaxLanguage.parser.parse` で得た木から、次の 3 ケースを確認する。
+回帰テストを先に書く。`readInfo` を export し、`cardpodSyntaxLanguage.parser.parse` で得た木から、次の 3 ケースを確認する。
 
 - `code:typescript` は `"typescript"`
 - `code:main.rs(rust)` は `"rust"`
 - `\tcode:ts`(インデント付き)は `"ts"`
 
-修正後、`parser/cardpot/README.md` 末尾の「`codeLanguages.ts` とインデント付きコードブロック(要確認)」の項を削除する。
+修正後、`parser/cardpod/README.md` 末尾の「`codeLanguages.ts` とインデント付きコードブロック(要確認)」の項を削除する。
 
 ### 7.4 結果の更新
 

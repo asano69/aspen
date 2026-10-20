@@ -1,6 +1,6 @@
-# Cardpot
+# Cardpod
 
-Cardpot is a card box for thinkers.
+Cardpod is a card box for thinkers.
 
 <img src="../frontend/public/favicon.svg" width="100" align="right" />
 
@@ -15,7 +15,7 @@ Cardpot is a card box for thinkers.
 - 自分が思いついたこと・考えたことを保存する。
 
 ## Features
-- Cardpotでは同一ページを複数人でリアルタイムに共同編集できます。
+- Cardpodでは同一ページを複数人でリアルタイムに共同編集できます。
 
 
 ## Tech Stack
@@ -36,6 +36,6 @@ Cardpot is a card box for thinkers.
 ---
 - Logo: "Japan Flat Vectors" by maxicons (CC Attribution License)
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/asano69/cardpot)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/asano69/cardpod)
 
 

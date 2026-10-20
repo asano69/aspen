@@ -1,5 +1,5 @@
 packages:
-  - path: "github.com/asano69/cardpot/internal/api"
+  - path: "github.com/asano69/cardpod/internal/api"
     output_path: "frontend/src/lib/api/generated.ts"
     # names.go holds the Go-only named types; the frontend uses its own
     # branded types for them (see the frontmatter below).

@@ -5,7 +5,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpot/internal/wikilink"
+	"github.com/asano69/cardpod/internal/wikilink"
 )
 
 // registerLinkCleanupHooks marks the links of a card as deleted the moment

@@ -1,11 +1,11 @@
-# Cardpot パーサ構造ガイド
+# Cardpod パーサ構造ガイド
 
 「どのファイルが何を担当し、テキストがどのように構文木になるか」を把握するためのガイド
 
 ## 1. 概要
 
 - ノート本文は CodeMirror 6 上のプレーンテキスト（Yjs の `Y.Text`）で、記法は Scrapbox/Cosense 互換。
-- パーサは `@lezer/markdown` の**インクリメンタルなブロック/インライン基盤だけを再利用**している。CommonMark の文法はすべて `remove` し、Cardpot 独自の規則を差し込む（`index.ts`）。
+- パーサは `@lezer/markdown` の**インクリメンタルなブロック/インライン基盤だけを再利用**している。CommonMark の文法はすべて `remove` し、Cardpod 独自の規則を差し込む（`index.ts`）。
 - 出力は Lezer の構文木。この木を表示層（`plugins/decorations/*`）と操作層（`plugins/interactions/*`）が読む。**パーサ自身は DOM も CodeMirror の View も知らない。**
 
 パーサ全体を貫く前提は次の3つ。
@@ -19,7 +19,7 @@
 ## 2. ファイル構成
 
 ```
-parser/cardpot/
+parser/cardpod/
 ├── index.ts            # パーサの組み立て（唯一の入口）
 ├── nodeProps.ts        # NodeProp の定義（表示層との契約）
 ├── indent.ts           # インデントの定義と測定
@@ -75,11 +75,11 @@ document text
 
 | 順 | 登録名 | rule | 担当 |
 | --- | --- | --- | --- |
-| 1 | `CardpotTitle` | `title.ts` | 1行目（**必ず先頭。他の rule に1行目を見せない**） |
-| 2 | `CardpotCodeBlock` | `codeBlock.ts` | `code:` で始まる行と、それより深い行 |
-| 3 | `CardpotTable` | `table.ts` | `table:` で始まる行と、それより深い行 |
-| 4 | `CardpotQuote` | `quote.ts` | `>` で始まる行 |
-| 5 | `CardpotParagraph` | `paragraph.ts` | 上記以外すべて（空白のみの行も消費） |
+| 1 | `CardpodTitle` | `title.ts` | 1行目（**必ず先頭。他の rule に1行目を見せない**） |
+| 2 | `CardpodCodeBlock` | `codeBlock.ts` | `code:` で始まる行と、それより深い行 |
+| 3 | `CardpodTable` | `table.ts` | `table:` で始まる行と、それより深い行 |
+| 4 | `CardpodQuote` | `quote.ts` | `>` で始まる行 |
+| 5 | `CardpodParagraph` | `paragraph.ts` | 上記以外すべて（空白のみの行も消費） |
 
 parse 関数の契約（`(cx: BlockContext, line: Line) => boolean`）:
 
@@ -154,12 +154,12 @@ parse 関数の契約（`(cx: BlockContext, line: Line) => boolean`）:
 
 | 順 | 登録名 | rule | 記法 |
 | --- | --- | --- | --- |
-| 1 | `CardpotDecoration` | `decoration.ts` | `[* x]` `[/ x]` `[*/ x]` |
-| 2 | `CardpotBlank` | `blank.ts` | `[ ]`（空白のみの角括弧） |
-| 3 | `CardpotBracket` | `bracket.ts` | 上記以外の `[...]` すべて |
-| 4 | `CardpotInlineCode` | `inlineCode.ts` | `` `code` `` |
-| 5 | `CardpotHashTag` | `hashTag.ts` | `#tag` |
-| 6 | `CardpotBareUrl` | `bareUrl.ts` | `https://...`（括弧なしの URL） |
+| 1 | `CardpodDecoration` | `decoration.ts` | `[* x]` `[/ x]` `[*/ x]` |
+| 2 | `CardpodBlank` | `blank.ts` | `[ ]`（空白のみの角括弧） |
+| 3 | `CardpodBracket` | `bracket.ts` | 上記以外の `[...]` すべて |
+| 4 | `CardpodInlineCode` | `inlineCode.ts` | `` `code` `` |
+| 5 | `CardpodHashTag` | `hashTag.ts` | `#tag` |
+| 6 | `CardpodBareUrl` | `bareUrl.ts` | `https://...`（括弧なしの URL） |
 
 順序には意味がある。`[* x]` が WikiLink に、`[ ]` が WikiLink になってしまわないよう、**特殊な角括弧を先に、汎用の `bracket.ts` を後に**置いている。
 
@@ -318,7 +318,7 @@ Obsidian 風のライブプレビュー: カーソルがノードに**触れて�
 cd frontend && bun run test   # vitest
 ```
 
-- `index.test.ts` は `cardpotSyntaxLanguage.parser.parse(...).toString()` の文字列（例 `Document(Paragraph(WikiLink(WikiLinkMark,WikiLinkMark)))`）を assert する。
+- `index.test.ts` は `cardpodSyntaxLanguage.parser.parse(...).toString()` の文字列（例 `Document(Paragraph(WikiLink(WikiLinkMark,WikiLinkMark)))`）を assert する。
 - 1行目はタイトルとして解釈されるため、ヘルパー `tree()` が先頭に `T\n` を付け、結果から `Title` を取り除いている。本文の記法だけをテストしたいときはこのヘルパーを使う。
 - 位置や行番号に依存するルール（Title など）は、`title.test.ts` の `reparse()` のように**編集後のインクリメンタル再パース**も検証する。
 - 入力ケースの出典は `scrapbox-parser/test/**`、構造的なエッジケース（ネスト括弧など）は `cosy` のテスト。
@@ -328,7 +328,7 @@ cd frontend && bun run test   # vitest
 ブラウザのコンソールで、現在開いているエディタの構文木を JSON で出力できる（`debug.ts`）。
 
 ```
-cardpotDebug.dumpTree()
+cardpodDebug.dumpTree()
 ```
 
 各ノードは位置ではなく**ソーステキスト**付きで出力される。

@@ -7,8 +7,8 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpot/internal/api"
-	"github.com/asano69/cardpot/internal/slug"
+	"github.com/asano69/cardpod/internal/api"
+	"github.com/asano69/cardpod/internal/slug"
 )
 
 // newLinksTestApp boots a throwaway app with the collections

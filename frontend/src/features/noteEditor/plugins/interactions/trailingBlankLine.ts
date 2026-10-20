@@ -4,11 +4,11 @@ import {
   type Text,
   type Transaction,
 } from "@codemirror/state";
-import { isBlankLine } from "../../parser/cardpot/indent";
+import { isBlankLine } from "../../parser/cardpod/indent";
 import { isUserTransaction } from "../../userEdit";
 
 // Whether `doc` needs a blank line appended: its last line holds text. The
-// first line is the card's title (see parser/cardpot/rules/title.ts) and is
+// first line is the card's title (see parser/cardpod/rules/title.ts) and is
 // never extended: adding a line right after the first keystroke would count
 // as confirming the title (see titleCandidatePlugin.ts's headerJustCommitted).
 export function needsTrailingLine(doc: Text): boolean {

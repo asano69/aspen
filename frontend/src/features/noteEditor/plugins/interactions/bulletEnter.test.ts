@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EditorState } from "@codemirror/state";
 import { indentUnit } from "@codemirror/language";
 import type { EditorView } from "@codemirror/view";
-import { cardpotSyntax } from "../../parser/cardpot";
+import { cardpodSyntax } from "../../parser/cardpod";
 import { insertNewlineKeepingBullet } from "./bulletEnter";
 
 // insertNewlineKeepingBullet only reads `view.state` and calls
@@ -14,7 +14,7 @@ function runCommand(doc: string, cursor: number) {
     doc,
     selection: { anchor: cursor },
     // Same unit index.tsx configures: one real tab per indent level.
-    extensions: [cardpotSyntax(), indentUnit.of("\t")],
+    extensions: [cardpodSyntax(), indentUnit.of("\t")],
   });
 
   let result: EditorState = state;
@@ -30,7 +30,7 @@ function runCommand(doc: string, cursor: number) {
 }
 
 // The first line of a card is its title, which never carries a bullet (see
-// parser/cardpot/rules/title.ts). Bullet behavior is therefore exercised on
+// parser/cardpod/rules/title.ts). Bullet behavior is therefore exercised on
 // the lines after it: this runs the command on `doc` placed below a
 // throwaway title line and returns the outcome with that line removed again.
 const TITLE_LINE = "T\n";

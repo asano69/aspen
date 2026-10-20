@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { EditorState } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
-import { cardpotSyntax } from "../../parser/cardpot";
+import { cardpodSyntax } from "../../parser/cardpod";
 import { buildDecorations } from "./hangingIndent";
 
 // buildDecorations only reads `view.state` and `view.visibleRanges`, so a
 // plain fake object is enough (same pattern as bulletEnter.test.ts).
 // Returns the 1-based numbers of the lines whose last pad draws a bullet dot.
 function dotLines(doc: string): number[] {
-  const state = EditorState.create({ doc, extensions: [cardpotSyntax()] });
+  const state = EditorState.create({ doc, extensions: [cardpodSyntax()] });
   const fakeView = {
     state,
     visibleRanges: [{ from: 0, to: doc.length }],
@@ -27,7 +27,7 @@ function dotLines(doc: string): number[] {
 
 // The "style" attribute of every line decoration, by 1-based line number.
 function lineStyles(doc: string): Record<number, string> {
-  const state = EditorState.create({ doc, extensions: [cardpotSyntax()] });
+  const state = EditorState.create({ doc, extensions: [cardpodSyntax()] });
   const fakeView = {
     state,
     visibleRanges: [{ from: 0, to: doc.length }],

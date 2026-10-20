@@ -6,8 +6,8 @@ import {
 } from "@codemirror/state";
 import { indentUnit, syntaxTree } from "@codemirror/language";
 import type { SyntaxNode } from "@lezer/common";
-import { CodeBlock } from "../../parser/cardpot";
-import { countIndent, indentRangeForLine } from "../../parser/cardpot/indent";
+import { CodeBlock } from "../../parser/cardpod";
+import { countIndent, indentRangeForLine } from "../../parser/cardpod/indent";
 
 // Returns the `code:` block containing `pos`, or null (see
 // codeBlockLines.ts / hangingIndent.ts for the same CodeBlock

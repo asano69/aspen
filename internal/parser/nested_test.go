@@ -8,7 +8,7 @@ import (
 )
 
 // The fixture is shared with the frontend (see
-// frontend/src/features/noteEditor/parser/cardpot/nestedBrackets.test.ts).
+// frontend/src/features/noteEditor/parser/cardpod/nestedBrackets.test.ts).
 const nestedFixturePath = "../../testdata/nested-brackets.json"
 
 type nestedCase struct {

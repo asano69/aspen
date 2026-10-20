@@ -3,10 +3,10 @@ package serve
 import (
 	"net/http"
 
-	"github.com/asano69/cardpot/internal/realtime"
-	"github.com/asano69/cardpot/internal/replica"
-	"github.com/asano69/cardpot/internal/static"
-	"github.com/asano69/cardpot/internal/version"
+	"github.com/asano69/cardpod/internal/realtime"
+	"github.com/asano69/cardpod/internal/replica"
+	"github.com/asano69/cardpod/internal/static"
+	"github.com/asano69/cardpod/internal/version"
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -22,7 +22,7 @@ import (
 // initYjsServer once the PocketBase app instance is available.
 var yjsServer *yjsws.Server
 
-// registerRoutes wires up every HTTP route served by cardpot. It is passed
+// registerRoutes wires up every HTTP route served by cardpod. It is passed
 // to app.OnServe().BindFunc in serve.go, keeping all route/handler
 // definitions in this file while serve.go stays focused on server setup
 // and startup.

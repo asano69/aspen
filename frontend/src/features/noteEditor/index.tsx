@@ -42,7 +42,7 @@ import {
   syntaxHighlighting,
   defaultHighlightStyle,
 } from "@codemirror/language";
-import { cardpotSyntax } from "./parser/cardpot";
+import { cardpodSyntax } from "./parser/cardpod";
 import { syntaxReveal } from "./plugins/decorations/syntaxReveal";
 import { wikiLinkNavigation } from "./plugins/interactions/wikiLinkNavigation";
 import { externalLinkNavigation } from "./plugins/interactions/externalLinkNavigation";
@@ -133,7 +133,7 @@ export default function NoteEditor(props: NoteEditorProps) {
         // existing closer instead of duplicating it. Also handles
         // nested brackets on its own -- "[" twice in a row produces
         // "[[|]]" -- so this is what makes typing "[[Some Page]]"
-        // (see cardpotSyntax.ts's WikiLink) feel natural, with no
+        // (see cardpodSyntax.ts's WikiLink) feel natural, with no
         // custom handling needed for the double-bracket case.
         closeBrackets(),
         yCollab(
@@ -177,15 +177,15 @@ export default function NoteEditor(props: NoteEditorProps) {
         // Suggests existing card titles while a wiki link is typed (see
         // plugins/interactions/titleCompletion.ts).
         titleCompletion(() => pot()?.id),
-        // Cardpot's own Scrapbox-style syntax parser (see
-        // parser/cardpot/index.ts): block notation (indentation, quotes,
+        // Cardpod's own Scrapbox-style syntax parser (see
+        // parser/cardpod/index.ts): block notation (indentation, quotes,
         // `code:` and `table:` blocks) and inline notation (decorations,
         // links, images, hashtags, ...). syntaxReveal reads this same
         // syntax tree to decide when to hide/show the raw markup around
         // the cursor, Obsidian-style (see syntaxReveal.ts).
-        cardpotSyntax(),
+        cardpodSyntax(),
         // Colors tokens inside `code:` blocks once their
-        // language has resolved (see parser/cardpot/codeLanguages.ts).
+        // language has resolved (see parser/cardpod/codeLanguages.ts).
         syntaxHighlighting(defaultHighlightStyle),
         syntaxReveal,
         wikiLinkNavigation(props.potSlug, navigate),
@@ -208,11 +208,11 @@ export default function NoteEditor(props: NoteEditorProps) {
         // indentMore/indentLess (bound below) both insert/remove
         // whatever this unit is. The parser itself accepts any
         // ECMAScript whitespace as indentation (see
-        // parser/cardpot/indent.ts), so a tab is just the unit this
+        // parser/cardpod/indent.ts), so a tab is just the unit this
         // editor produces.
         indentUnit.of("\t"),
         // Every key binding, grouped by origin and ordered by
-        // precedence (see keymaps.ts): Cardpot's own Tab/Enter/`/`*`
+        // precedence (see keymaps.ts): Cardpod's own Tab/Enter/`/`*`
         // bindings win over the library keymaps that follow them,
         // since each group becomes its own keymap.of(...) extension
         // and CodeMirror's keymap() facet lets earlier extensions win
@@ -225,7 +225,7 @@ export default function NoteEditor(props: NoteEditorProps) {
     });
 
     const view = new EditorView({ state, parent: el });
-    // Lets cardpotDebug.dumpTree() in the browser console find this editor.
+    // Lets cardpodDebug.dumpTree() in the browser console find this editor.
     const unregisterDebug = registerDebugView(view);
     props.onView?.(view);
 

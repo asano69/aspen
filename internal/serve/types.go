@@ -4,7 +4,7 @@
 // mistake even though both are just text underneath.
 package serve
 
-import "github.com/asano69/cardpot/internal/api"
+import "github.com/asano69/cardpod/internal/api"
 
 // TitleCandidate is raw, unresolved text extracted from a card's live
 // document -- its header, or its first body line if the header is

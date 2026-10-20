@@ -22,8 +22,8 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
 
-	"github.com/asano69/cardpot/internal/parser"
-	"github.com/asano69/cardpot/internal/slug"
+	"github.com/asano69/cardpod/internal/parser"
+	"github.com/asano69/cardpod/internal/slug"
 )
 
 // Stage starts timing a named stage and returns the function that ends it. It

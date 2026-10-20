@@ -16,7 +16,7 @@ package main
 // script guarantees is that no line of actual text is lost.
 //
 // IMPORTANT:
-//   - Stop the cardpot server before running this.
+//   - Stop the cardpod server before running this.
 //   - Back up pb_data/ first -- this OVERWRITES every card's
 //     card_ydocs records.
 //   - This assumes the new CodeMirror editor reads its content from a
@@ -69,7 +69,7 @@ var textblockTags = map[string]bool{
 }
 
 func main() {
-	dir := flag.String("dir", envOr("CARDPOT_DATA_DIR", "pb_data"), "PocketBase data directory")
+	dir := flag.String("dir", envOr("CARDPOD_DATA_DIR", "pb_data"), "PocketBase data directory")
 	dryRun := flag.Bool("dry-run", false, "print the extracted text per card without writing anything")
 	flag.Parse()
 

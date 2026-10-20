@@ -1,6 +1,6 @@
 import type { EditorState } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
-import { Code } from "../../../parser/cardpot";
+import { Code } from "../../../parser/cardpod";
 import { enclosingCodeBlock } from "../bulletEnter";
 
 // Places where a paste is never converted: the text is inserted as it is.

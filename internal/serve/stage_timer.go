@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/asano69/cardpot/internal/wikilink"
+	"github.com/asano69/cardpod/internal/wikilink"
 )
 
 // stageTimer accumulates how long each named stage of a job took, so a slow

@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "cardpot-frontend",
+      "name": "cardpod-frontend",
       "dependencies": {
         "@codemirror/autocomplete": "",
         "@codemirror/commands": "^6.7.1",

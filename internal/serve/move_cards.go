@@ -19,8 +19,8 @@ import (
 	"github.com/pocketbase/pocketbase/tools/types"
 	"github.com/reearth/ygo/crdt"
 
-	"github.com/asano69/cardpot/internal/api"
-	"github.com/asano69/cardpot/internal/slug"
+	"github.com/asano69/cardpod/internal/api"
+	"github.com/asano69/cardpod/internal/slug"
 )
 
 // moveCardsHandler serves POST /api/admin/cards/move.

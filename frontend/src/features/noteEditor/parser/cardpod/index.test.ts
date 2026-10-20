@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cardpotSyntaxLanguage, ExternalLinkMark, Indent, isIndent } from ".";
+import { cardpodSyntaxLanguage, ExternalLinkMark, Indent, isIndent } from ".";
 
 // The first line of every document is its title (see rules/title.ts), so most
 // tests below describe body notation only. These helpers place a throwaway
@@ -9,7 +9,7 @@ import { cardpotSyntaxLanguage, ExternalLinkMark, Indent, isIndent } from ".";
 const TITLE_LINE = "T\n";
 
 function tree(input: string): string {
-  return cardpotSyntaxLanguage.parser
+  return cardpodSyntaxLanguage.parser
     .parse(TITLE_LINE + input)
     .toString()
     .replace(/^Document\(Title,?/, "Document(");
@@ -17,7 +17,7 @@ function tree(input: string): string {
 
 function indentRanges(input: string): { from: number; to: number }[] {
   const ranges: { from: number; to: number }[] = [];
-  const syntax = cardpotSyntaxLanguage.parser.parse(TITLE_LINE + input);
+  const syntax = cardpodSyntaxLanguage.parser.parse(TITLE_LINE + input);
   syntax.iterate({
     enter(node) {
       if (node.type === Indent) {
@@ -31,8 +31,8 @@ function indentRanges(input: string): { from: number; to: number }[] {
   return ranges;
 }
 
-describe("Cardpot Lezer syntax", () => {
-  it("parses Cardpot inline notation only inside paragraph blocks", () => {
+describe("Cardpod Lezer syntax", () => {
+  it("parses Cardpod inline notation only inside paragraph blocks", () => {
     expect(tree("plain [page] [* bold] `code`")).toBe(
       "Document(Paragraph(link(linkMark,linkMark),deco(decoMark,decoMark),code(codeMark,codeMark)))",
     );
@@ -98,7 +98,7 @@ describe("Cardpot Lezer syntax", () => {
   it("makes the mark on the URL's side cover the URL of a labelled link", () => {
     const markRanges = (input: string) => {
       const ranges: { from: number; to: number }[] = [];
-      cardpotSyntaxLanguage.parser.parse(TITLE_LINE + input).iterate({
+      cardpodSyntaxLanguage.parser.parse(TITLE_LINE + input).iterate({
         enter(node) {
           if (node.type === ExternalLinkMark) {
             ranges.push({
@@ -326,7 +326,7 @@ describe("Cardpot Lezer syntax", () => {
     );
   });
 
-  it("parses a quote line and delegates its content to Cardpot inline rules", () => {
+  it("parses a quote line and delegates its content to Cardpod inline rules", () => {
     expect(tree("> [* bold] [page] `code`")).toBe(
       "Document(quote(quoteMark,deco(decoMark,decoMark),link(linkMark,linkMark),code(codeMark,codeMark)))",
     );

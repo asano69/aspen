@@ -11,7 +11,7 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpot/internal/replica"
+	"github.com/asano69/cardpod/internal/replica"
 )
 
 // shutdownTimeout bounds how long Terminate waits for the node to close its

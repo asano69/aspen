@@ -1,6 +1,6 @@
 {
-  "name": "Cardpot",
-  "short_name": "Cardpot",
+  "name": "Cardpod",
+  "short_name": "Cardpod",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e1f20",

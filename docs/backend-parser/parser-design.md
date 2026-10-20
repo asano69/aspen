@@ -5,7 +5,7 @@
 
 ## 0. 何を作るのか
 
-Cardpot のカード本文は Scrapbox/Cosense 互換のテキスト記法で書かれる。フロントエンドは Lezer で解析しているが、
+Cardpod のカード本文は Scrapbox/Cosense 互換のテキスト記法で書かれる。フロントエンドは Lezer で解析しているが、
 バックエンドにも同じ規則で本文を解析するパーサが必要で、次の3つを取り出せればよい。
 
 1. **タイトル**: 1行目
@@ -677,7 +677,7 @@ func body(t *testing.T, text string) string {
 ケースの出典:
 
 - `internal/notation` の `wikilink_test.go` と `bracket_test.go` の全ケース（`WikiLinkTitles()` と `DecideBracket` の期待値に読み替える）
-- フロントエンドの `parser/cardpot/index.test.ts` と `rules/title.test.ts`
+- フロントエンドの `parser/cardpod/index.test.ts` と `rules/title.test.ts`
 - 画像: 通常 / Linked / `[[image]]`（`Strong(Image)`）、`code:` ブロック内、インラインコード内、Decoration 内、複数あるとき先頭が返ること、タイトル行内は無視されること
 - タイトル: 1行だけの文書、2行目以降が本文、タイトル行の記法が解釈されないこと（`[page]`、`code:`）、1行目が空白のみ（半角・全角）なら `Title()` が空でノードも作られず2行目もタイトルにならないこと、先頭の空白が保たれること
 

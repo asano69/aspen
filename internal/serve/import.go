@@ -1,4 +1,4 @@
-// import.go implements "cardpot import": it loads pages from a JSON export
+// import.go implements "cardpod import": it loads pages from a JSON export
 // into one pot. A card body is never written to the database directly --
 // it is committed as a Yjs update through ygo's persistence adapter
 // (ydocPersistence.StoreUpdate), the same path a live editing session
@@ -29,7 +29,7 @@ import (
 	"github.com/reearth/ygo/crdt"
 	yjsws "github.com/reearth/ygo/provider/websocket"
 
-	"github.com/asano69/cardpot/internal/slug"
+	"github.com/asano69/cardpod/internal/slug"
 )
 
 // The JSON layout accepted by Import is {"pages": [...]}. Unknown fields are

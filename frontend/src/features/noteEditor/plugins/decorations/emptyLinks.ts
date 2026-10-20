@@ -1,7 +1,7 @@
 import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { Decoration, type DecorationSet } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
-import { HashTag, WikiLink } from "../../parser/cardpot";
+import { HashTag, WikiLink } from "../../parser/cardpod";
 import { hashTagTitle } from "@/lib/models/hashTagTitle";
 import { titleToLowerKey } from "@/lib/models/slugify";
 import { decorationPlugin } from "./decorationPlugin";

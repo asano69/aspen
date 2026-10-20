@@ -5,7 +5,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/asano69/cardpot/internal/slug"
+	"github.com/asano69/cardpod/internal/slug"
 )
 
 func TestResolveTitle_LongCandidateIsTruncated(t *testing.T) {

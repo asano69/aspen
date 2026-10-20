@@ -1,3 +1,3 @@
 debug:
-    $ cardpotDebug.dumpTree()
+    $ cardpodDebug.dumpTree()
 

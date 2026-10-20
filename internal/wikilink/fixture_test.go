@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/asano69/cardpot/internal/parser"
+	"github.com/asano69/cardpod/internal/parser"
 )
 
 // The fixture is shared with the frontend (see

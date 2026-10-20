@@ -1,7 +1,7 @@
 import { EditorView } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
-import { BareUrl, ExternalLink } from "../../parser/cardpot";
-import { decideBracketNodeType } from "../../parser/cardpot/rules/bracket";
+import { BareUrl, ExternalLink } from "../../parser/cardpod";
+import { decideBracketNodeType } from "../../parser/cardpod/rules/bracket";
 
 // Makes an ExternalLink node ("[url]", "[url label]", or "[label url]")
 // act as a real hyperlink: clicking anywhere inside the node opens its
@@ -14,7 +14,7 @@ import { decideBracketNodeType } from "../../parser/cardpot/rules/bracket";
 // same as WikiLink, moving the cursor into the node's range via the
 // keyboard still reveals its raw markup for editing independently of
 // this handler.
-// The class parser/cardpot/index.ts's revealStyle gives ExternalLink and
+// The class parser/cardpod/index.ts's revealStyle gives ExternalLink and
 // BareUrl nodes. Internal links use "page-link" instead, so this never
 // matches a WikiLink.
 const EXTERNAL_LINK_CLASS = "link";

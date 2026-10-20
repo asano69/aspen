@@ -19,8 +19,8 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/reearth/ygo/crdt"
 
-	"github.com/asano69/cardpot/internal/parser"
-	"github.com/asano69/cardpot/internal/slug"
+	"github.com/asano69/cardpod/internal/parser"
+	"github.com/asano69/cardpod/internal/slug"
 )
 
 // titleWatchDebounce mirrors the frontend's own DEBOUNCE_MS

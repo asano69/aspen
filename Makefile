@@ -1,9 +1,9 @@
 .PHONY: lint
 
-include cardpot.env
+include cardpod.env
 export
 
-BINARY := cardpot
+BINARY := cardpod
 
 # Ports used by the dev servers (frontend, backend, and PocketBase-style API)
 PORTS := 3000 3001
@@ -15,12 +15,12 @@ all: # (*) Build frontend assets and start the server
 
 
 init:
-	fastmod --hidden cardpot $(notdir $(CURDIR)) --glob '!Makefile'
+	fastmod --hidden cardpod $(notdir $(CURDIR)) --glob '!Makefile'
 	fastmod --hidden CARDEX $(shell echo '$(notdir $(CURDIR))' | tr '[:lower:]' '[:upper:]') --glob '!Makefile'
-	find . -depth \( -type f -o -type d \) -name '*cardpot*' | while read -r f; do \
-		mv -- "$$f" "$$(dirname "$$f")/$$(basename "$$f" | sed 's/cardpot/$(notdir $(CURDIR))/g')"; \
+	find . -depth \( -type f -o -type d \) -name '*cardpod*' | while read -r f; do \
+		mv -- "$$f" "$$(dirname "$$f")/$$(basename "$$f" | sed 's/cardpod/$(notdir $(CURDIR))/g')"; \
 	done
-	fastmod cardpot $(notdir $(CURDIR))
+	fastmod cardpod $(notdir $(CURDIR))
 
 
 
@@ -34,11 +34,11 @@ build-front: deps-front
 
 .PHONY: build
 build: build-front
-	go build -ldflags="-X github.com/asano69/cardpot/internal/version.Version=$(VERSION)" -o $(BINARY) ./cmd/$(BINARY)
+	go build -ldflags="-X github.com/asano69/cardpod/internal/version.Version=$(VERSION)" -o $(BINARY) ./cmd/$(BINARY)
 
 .PHONY: server
 server: 
-	#./cardpot migrate up --dir=pb_data
+	#./cardpod migrate up --dir=pb_data
 	./$(BINARY) superuser upsert admin@mail.internal password --dir=pb_data
 	./$(BINARY) serve --dev
 
@@ -90,7 +90,7 @@ format:
 # 本番では、後方互換性のために残しておいたほうが良いかも。
 migrate-collections:
 	ls -1 migrations/*.go | sort | head -n -1 | xargs rm -f
-	yes | go run ./cmd/cardpot migrate collections
+	yes | go run ./cmd/cardpod migrate collections
 	ls -1 migrations/*.go | sort | head -n -1 | xargs rm -f
 
 install: build

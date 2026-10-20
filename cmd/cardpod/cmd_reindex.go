@@ -6,7 +6,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/spf13/cobra"
 
-	"github.com/asano69/cardpot/internal/serve"
+	"github.com/asano69/cardpod/internal/serve"
 )
 
 // reindexCmd rebuilds the full-text index from card_ydocs.

@@ -28,8 +28,8 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
 
-	"github.com/asano69/cardpot/internal/api"
-	"github.com/asano69/cardpot/internal/auth"
+	"github.com/asano69/cardpod/internal/api"
+	"github.com/asano69/cardpod/internal/auth"
 )
 
 // viewDedupeWindow is how long after a counted view the same user opening

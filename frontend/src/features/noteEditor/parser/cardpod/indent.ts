@@ -3,7 +3,7 @@ import type { Tree } from "@lezer/common";
 import { isIndent } from "./nodeProps";
 
 /**
- * Cardpot indentation is deliberately measured in source characters, rather
+ * Cardpod indentation is deliberately measured in source characters, rather
  * than display columns. This is the ECMAScript `^\\s+` definition: a tab, a
  * half-width space, and a full-width space therefore each contribute one
  * level.
@@ -45,7 +45,7 @@ export function leadingIndentRange(
 /**
  * Returns the parser-recorded indentation range, or reconstructs the range
  * for a whitespace-only line. @lezer/markdown omits blank lines from its
- * syntax tree, while Cardpot still needs their indentation to display and
+ * syntax tree, while Cardpod still needs their indentation to display and
  * release an empty bullet.
  */
 export function indentRangeForLine(

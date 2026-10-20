@@ -20,7 +20,7 @@ package main
 // slug.ToLowerKey(title) is left untouched, so a second run is a
 // no-op.
 //
-// IMPORTANT: stop the cardpot server before running this, so nothing
+// IMPORTANT: stop the cardpod server before running this, so nothing
 // else is writing to the same data directory at the same time.
 
 import (
@@ -31,11 +31,11 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpot/internal/slug"
+	"github.com/asano69/cardpod/internal/slug"
 )
 
 func main() {
-	dir := flag.String("dir", envOr("CARDPOT_DATA_DIR", "pb_data"), "PocketBase data directory")
+	dir := flag.String("dir", envOr("CARDPOD_DATA_DIR", "pb_data"), "PocketBase data directory")
 	flag.Parse()
 
 	app := core.NewBaseApp(core.BaseAppConfig{DataDir: *dir})

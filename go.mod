@@ -1,4 +1,4 @@
-module github.com/asano69/cardpot
+module github.com/asano69/cardpod
 
 go 1.26.0
 

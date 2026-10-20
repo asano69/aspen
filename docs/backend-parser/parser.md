@@ -3,7 +3,7 @@
 ## 0. 目的とスコープ
 
 バックエンドに、フロントエンド（Lezer）と同じ規則で動く小さな本物のパーサを持たせる。
-ノートの構文は Scrapbox/Cosense 互換で、フロントエンドは `parser/cardpot/` に実装済み。
+ノートの構文は Scrapbox/Cosense 互換で、フロントエンドは `parser/cardpod/` に実装済み。
 バックエンドは今まで `internal/notation` の手書きスキャナで済ませてきたが、構文が増えるたびに場当たり的に拡張することになる。
 
 **直近で必要なのは次の3つだけ**であり、それ以外の構文は必要になるまで実装しない。
@@ -181,7 +181,7 @@ Go の `regexp`（RE2）の `\s` は ASCII のみで、`unicode.IsSpace` は U+0
 
 ### 3.8 lockstep 規約
 
-`internal/slug` と同じ。frontend の `parser/cardpot/rules/*.ts` に対応するファイルには冒頭コメントでそれを明記し、
+`internal/slug` と同じ。frontend の `parser/cardpod/rules/*.ts` に対応するファイルには冒頭コメントでそれを明記し、
 frontend のテストケースが増えたら backend にも足す（逆も同様）。
 
 ## 4. ファイル構成
@@ -351,9 +351,9 @@ func parseDecoration(s string, pos int) (*Node, int, bool) {
 
 将来 Markdown を扱いたくなった場合は、**ノートのパーサに Markdown を混ぜず、インポート時の一方向の変換として扱う**。
 
-- Markdown ファイル（またはインポート元のテキスト）を goldmark でパースし、AST を辿って Cardpot 記法のテキストへ書き出す。
+- Markdown ファイル（またはインポート元のテキスト）を goldmark でパースし、AST を辿って Cardpod 記法のテキストへ書き出す。
 - 変換器はノートのパーサとは別のパッケージにする（例: `internal/mdimport`）。goldmark に依存するのはそこだけになる。
-- 変換結果は普通の Cardpot テキストとして保存されるので、frontend とのlockstep の対象は増えない。
+- 変換結果は普通の Cardpod テキストとして保存されるので、frontend とのlockstep の対象は増えない。
 - 具体的な変換規則（見出し・箇条書き・リンクなど）は、必要になった時点で決める。今は決めない。
 
 ## 9. 検討した選択肢（記録）

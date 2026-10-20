@@ -1,4 +1,4 @@
-// Package config loads the configuration for cardpot serve from
+// Package config loads the configuration for cardpod serve from
 // environment variables.
 package config
 
@@ -23,17 +23,17 @@ type Config struct {
 //
 // Recognised variables:
 //
-//	CARDPOT_SERVER_HOST         default "0.0.0.0"
-//	CARDPOT_SERVER_PORT         default 3000
+//	CARDPOD_SERVER_HOST         default "0.0.0.0"
+//	CARDPOD_SERVER_PORT         default 3000
 func Load() (*Config, error) {
-	port, err := envInt("CARDPOT_SERVER_PORT", 3000)
+	port, err := envInt("CARDPOD_SERVER_PORT", 3000)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := &Config{
 		Server: ServerConfig{
-			Host: envString("CARDPOT_SERVER_HOST", "0.0.0.0"),
+			Host: envString("CARDPOD_SERVER_HOST", "0.0.0.0"),
 			Port: port,
 		},
 	}

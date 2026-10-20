@@ -6,7 +6,7 @@ import {
   type DecorationSet,
 } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
-import { CodeBlock } from "../../parser/cardpot";
+import { CodeBlock } from "../../parser/cardpod";
 import { mermaidSource } from "./mermaidSource";
 
 // Replaces a `code:mermaid` block with its rendered diagram while the

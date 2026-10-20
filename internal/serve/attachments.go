@@ -11,8 +11,8 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 
-	"github.com/asano69/cardpot/internal/api"
-	"github.com/asano69/cardpot/internal/attachment"
+	"github.com/asano69/cardpod/internal/api"
+	"github.com/asano69/cardpod/internal/attachment"
 )
 
 // maxUploadBytes bounds the size of an uploaded image before processing.

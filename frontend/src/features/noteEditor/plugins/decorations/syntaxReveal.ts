@@ -7,7 +7,7 @@ import {
 import { syntaxTree } from "@codemirror/language";
 import { decorationPlugin } from "./decorationPlugin";
 import type { SyntaxNodeRef } from "@lezer/common";
-import { Deco, revealStyle, isMark, hideContent } from "../../parser/cardpot";
+import { Deco, revealStyle, isMark, hideContent } from "../../parser/cardpod";
 import { decoClasses } from "./decoClasses";
 
 // The mark decoration styling a revealable node's whole range. A deco node
@@ -65,7 +65,7 @@ class EmptyRevealWidget extends WidgetType {
 }
 
 // Generic Obsidian-style live preview: any node type tagged with
-// revealStyle (see parser/cardpot) gets its full range styled with
+// revealStyle (see parser/cardpod) gets its full range styled with
 // that CSS class at all times. While the cursor is NOT touching the
 // node, its direct mark children (tagged with isMark) are hidden --
 // so only the styled content shows. The instant the cursor enters the
@@ -74,7 +74,7 @@ class EmptyRevealWidget extends WidgetType {
 // not just the content sub-range.
 //
 // Adding a new revealable syntax (wikilinks, tags, ...) needs no
-// change here -- only new node types in parser/cardpot tagged with
+// change here -- only new node types in parser/cardpod tagged with
 // revealStyle/isMark, plus their own scan logic in parseDocument.
 function buildDecorations(view: EditorView): DecorationSet {
   const decorations = [];
@@ -113,7 +113,7 @@ function buildDecorations(view: EditorView): DecorationSet {
       }
 
       // Exactly two mark children (open/close) are expected per
-      // revealable node (see parser/cardpot's parseDocument) -- the
+      // revealable node (see parser/cardpod's parseDocument) -- the
       // node's content is whatever sits between them.
       const openMark = node.node.firstChild;
       const closeMark = node.node.lastChild;

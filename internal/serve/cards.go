@@ -13,8 +13,8 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpot/internal/api"
-	"github.com/asano69/cardpot/internal/slug"
+	"github.com/asano69/cardpod/internal/api"
+	"github.com/asano69/cardpod/internal/slug"
 )
 
 

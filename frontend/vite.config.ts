@@ -4,7 +4,7 @@ import solid from "vite-plugin-solid";
 // Single source of truth for this build: also read by __APP_NAME__ below
 // and by the index.html %APP_NAME% placeholder, so the value only has to
 // be resolved once. Backed by the same APP_NAME the Go backend reads
-// (see cardpot.env), so both sides agree without duplicating the value.
+// (see cardpod.env), so both sides agree without duplicating the value.
 const appName = process.env.APP_NAME;
 
 // index.html isn't JS, so Vite's `define` (below) can't reach it;

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/asano69/cardpot/internal/wikilink"
+	"github.com/asano69/cardpod/internal/wikilink"
 )
 
 // syncDerived brings every row derived from a card's saved text up to date:

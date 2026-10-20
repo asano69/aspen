@@ -5,8 +5,8 @@ import {
   type DecorationSet,
 } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
-import { CodeBlock } from "../../parser/cardpot";
-import { countIndent, indentRangeForLine } from "../../parser/cardpot/indent";
+import { CodeBlock } from "../../parser/cardpod";
+import { countIndent, indentRangeForLine } from "../../parser/cardpod/indent";
 import { decorationPlugin } from "./decorationPlugin";
 
 // Width of one indent level's mark element, in pixels (see

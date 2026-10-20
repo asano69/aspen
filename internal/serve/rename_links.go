@@ -32,9 +32,9 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/reearth/ygo/crdt"
 
-	"github.com/asano69/cardpot/internal/api"
-	"github.com/asano69/cardpot/internal/slug"
-	"github.com/asano69/cardpot/internal/wikilink"
+	"github.com/asano69/cardpod/internal/api"
+	"github.com/asano69/cardpod/internal/slug"
+	"github.com/asano69/cardpod/internal/wikilink"
 )
 
 // maxRenameWorkers bounds how many cards are prepared at the same time.

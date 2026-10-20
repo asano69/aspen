@@ -3,7 +3,7 @@
 理由は3つあります。
 
 1. **パース方式が根本的に別物**
-   scrapbox-parserは`convertToNodes(text, opts)`が正規表現でマッチした位置の`left`/`right`を再帰的に`convertToNodes`し直す、文字列全体を毎回舐め直す非インクリメンタルな設計（`creator.ts`参照）。一方Cardpotパーサは`@lezer/markdown`の`parseInline(cx, next, pos)` / `parseBlock(cx, line)`ベースで、CodeMirrorの差分再パース・`syntaxTree()`・`Decoration`機構すべてに乗っかっている。scrapbox-parserの出力（プレーンJSオブジェクトツリー）をCodeMirrorの`syntaxReveal.ts`や`hangingIndent.ts`が要求する`NodeType`/`SyntaxNode`に変換するアダプタを書くコストは、最初からLezerルールとして書き直すコストとほぼ変わらないか、むしろ高くつきます。
+   scrapbox-parserは`convertToNodes(text, opts)`が正規表現でマッチした位置の`left`/`right`を再帰的に`convertToNodes`し直す、文字列全体を毎回舐め直す非インクリメンタルな設計（`creator.ts`参照）。一方Cardpodパーサは`@lezer/markdown`の`parseInline(cx, next, pos)` / `parseBlock(cx, line)`ベースで、CodeMirrorの差分再パース・`syntaxTree()`・`Decoration`機構すべてに乗っかっている。scrapbox-parserの出力（プレーンJSオブジェクトツリー）をCodeMirrorの`syntaxReveal.ts`や`hangingIndent.ts`が要求する`NodeType`/`SyntaxNode`に変換するアダプタを書くコストは、最初からLezerルールとして書き直すコストとほぼ変わらないか、むしろ高くつきます。
 
 2. **拡張できない**
    `block/node/index.ts`の`combineNodeParsers(...)`は固定配列。独自構文を挟むには結局この配列を直接編集する＝実質フォークになるので、「ライブラリとして依存」のメリットがほぼ消えます。
@@ -13,7 +13,7 @@
 
 ## 構造対応表
 
-| scrapbox-parser | Cardpotパーサでの相当物 |
+| scrapbox-parser | Cardpodパーサでの相当物 |
 |---|---|
 | `convertToNodes`の配列順（precedence） | `parseInline`配列の順序（同じ思想。幸い1:1で移せる） |
 | `NodeCreator`が`match[0]`の`left`/`right`を再帰処理 | `cx.addElement(cx.elt(name, from, to, children))`で子ノードを明示的に積む |
@@ -28,14 +28,14 @@
 **フェーズ1: 単純な行内デコレーション系（既存rulesと同じ形）**
 - `HashTagNode`（`#tag`）— 正規表現一発、既存構造そのまま流用可能
 - `BlankNode`（`[ ]`）
-- `CodeNode`は既存（Cardpotの`` `code` ``と同一）
+- `CodeNode`は既存（Cardpodの`` `code` ``と同一）
 
 **フェーズ2: 汎用Decoration機構への一般化**
-現状Cardpotの`Bold`は`[* text]`固定です。scrapbox本家は`[!"#%&'()*+,-./{|}<>_~]`のどれでも良い汎用Decorationで、`*`の個数で強調レベルが変わる（`*-1`〜`*-10`）。ここは「Boldを潰してDecorationに一般化し、Boldはdecoration文字`*`の特殊表示」として実装するか判断が必要です。**簡潔さ優先なら、まず`*`だけ強度なしで対応し、他の記号は将来の別PRに回す**のが現実的だと思います（全部一度に対応するとテストケース数が爆発する）。
+現状Cardpodの`Bold`は`[* text]`固定です。scrapbox本家は`[!"#%&'()*+,-./{|}<>_~]`のどれでも良い汎用Decorationで、`*`の個数で強調レベルが変わる（`*-1`〜`*-10`）。ここは「Boldを潰してDecorationに一般化し、Boldはdecoration文字`*`の特殊表示」として実装するか判断が必要です。**簡潔さ優先なら、まず`*`だけ強度なしで対応し、他の記号は将来の別PRに回す**のが現実的だと思います（全部一度に対応するとテストケース数が爆発する）。
 
 **フェーズ3: 角括弧の多義性解決（一番の難所）**
 scrapboxでは`[...]`の中身によって以下すべてに化けます：
-- `[title]` → 内部リンク（Cardpotの`WikiLink`と同型）
+- `[title]` → 内部リンク（Cardpodの`WikiLink`と同型）
 - `[http://...]` → 外部リンク or 画像（拡張子で判定）
 - `[title http://...]` / `[http://... title]` → リンク+ラベル
 - `[N35..,E139..]` → GoogleMap
@@ -57,7 +57,7 @@ scrapbox-parser側は「正規表現の優先順位配列」で解決してい�
 
 ## テスト移植の具体的なやり方
 
-`scrapbox-parser/test/line/*.test.ts`の入力文字列だけを抜き出し、期待値はscrapbox-parserのAST構造ではなく、**Cardpotパーサの`.toString()`表現**（`index.test.ts`が既にやっている形）に書き換えて新規に書き起こす。スナップショットファイル自体は移植せず、「この入力文字列がこのノード種別としてパースされるべき」という**意図だけ**を引き継ぐイメージです。
+`scrapbox-parser/test/line/*.test.ts`の入力文字列だけを抜き出し、期待値はscrapbox-parserのAST構造ではなく、**Cardpodパーサの`.toString()`表現**（`index.test.ts`が既にやっている形）に書き換えて新規に書き起こす。スナップショットファイル自体は移植せず、「この入力文字列がこのノード種別としてパースされるべき」という**意図だけ**を引き継ぐイメージです。
 
 ```ts
 // 例：hashTag.test.ts の意図を移植
@@ -71,6 +71,6 @@ it("Only `#` is not hashTag", () => {
 
 ## 独自構文との共存
 
-`parseInline`/`parseBlock`配列に追加する形なので、scrapbox互換ルールと独自ルールは同じ配列の中で優先順位を明示的に決められます（これがscrapbox-parser自体にはできなかった点）。既存の`WikiLink`（Cardpot独自の`[title]`ナビゲーション付き）や`Bold`（`[* text]`）はそのまま活かして、scrapbox完全互換が必要な部分だけ追加していくのが一番手戻りが少ないはずです。
+`parseInline`/`parseBlock`配列に追加する形なので、scrapbox互換ルールと独自ルールは同じ配列の中で優先順位を明示的に決められます（これがscrapbox-parser自体にはできなかった点）。既存の`WikiLink`（Cardpod独自の`[title]`ナビゲーション付き）や`Bold`（`[* text]`）はそのまま活かして、scrapbox完全互換が必要な部分だけ追加していくのが一番手戻りが少ないはずです。
 
 まずどこから着手したいですか？ 個人的には**フェーズ1（HashTag）**が一番リスクが低く、既存の`rules/`ディレクトリの型をそのまま複製できるので足慣らしに向いていると思います。

@@ -13,7 +13,7 @@ left untouched -- this script only adds data, it never deletes or
 modifies the existing file.
 
 IMPORTANT:
-  - Stop the cardpot server before running this, so nothing else is
+  - Stop the cardpod server before running this, so nothing else is
     writing to data.db at the same time (SQLITE_BUSY risk otherwise).
   - Back up pb_data/ first. This script writes directly to the
     database file.

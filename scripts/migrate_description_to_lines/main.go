@@ -20,7 +20,7 @@ package main
 // through the normal Dexie pull.
 //
 // IMPORTANT:
-//   - Stop the cardpot server before running this, so nothing else is
+//   - Stop the cardpod server before running this, so nothing else is
 //     writing to the same data directory at the same time.
 //   - Back up pb_data/ first.
 //   - Run it together with the backend change that starts writing the new
@@ -41,7 +41,7 @@ import (
 )
 
 func main() {
-	dir := flag.String("dir", envOr("CARDPOT_DATA_DIR", "pb_data"), "PocketBase data directory")
+	dir := flag.String("dir", envOr("CARDPOD_DATA_DIR", "pb_data"), "PocketBase data directory")
 	dryRun := flag.Bool("dry-run", false, "print what would change without writing anything")
 	flag.Parse()
 
