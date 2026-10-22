@@ -6,6 +6,9 @@ Cardpod is a card box for thinkers.
 
 
 
+    cardpod export out.zip --dir=pb_data
+
+
 ## Purpose
 - アイデアや言葉を保存する汎用的なカード箱
 - 

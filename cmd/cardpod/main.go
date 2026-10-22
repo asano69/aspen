@@ -41,6 +41,7 @@ func main() {
 	root.AddCommand(
 		serveCmd(app),
 		importCmd(app),
+		exportCmd(app),
 		reindexCmd(app),
 		pbcmd.NewSuperuserCommand(app),
 	)
