@@ -18,26 +18,23 @@ Cardpod is a card box for thinkers.
 - 自分が思いついたこと・考えたことを保存する。
 
 ## Features
-- Cardpodでは同一ページを複数人でリアルタイムに共同編集できます。
-
+- リアルタイム共同編集
+- 実ファイル・編集バッファの双方向同期
+- 分散型識別子を用いたフェデレーション 
 
 ## Tech Stack
 ### backend
 - Go
 - PocketBase v0.39+
-- reearth/ygo v1.49.5
 - blevesearch/bleve
 
 ### frontend
 - Solid.js v1.9
 - Kobalte v0.13+
-- Tailwind v4
 - dnd-kit v0.5.0
 - CodeMirror6
-- yjs
 
 ---
-- Logo: "Japan Flat Vectors" by maxicons (CC Attribution License)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/asano69/cardpod)
 

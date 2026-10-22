@@ -63,14 +63,12 @@ import (
 ### backend
 - Go 1.26.0 (1.27はライブラリ非対応)
 - PocketBase v0.39+
-- reearth/ygo v1.49.5
 - centrifugal/centrifuge v0.39+
 - google/mangle
 - blevesearch/bleve
 
 ### frontend
 - Solid.js v1.9
-- yjs
 - Dexie.js
 - CodeMirror6
 - sigma.js v4
