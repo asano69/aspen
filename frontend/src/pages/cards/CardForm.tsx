@@ -1,6 +1,5 @@
 import { createSignal, createEffect, Show } from "solid-js";
 import { useParams, A } from "@solidjs/router";
-import type * as Y from "yjs";
 import DraftCardEditor from "@/features/noteEditor/DraftCardEditor";
 import ExistingCardEditor from "@/features/noteEditor/ExistingCardEditor";
 import Loading from "@/components/Loading";
@@ -38,7 +37,8 @@ export default function CardForm() {
   const [draft, setDraft] = createSignal<Draft | undefined>(
     params.cardSlug ? undefined : {},
   );
-  const [draftYdoc, setDraftYdoc] = createSignal<Y.Doc>();
+  // The text of the draft that just became a card (see handleCreated).
+  const [draftText, setDraftText] = createSignal<string>();
   // The title the open card duplicates, announced by the server (see
   // lib/stores/mergeAlertStore.ts).
   const mergeTarget = () => mergeTargetOf(cardId());
@@ -107,7 +107,7 @@ export default function CardForm() {
     if (!params.cardSlug) {
       openRequest++;
       setCardId(undefined);
-      setDraftYdoc(undefined);
+      setDraftText(undefined);
       setDraft({});
       setFocusSelection(undefined);
       return;
@@ -128,7 +128,7 @@ export default function CardForm() {
       openRequest++;
       return;
     }
-    setDraftYdoc(undefined);
+    setDraftText(undefined);
     setFocusSelection(undefined);
     // The card is looked up
     // The card is looked up on the server, not in the store, so nothing
@@ -193,12 +193,12 @@ export default function CardForm() {
 
   const handleCreated = (
     id: string,
-    ydoc: Y.Doc,
+    text: string,
     selection: { anchor: number; head: number },
   ) => {
     // Keep the caret where the user left it in the draft editor.
     setFocusSelection(selection);
-    setDraftYdoc(ydoc);
+    setDraftText(text);
     // The draft's URL is already committed, so it is safe to replace it now.
     const title = cardsById[id]?.title;
     if (title) replaceUrl(titleToSegment(title));
@@ -310,8 +310,7 @@ export default function CardForm() {
               <ExistingCardEditor
                 cardId={id}
                 potSlug={() => params.slug}
-                initialYdoc={draftYdoc()}
-                existingTitle={cardsById[id]?.title}
+                initialText={draftText()}
                 onContentSnapshot={(fn) => setContentSnapshot(() => fn)}
                 onReady={setEditorReady}
                 initialSelection={focusSelection()}

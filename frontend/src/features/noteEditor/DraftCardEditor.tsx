@@ -1,5 +1,4 @@
-import { createSignal, onCleanup } from "solid-js";
-import * as Y from "yjs";
+import { createSignal } from "solid-js";
 import type { EditorView } from "@codemirror/view";
 import NoteEditor from "./index";
 import RelatedCards from "@/pages/cards/RelatedCards";
@@ -13,26 +12,16 @@ export interface DraftCardEditorProps {
   initialTitle?: string;
   onCreated: (
     cardId: string,
-    ydoc: Y.Doc,
+    text: string,
     selection: { anchor: number; head: number },
   ) => void;
 }
 
-// A draft's Y.Doc is purely in-memory: no WebsocketProvider, and (unlike
-// an existing card, see ExistingCardEditor.tsx) no IndexedDB persistence
-// either. Persisting a draft under a slug-derived key used to leave stale
-// updates behind whenever a draft was abandoned without confirming a
-// title -- revisiting the same nonexistent page later would then merge
-// that old content into the fresh doc unpredictably (e.g. "test" ->
-// "testtest", or worse). Keeping the draft in memory only avoids that
-// entirely; once createCard succeeds, the Y.Doc itself -- not a
-// re-encoded snapshot -- is handed to ExistingCardEditor, which reuses
-// the same instance before connecting to the room. Handing off the live
-// doc instead of Y.encodeStateAsUpdate()/Y.applyUpdate() removes any risk
-// of the snapshot missing an edit that hadn't yet been reflected at the
-// moment it was taken.
+// A draft is purely local: no connection to the server and nothing stored
+// anywhere, so an abandoned draft leaves no trace. Once createCard succeeds,
+// the draft's text is handed to ExistingCardEditor, which pushes it to the new
+// card's room as its first edit.
 export default function DraftCardEditor(props: DraftCardEditorProps) {
-  const ydoc = new Y.Doc();
   const [saveError, setSaveError] = createSignal(false);
   let creating = false;
   let created = false;
@@ -50,11 +39,12 @@ export default function DraftCardEditor(props: DraftCardEditorProps) {
       setSaveError(false);
       // Read after the request: the user may have kept typing or moved
       // the caret while it was in flight.
+      const text = view?.state.doc.toString() ?? "";
       const { anchor, head } = view?.state.selection.main ?? {
         anchor: 0,
         head: 0,
       };
-      props.onCreated(result.card.id, ydoc, { anchor, head });
+      props.onCreated(result.card.id, text, { anchor, head });
     } catch (error) {
       console.error("[draft-card-editor] failed to create card:", error);
       setSaveError(true);
@@ -62,13 +52,6 @@ export default function DraftCardEditor(props: DraftCardEditorProps) {
       creating = false;
     }
   };
-
-  onCleanup(() => {
-    // Only destroy the Y.Doc if it was never handed off: once
-    // ExistingCardEditor has taken ownership, this component must leave
-    // it alone rather than destroying the doc out from under it.
-    if (!created) ydoc.destroy();
-  });
 
   return (
     <>
@@ -79,7 +62,6 @@ export default function DraftCardEditor(props: DraftCardEditorProps) {
         </p>
       )}
       <NoteEditor
-        ydoc={ydoc}
         onView={(v) => (view = v)}
         potSlug={props.potSlug}
         initialTitle={props.initialTitle}

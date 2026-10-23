@@ -6,6 +6,7 @@
       "name": "cardpod-frontend",
       "dependencies": {
         "@codemirror/autocomplete": "",
+        "@codemirror/collab": "^6.1.1",
         "@codemirror/commands": "^6.7.1",
         "@codemirror/language-data": "^6.5.1",
         "@codemirror/state": "^6.5.0",
@@ -22,8 +23,8 @@
         "@sigma/node-image": "^4.0.0",
         "@solidjs/router": "^0.16.1",
         "centrifuge": "^5.7.4",
-        "dexie": "^4.0.11",
         "cm-websocket": "github:asano69/cm-websocket",
+        "dexie": "^4.0.11",
         "globals": "^17.7.0",
         "graphology": "^0.26.0",
         "graphology-layout-force": "^0.2.4",

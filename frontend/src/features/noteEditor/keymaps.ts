@@ -10,9 +10,13 @@
 // can replace, reorder, or drop individual groups wholesale instead of
 // editing editor setup code directly.
 import type { KeyBinding } from "@codemirror/view";
-import { defaultKeymap, indentMore, indentLess } from "@codemirror/commands";
+import {
+  defaultKeymap,
+  historyKeymap,
+  indentMore,
+  indentLess,
+} from "@codemirror/commands";
 import { closeBracketsKeymap } from "@codemirror/autocomplete";
-import { yUndoManagerKeymap } from "y-codemirror.next";
 import { insertNewlineKeepingBullet } from "./plugins/interactions/bulletEnter";
 import { wrapBacktick, wrapBold } from "./plugins/interactions/wrapSelection";
 
@@ -47,9 +51,9 @@ export const closeBracketsKeymapGroup: KeymapGroup = {
   bindings: closeBracketsKeymap,
 };
 
-export const yUndoKeymapGroup: KeymapGroup = {
-  id: "yjs-undo",
-  bindings: yUndoManagerKeymap,
+export const historyKeymapGroup: KeymapGroup = {
+  id: "history",
+  bindings: historyKeymap,
 };
 
 export const defaultKeymapGroup: KeymapGroup = {
@@ -64,6 +68,6 @@ export const defaultKeymapGroup: KeymapGroup = {
 export const defaultKeymapGroups: readonly KeymapGroup[] = [
   cardpodKeymap,
   closeBracketsKeymapGroup,
-  yUndoKeymapGroup,
+  historyKeymapGroup,
   defaultKeymapGroup,
 ];
