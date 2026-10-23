@@ -7,12 +7,10 @@ import (
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/reearth/ygo/crdt"
 )
 
 // newImportTestApp extends newLinksTestApp with what Import touches beyond
-// it: the card_ydocs log and the cards' image and position fields. The log
-// needs a "created" field because ydocPersistence replays it in that order.
+// it: the cards' image field. A note is a file in the app's data directory.
 func newImportTestApp(t *testing.T) core.App {
 	t.Helper()
 	app := newLinksTestApp(t)
@@ -24,16 +22,6 @@ func newImportTestApp(t *testing.T) core.App {
 	cards.Fields.Add(&core.TextField{Name: "image"})
 	if err := app.Save(cards); err != nil {
 		t.Fatalf("extend cards collection: %v", err)
-	}
-
-	ydocs := core.NewBaseCollection("card_ydocs")
-	ydocs.Fields.Add(
-		&core.TextField{Name: "card"},
-		&core.TextField{Name: "payload"},
-		&core.AutodateField{Name: "created", OnCreate: true},
-	)
-	if err := app.Save(ydocs); err != nil {
-		t.Fatalf("create card_ydocs collection: %v", err)
 	}
 	return app
 }
@@ -47,19 +35,18 @@ func runImport(t *testing.T, app core.App, pot, json string) ImportResult {
 	return result
 }
 
-// cardText replays a card's stored updates, exactly like a peer joining
-// its room would.
+// cardText reads the note file of a card.
 func cardText(t *testing.T, app core.App, cardID string) string {
 	t.Helper()
-	stored, err := (&ydocPersistence{app: app}).LoadDoc(cardID)
+	card, err := app.FindRecordById("cards", cardID)
 	if err != nil {
-		t.Fatalf("LoadDoc: %v", err)
+		t.Fatalf("find card: %v", err)
 	}
-	doc := crdt.New()
-	if err := doc.ApplyUpdate(stored); err != nil {
-		t.Fatalf("apply stored updates: %v", err)
+	text, err := readNote(app, card)
+	if err != nil {
+		t.Fatalf("readNote: %v", err)
 	}
-	return doc.GetText("content").ToString()
+	return text
 }
 
 func cardInPot(t *testing.T, app core.App, pot, titleLc string) *core.Record {
@@ -177,8 +164,6 @@ func TestImport_OverwritesCardWithSameTitle(t *testing.T) {
 	app := newImportTestApp(t)
 	pot := createPot(t, app, "pot1")
 
-	// The emoji is outside the BMP, so replacing it only works if the
-	// deleted length is counted in UTF-16 code units.
 	runImport(t, app, "pot1", `{"pages":[{"title":"a","lines":["a","😀 old"]}]}`)
 	before := cardInPot(t, app, pot.Id, "a")
 

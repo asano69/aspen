@@ -1,20 +1,7 @@
 package wikilink
 
-import (
-	"testing"
-	"unicode/utf16"
-)
+import "testing"
 
-// applyEdits applies edits (ordered from the end) to text in UTF-16 units, like
-// a Y.Text would.
-func applyEdits(text string, edits []Edit) string {
-	units := utf16.Encode([]rune(text))
-	for _, e := range edits {
-		tail := append(utf16.Encode([]rune(e.Insert)), units[e.From+e.Len:]...)
-		units = append(units[:e.From], tail...)
-	}
-	return string(utf16.Decode(units))
-}
 
 func TestRenameEdits(t *testing.T) {
 	cases := []struct {
@@ -40,7 +27,7 @@ func TestRenameEdits(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			got := applyEdits(tt.text, RenameEdits(tt.text, tt.oldLc, tt.newTitle))
+			got := ApplyEdits(tt.text, RenameEdits(tt.text, tt.oldLc, tt.newTitle))
 			if got != tt.want {
 				t.Errorf("result = %q, want %q", got, tt.want)
 			}

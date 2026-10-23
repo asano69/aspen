@@ -64,6 +64,17 @@ func RenameEdits(text, oldLc, newTitle string) []Edit {
 	return edits
 }
 
+// ApplyEdits applies edits, as RenameEdits returns them (ordered from the end
+// of the text), to text and returns the result.
+func ApplyEdits(text string, edits []Edit) string {
+	units := utf16.Encode([]rune(text))
+	for _, e := range edits {
+		tail := append(utf16.Encode([]rune(e.Insert)), units[e.From+e.Len:]...)
+		units = append(units[:e.From], tail...)
+	}
+	return string(utf16.Decode(units))
+}
+
 func utf16Len(s string) int {
 	return len(utf16.Encode([]rune(s)))
 }

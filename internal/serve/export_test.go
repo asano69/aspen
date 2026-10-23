@@ -29,7 +29,6 @@ func TestExport_WritesEveryCardOfEveryPotAsCsn(t *testing.T) {
 		{"title":"c","lines":["c"]},
 		{"title":"gone","lines":["gone"]}
 	]}`)
-	yjsServer = nil // no room is loaded: every card is read from its stored log
 	softDelete(t, app, cardInPot(t, app, src.Id, "gone"))
 
 	var buf bytes.Buffer

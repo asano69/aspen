@@ -1,4 +1,3 @@
-// internal/serve/ydoc_test.go
 package serve
 
 import (
@@ -75,9 +74,8 @@ func TestUpdatePreview_UpdatesDescriptionAndFirstImage(t *testing.T) {
 	}
 
 	record := createCard(t, app, "pot1", "Title")
-	persistence := &ydocPersistence{app: app}
 	text := "Title\n`[https://example.com/hidden.png]`\n[https://example.com/first.png]\n[https://example.com/later.jpg]"
-	if err := persistence.updatePreview(record.Id, text); err != nil {
+	if err := updatePreview(app, record.Id, text); err != nil {
 		t.Fatalf("updatePreview: %v", err)
 	}
 
@@ -96,7 +94,7 @@ func TestUpdatePreview_UpdatesDescriptionAndFirstImage(t *testing.T) {
 
 	// Saving the same text again must not touch the record.
 	before := updated.GetDateTime("updated")
-	if err := persistence.updatePreview(record.Id, text); err != nil {
+	if err := updatePreview(app, record.Id, text); err != nil {
 		t.Fatalf("updatePreview (again): %v", err)
 	}
 	again, err := app.FindRecordById("cards", record.Id)

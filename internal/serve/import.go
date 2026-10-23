@@ -1,33 +1,25 @@
 // import.go implements "cardpod import": it loads pages from a JSON export
-// into one pot. A card body is never written to the database directly --
-// it is committed as a Yjs update through ygo's persistence adapter
-// (ydocPersistence.StoreUpdate), the same path a live editing session
-// uses. Only the card record itself (pot, title, position) is created
-// the way createCardHandler creates it.
+// into one pot. A card body is written as a note file (see notes.go), the same
+// way a live editing session stores it. Only the card record itself (pot,
+// title, position) is created the way createCardHandler creates it.
 //
 // The command opens the data directory in its own process, so run it while
-// the server is stopped: a room the running server already holds in memory
-// would not see the imported content.
+// the server is stopped: a card the running server already has open would not
+// see the imported content.
 package serve
 
 import (
 	"bytes"
-	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"math"
 	"strings"
-	"time"
-	"unicode/utf16"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/reearth/ygo/crdt"
-	yjsws "github.com/reearth/ygo/provider/websocket"
 
 	"github.com/asano69/cardpod/internal/slug"
 )
@@ -203,19 +195,6 @@ func Import(app core.App, potName string, r io.ReaderAt, progress func(done, tot
 		return result, fmt.Errorf("find pot %q: %w", potName, err)
 	}
 
-	// StoreUpdate reads the package-level yjsServer, so one has to exist even
-	// though this process never serves a connection. No room is ever loaded
-	// into it, which is why the derived card data is synced explicitly below.
-	persistence := &ydocPersistence{app: app}
-	yjsServer = yjsws.NewServerWithPersistence(persistence)
-	defer func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if err := yjsServer.Shutdown(ctx); err != nil {
-			slog.Warn("yjs server shutdown", "error", err)
-		}
-	}()
-
 	// New cards get ever-higher positions and the card grid lists the
 	// highest first, so importing in reverse keeps the file's order on
 	// screen.
@@ -223,7 +202,6 @@ func Import(app core.App, potName string, r io.ReaderAt, progress func(done, tot
 		start := max(0, end-importBatchSize)
 		err := app.RunInTransaction(func(tx core.App) error {
 			// Everything inside the batch must use the transaction's app.
-			batch := &ydocPersistence{app: tx}
 			for i := end - 1; i >= start; i-- {
 				stop := stages.start("read page")
 				page, err := readPage(r, spans[i])
@@ -231,7 +209,7 @@ func Import(app core.App, potName string, r io.ReaderAt, progress func(done, tot
 				if err != nil {
 					return fmt.Errorf("read page %d: %w", i, err)
 				}
-				created, err := importImportedPage(tx, batch, pot.Id, page)
+				created, err := importImportedPage(tx, pot.Id, page)
 				if err != nil {
 					return fmt.Errorf("import page %q: %w", page.Title, err)
 				}
@@ -253,11 +231,11 @@ func Import(app core.App, potName string, r io.ReaderAt, progress func(done, tot
 	return result, nil
 }
 
-// importPage creates or finds the card for page and replaces its body.
+// importImportedPage creates or finds the card for page and replaces its body.
 // It reports whether the card was newly created. A failure after the card
-// record was created leaves an empty card behind; re-running the import
+// record was created leaves a card without a note; re-running the import
 // fills it in.
-func importImportedPage(app core.App, p *ydocPersistence, pot string, page importPage) (created bool, err error) {
+func importImportedPage(app core.App, pot string, page importPage) (created bool, err error) {
 	text := pageText(page)
 	stop := stages.start("find card")
 	card, err := findCardByTitle(app, pot, page.Title)
@@ -275,15 +253,11 @@ func importImportedPage(app core.App, p *ydocPersistence, pot string, page impor
 		created = true
 	}
 
+	// Writes the note file and the data derived from it.
 	stop = stages.start("replace content")
-	err = p.replaceContent(card.Id, text)
+	err = persistNote(app, card.Id, text)
 	stop()
-	if err != nil {
-		return created, err
-	}
-
-	// Same derived data ydocPersistence.store keeps in sync for a live room.
-	return created, p.syncDerived(card.Id, text)
+	return created, err
 }
 
 // pageText joins a page's lines into the card's plain text. A page without
@@ -337,47 +311,4 @@ func createImportedCard(app core.App, pot, title, text string) (*core.Record, er
 		return nil, fmt.Errorf("save card: %w", err)
 	}
 	return record, nil
-}
-
-// replaceContent makes the "content" text of room equal to text by
-// committing one Yjs update through StoreUpdate. The room's stored history
-// is replayed first, so the old text is deleted (not orphaned) and any
-// editor that later loads the room sees a normal edit.
-//
-// The stored update is the document's full state after the edit. Yjs
-// updates merge idempotently, so LoadDoc replaying it on top of the
-// earlier increments yields exactly this document.
-func (p *ydocPersistence) replaceContent(room, text string) error {
-	stored, err := p.LoadDoc(room)
-	if err != nil {
-		return fmt.Errorf("load card document: %w", err)
-	}
-	doc := crdt.New()
-	if len(stored) > 0 {
-		if err := doc.ApplyUpdate(stored); err != nil {
-			return fmt.Errorf("apply stored updates: %w", err)
-		}
-	}
-
-	content := doc.GetText("content")
-	old := content.ToString()
-	if old == text {
-		return nil // already up to date -- don't grow the update log
-	}
-
-	// Yjs text indexes and lengths count UTF-16 code units.
-	oldLen := len(utf16.Encode([]rune(old)))
-	doc.Transact(func(txn *crdt.Transaction) {
-		if oldLen > 0 {
-			content.Delete(txn, 0, oldLen)
-		}
-		if text != "" {
-			content.Insert(txn, 0, text, nil)
-		}
-	})
-
-	if err := p.StoreUpdate(room, doc.EncodeStateAsUpdate()); err != nil {
-		return fmt.Errorf("store card document: %w", err)
-	}
-	return nil
 }
