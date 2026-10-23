@@ -4,8 +4,8 @@
 // holding the card's full text.
 //
 // Like import, the command opens the data directory in its own process, so run
-// it while the server is stopped: the text is read from the stored update log,
-// which can be a few seconds behind a room the running server holds.
+// it while the server is stopped: the text is read from the note files, which
+// can be a moment behind a card the running server has open.
 package serve
 
 import (
@@ -41,13 +41,12 @@ func Export(app core.App, w io.Writer) (ExportResult, error) {
 	}
 
 	zw := zip.NewWriter(w)
-	p := &ydocPersistence{app: app}
 	for _, pot := range pots {
 		// An explicit folder entry keeps a pot without cards in the archive.
 		if _, err := zw.Create(pot.Id + "/"); err != nil {
 			return result, fmt.Errorf("write folder of pot %s: %w", pot.Id, err)
 		}
-		n, err := exportPot(app, p, zw, pot.Id)
+		n, err := exportPot(app, zw, pot.Id)
 		if err != nil {
 			return result, fmt.Errorf("export pot %s: %w", pot.Id, err)
 		}
@@ -62,7 +61,7 @@ func Export(app core.App, w io.Writer) (ExportResult, error) {
 
 // exportPot writes the live cards of one pot into its folder and returns how
 // many were written.
-func exportPot(app core.App, p *ydocPersistence, zw *zip.Writer, potID string) (int, error) {
+func exportPot(app core.App, zw *zip.Writer, potID string) (int, error) {
 	cards, err := app.FindRecordsByFilter(
 		"cards", "pot = {:pot} && "+notDeleted, "title", 0, 0,
 		dbx.Params{"pot": potID},
@@ -72,7 +71,7 @@ func exportPot(app core.App, p *ydocPersistence, zw *zip.Writer, potID string) (
 	}
 
 	for _, card := range cards {
-		doc, _, err := loadCardDoc(p, card.Id)
+		text, err := loadCardText(app, card)
 		if err != nil {
 			return 0, err
 		}
@@ -81,7 +80,7 @@ func exportPot(app core.App, p *ydocPersistence, zw *zip.Writer, potID string) (
 		if err != nil {
 			return 0, fmt.Errorf("write %s: %w", name, err)
 		}
-		if _, err := io.WriteString(f, doc.GetText("content").ToString()); err != nil {
+		if _, err := io.WriteString(f, text); err != nil {
 			return 0, fmt.Errorf("write %s: %w", name, err)
 		}
 	}

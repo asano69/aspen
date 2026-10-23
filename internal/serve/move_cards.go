@@ -4,9 +4,8 @@
 // events (and the pull protocol), and the links of the copy are derived from
 // its text in the new pot like those of any other card.
 //
-// The copy gets the full Yjs state of the old card, so its text, line ids and
-// line meta are kept. It gets a new card id, so what users have seen of it
-// (card_views) starts over.
+// The copy gets a new card id, so what users have seen of it (card_views)
+// starts over. The note file of the old card is trashed by the note hooks.
 package serve
 
 import (
@@ -17,7 +16,6 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
-	"github.com/reearth/ygo/crdt"
 
 	"github.com/asano69/cardpod/internal/api"
 	"github.com/asano69/cardpod/internal/slug"
@@ -48,20 +46,20 @@ func moveCardsHandler(e *core.RequestEvent) error {
 	return e.JSON(http.StatusOK, api.MoveCardsResponse{Moved: moved})
 }
 
-// moveCards moves the cards with the given ids to destPot, all or none, and
-// returns how many were moved.
+// moveCards moves the cards with the given ids to destPot and returns how many
+// were moved. The records change all or none; a note file written before a
+// failure is left behind and overwritten when the move is tried again.
 func moveCards(app core.App, ids []string, destPot string) (int, error) {
 	cards, err := movableCards(app, ids, destPot)
 	if err != nil {
 		return 0, err
 	}
 
-	// The docs are read before the transaction, from the live rooms where
-	// there are any (see loadCardDoc).
-	p := &ydocPersistence{app: app}
-	docs := make([]*crdt.Doc, len(cards))
+	// The texts are read before the transaction, from the open cards where
+	// there are any (see loadCardText).
+	texts := make([]string, len(cards))
 	for i, card := range cards {
-		if docs[i], _, err = loadCardDoc(p, card.Id); err != nil {
+		if texts[i], err = loadCardText(app, card); err != nil {
 			return 0, err
 		}
 	}
@@ -71,14 +69,10 @@ func moveCards(app core.App, ids []string, destPot string) (int, error) {
 		if err != nil {
 			return err
 		}
-		ydocs, err := tx.FindCollectionByNameOrId("card_ydocs")
-		if err != nil {
-			return err
-		}
 		// New cards get ever-higher positions and the grid lists the highest
 		// first, so creating them in reverse keeps the order of ids on screen.
 		for i := len(cards) - 1; i >= 0; i-- {
-			if err := moveCard(tx, cardsCollection, ydocs, cards[i], docs[i], destPot); err != nil {
+			if err := moveCard(tx, cardsCollection, cards[i], texts[i], destPot); err != nil {
 				return fmt.Errorf("move card %s: %w", cards[i].Id, err)
 			}
 		}
@@ -86,12 +80,6 @@ func moveCards(app core.App, ids []string, destPot string) (int, error) {
 	})
 	if err != nil {
 		return 0, err
-	}
-
-	// Only after the commit, since closing a room cannot be rolled back. Its
-	// peers reconnect and are refused, because the card is deleted now.
-	for _, card := range cards {
-		forgetRoom(card.Id)
 	}
 	return len(cards), nil
 }
@@ -125,7 +113,7 @@ func movableCards(app core.App, ids []string, destPot string) ([]*core.Record, e
 // moveCard creates the copy of old in destPot and soft-deletes old. The copy's
 // title is resolved like any new title there, so a collision gets a numeric
 // suffix. It must run on the transaction's app.
-func moveCard(tx core.App, cards, ydocs *core.Collection, old *core.Record, doc *crdt.Doc, destPot string) error {
+func moveCard(tx core.App, cards *core.Collection, old *core.Record, text, destPot string) error {
 	title, err := resolveTitle(tx, destPot, TitleCandidate(old.GetString("title")), "")
 	if err != nil {
 		return fmt.Errorf("resolve title: %w", err)
@@ -138,13 +126,7 @@ func moveCard(tx core.App, cards, ydocs *core.Collection, old *core.Record, doc 
 	if err := tx.Save(card); err != nil {
 		return fmt.Errorf("save card: %w", err)
 	}
-
-	err = saveRenamed(tx, &ydocPersistence{app: tx}, ydocs, &renamedCard{
-		id:    card.Id,
-		text:  doc.GetText("content").ToString(),
-		state: doc.EncodeStateAsUpdate(),
-	})
-	if err != nil {
+	if err := persistNote(tx, card.Id, text); err != nil {
 		return err
 	}
 

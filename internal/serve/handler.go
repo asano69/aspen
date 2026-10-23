@@ -10,24 +10,20 @@ import (
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-
-	yjsws "github.com/reearth/ygo/provider/websocket"
 )
-
-// yjsServer is a single in-memory Yjs sync server shared by every room.
-// PoC only (see docs/yjs-design.md): no auth yet. Its persistence
-// adapter (ydocPersistence, see ydoc.go) reads and writes the matching
-// card's "ydoc" field, so that field -- not this in-memory server --
-// remains the single source of truth. Constructed lazily by
-// initYjsServer once the PocketBase app instance is available.
-var yjsServer *yjsws.Server
 
 // registerRoutes wires up every HTTP route served by cardpod. It is passed
 // to app.OnServe().BindFunc in serve.go, keeping all route/handler
 // definitions in this file while serve.go stays focused on server setup
 // and startup.
 func registerRoutes(e *core.ServeEvent) error {
-	initYjsServer(e.App)
+	// The open cards (see rooms.go). Whatever is still unsaved is written when
+	// the server stops.
+	liveRooms = newRooms(e.App)
+	e.App.OnTerminate().BindFunc(func(te *core.TerminateEvent) error {
+		liveRooms.flush()
+		return te.Next()
+	})
 
 	// Public routes: no auth required. Keep this list limited to
 	// endpoints that return no user data (version info, health checks,
@@ -40,10 +36,10 @@ func registerRoutes(e *core.ServeEvent) error {
 		return re.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	// Real-time Yjs sync (see docs/yjs-design.md). {room} is the "cards"
+	// Real-time editing of one card (see rooms.go). {room} is the "cards"
 	// record id. The auth token comes in the "token" query parameter and is
-	// checked before the upgrade (see yjs_auth.go).
-	e.Router.GET("/yjs/{room}", apis.WrapStdHandler(yjsAuth(e.App, yjsServer)))
+	// checked before the upgrade (see collab_auth.go).
+	e.Router.GET("/collab/{room}", apis.WrapStdHandler(collabAuth(e.App, liveRooms)))
 
 	// Realtime card events (see internal/realtime). Authentication happens
 	// inside the hub (any valid auth token), not via this router's middleware.

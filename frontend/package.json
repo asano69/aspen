@@ -29,6 +29,7 @@
     "@sigma/node-image": "^4.0.0",
     "@solidjs/router": "^0.16.1",
     "centrifuge": "^5.7.4",
+    "cm-websocket": "github:asano69/cm-websocket",
     "dexie": "^4.0.11",
     "globals": "^17.7.0",
     "graphology": "^0.26.0",
@@ -42,11 +43,7 @@
     "sigma": "^4.0.0",
     "solid-js": "^1.9.12",
     "svg-pan-zoom": "^3.6.2",
-    "tinykeys": "^4.0.1",
-    "y-codemirror.next": "^0.3.5",
-    "y-indexeddb": "^9.0.12",
-    "y-websocket": "^2.0.4",
-    "yjs": "^13.6.18"
+    "tinykeys": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

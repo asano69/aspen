@@ -1,8 +1,9 @@
 module github.com/asano69/cardpod
 
-go 1.26.0
+go 1.26.9
 
 require (
+	github.com/asano69/cmgo v0.0.0-20261023024522-c785a0045396
 	github.com/blevesearch/bleve/v2 v2.6.1
 	github.com/centrifugal/centrifuge v0.39.2
 	github.com/pocketbase/dbx v1.12.0
@@ -39,6 +40,7 @@ require (
 	github.com/blevesearch/zapx/v17 v17.2.3 // indirect
 	github.com/centrifugal/protocol v0.22.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/coder/websocket v1.8.15 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/domodwyer/mailyak/v3 v3.6.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect

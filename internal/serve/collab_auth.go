@@ -1,4 +1,4 @@
-// yjs_auth.go protects the Yjs websocket. A browser WebSocket cannot send an
+// collab_auth.go protects the collab websocket. A browser WebSocket cannot send an
 // Authorization header, so the PocketBase auth token comes in the "token"
 // query parameter. Everything is checked before the upgrade, so a rejected
 // client gets a plain HTTP status instead of an open socket.
@@ -17,9 +17,9 @@ import (
 	"github.com/asano69/cardpod/internal/auth"
 )
 
-// yjsAuth lets a request through to next only when its token is valid and the
+// collabAuth lets a request through to next only when its token is valid and the
 // user may open the requested room.
-func yjsAuth(app core.App, next http.Handler) http.Handler {
+func collabAuth(app core.App, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := auth.Verify(app, r.URL.Query().Get("token"))
 		if err != nil {
@@ -27,7 +27,7 @@ func yjsAuth(app core.App, next http.Handler) http.Handler {
 			return
 		}
 
-		// The room name is a card id (see ExistingCardEditor.tsx).
+		// The room name is a card id.
 		err = auth.CanAccessCard(app, session.UserID, r.PathValue("room"))
 		switch {
 		case errors.Is(err, auth.ErrCardNotFound):

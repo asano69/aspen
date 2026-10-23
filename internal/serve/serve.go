@@ -1,10 +1,11 @@
 // Package serve implements the "serve" command, which runs a single HTTP server
 // that hosts the index page and all drill sessions defined in the config file.
 //
-// The package is split across three files:
+// The package is split across these files, among others:
 //   - serve.go:   route registration and server startup (this file)
 //   - handler.go: HTTP handlers
-//   - ydoc.go:    periodic Yjs snapshot persistence
+//   - rooms.go:   open cards, edited live through cmgo's collab server
+//   - notes.go:   the note files that hold the text of every card
 package serve
 
 import (
@@ -30,6 +31,7 @@ func Run(app *pocketbase.PocketBase, cfg *config.Config) error {
 	registerLinkCleanupHooks(app)
 	registerSearchHooks(app)
 	registerGeneratedImageHooks(app)
+	registerNoteHooks(app)
 
 	slog.Info("listening", "addr", addr)
 	return apis.Serve(app, apis.ServeConfig{

@@ -105,15 +105,6 @@ func searchHandler(e *core.RequestEvent) error {
 	return e.JSON(http.StatusOK, api.SearchResponse{Total: int(res.Total), Items: items})
 }
 
-// loadCardText returns the current text of a card, read from its stored
-// update log (or from its live room, when one is loaded).
-func loadCardText(app core.App, card *core.Record) (string, error) {
-	doc, _, err := loadCardDoc(&ydocPersistence{app: app}, card.Id)
-	if err != nil {
-		return "", err
-	}
-	return doc.GetText("content").ToString(), nil
-}
 
 // Reindex rebuilds the whole index; used by `cardpod reindex`. It opens the
 // index itself, so the server must be stopped (Bleve allows one writer).
@@ -129,7 +120,7 @@ func Reindex(app core.App) (int, error) {
 		return 0, err
 	}
 	for _, c := range cards {
-		text, err := loadCardText(app, c) // see rename_links.go loadCardDoc
+		text, err := loadCardText(app, c) // see rooms.go
 		if err != nil {
 			return 0, fmt.Errorf("card %s: %w", c.Id, err)
 		}

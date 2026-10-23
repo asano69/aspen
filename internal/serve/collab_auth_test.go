@@ -33,22 +33,22 @@ func newSuperuserToken(t *testing.T, app core.App) string {
 	return token
 }
 
-// yjsAuthStatus sends one request through yjsAuth and returns the status and
+// collabAuthStatus sends one request through collabAuth and returns the status and
 // whether the protected handler was reached.
-func yjsAuthStatus(t *testing.T, app core.App, room, token string) (status int, reached bool) {
+func collabAuthStatus(t *testing.T, app core.App, room, token string) (status int, reached bool) {
 	t.Helper()
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		reached = true
 		w.WriteHeader(http.StatusNoContent)
 	})
-	req := httptest.NewRequest(http.MethodGet, "/yjs/"+room+"?token="+token, nil)
+	req := httptest.NewRequest(http.MethodGet, "/collab/"+room+"?token="+token, nil)
 	req.SetPathValue("room", room)
 	rec := httptest.NewRecorder()
-	yjsAuth(app, next).ServeHTTP(rec, req)
+	collabAuth(app, next).ServeHTTP(rec, req)
 	return rec.Code, reached
 }
 
-func TestYjsAuth(t *testing.T) {
+func TestCollabAuth(t *testing.T) {
 	app := newSlugTestApp(t)
 	token := newSuperuserToken(t, app)
 	live := createCard(t, app, "pot1", "A")
@@ -68,7 +68,7 @@ func TestYjsAuth(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			status, reached := yjsAuthStatus(t, app, tt.room, tt.token)
+			status, reached := collabAuthStatus(t, app, tt.room, tt.token)
 			if status != tt.status || reached != tt.reached {
 				t.Errorf("got (%d, reached=%v), want (%d, reached=%v)", status, reached, tt.status, tt.reached)
 			}
