@@ -17,15 +17,13 @@ const injectAppNameHtml: Plugin = {
   },
 };
 
-// Proxy settings shared by every websocket endpoint of the backend (Yjs and
-// realtime card events). configure() rewrites the outgoing Origin header to
-// match the proxy target: the backend's websocket upgraders reject any
-// handshake whose Origin doesn't match the Host they receive.
+// Proxy settings shared by every websocket endpoint of the backend (collab
+// editing and realtime card events). configure() rewrites the outgoing Origin
+// header to match the proxy target: the backend's websocket upgraders reject
+// any handshake whose Origin doesn't match the Host they receive.
 // changeOrigin only rewrites Host, not Origin, so without this every real
 // cross-origin connection (i.e. anything going through this dev proxy)
-// fails the handshake -- this is the actual cause behind the
-// CONNECTION_REFUSED errors seen when two clients on different origins try
-// to sync.
+// fails the handshake.
 const wsProxy: ProxyOptions = {
   target: "http://127.0.0.1:3000",
   changeOrigin: true,
@@ -59,7 +57,7 @@ export default defineConfig({
       "/_": { target: "http://127.0.0.1:3000", changeOrigin: true },
       "/health": { target: "http://127.0.0.1:3000", changeOrigin: true },
 
-      "/yjs/": wsProxy,
+      "/collab/": wsProxy,
       "/connection/": wsProxy,
     },
   },
