@@ -1155,7 +1155,7 @@ func init() {
 						"name": "position",
 						"onlyInt": false,
 						"presentable": false,
-						"required": true,
+						"required": false,
 						"system": false,
 						"type": "number"
 					},
@@ -1998,14 +1998,13 @@ func init() {
 					{
 						"help": "",
 						"hidden": false,
-						"id": "date3946532403",
-						"max": "",
-						"min": "",
-						"name": "deleted",
+						"id": "json1325501590",
+						"maxSize": 0,
+						"name": "lines",
 						"presentable": false,
 						"required": false,
 						"system": false,
-						"type": "date"
+						"type": "json"
 					},
 					{
 						"hidden": false,
