@@ -255,7 +255,7 @@ func importImportedPage(app core.App, pot string, page importPage) (created bool
 
 	// Writes the note file and the data derived from it.
 	stop = stages.start("replace content")
-	err = persistNote(app, card.Id, text)
+	err = persistNote(app, card.Id, text, nil)
 	stop()
 	return created, err
 }

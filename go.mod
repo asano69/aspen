@@ -6,6 +6,7 @@ require (
 	github.com/asano69/cmgo v0.0.0-20261023024522-c785a0045396
 	github.com/blevesearch/bleve/v2 v2.6.1
 	github.com/centrifugal/centrifuge v0.39.2
+	github.com/google/uuid v1.6.0
 	github.com/pocketbase/dbx v1.12.0
 	github.com/pocketbase/pocketbase v0.39.4
 	github.com/sig-0/boring-avatars-go v0.1.1
@@ -51,7 +52,6 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gzuidhof/tygo v0.2.21 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect

@@ -126,7 +126,7 @@ func moveCard(tx core.App, cards *core.Collection, old *core.Record, text, destP
 	if err := tx.Save(card); err != nil {
 		return fmt.Errorf("save card: %w", err)
 	}
-	if err := persistNote(tx, card.Id, text); err != nil {
+	if err := persistNote(tx, card.Id, text, nil); err != nil {
 		return err
 	}
 

@@ -13,12 +13,14 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode/utf16"
 
 	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/asano69/cmgo/authority"
 	"github.com/asano69/cmgo/collab"
 
+	"github.com/asano69/cardpod/internal/lineid"
 	"github.com/asano69/cardpod/internal/parser"
 )
 
@@ -51,18 +53,57 @@ type room struct {
 
 	scheduled atomic.Bool
 
-	// saveMu serializes save and guards the two fields below. It is never
-	// taken while the Document is locked (Track runs with it locked).
-	saveMu  sync.Mutex
-	saved   string // the text that was last stored
-	lastRaw string // the first line that was last resolved into a title
+	// linesMu guards lines, the ID of every line of the live text. Lock order:
+	// the Server's lock, then linesMu.
+	linesMu sync.Mutex
+	lines   []lineid.Line
+
+	// saveMu serializes save and guards the fields below. It is never taken
+	// while the Document is locked (Track runs with it locked).
+	saveMu     sync.Mutex
+	saved      string         // the text that was last stored
+	savedLines []lineid.Line  // the line IDs that were last stored
+	lastRaw    string         // the first line that was last resolved into a title
 }
 
-// Track is called with the Document locked, so it only schedules the save.
-func (r *room) Track([]authority.Change, []uint16, any, int64) {
+// Track is called with the Document locked: it moves the line IDs along with
+// the edits and schedules the save.
+func (r *room) Track(changes []authority.Change, _ []uint16, _ any, now int64) {
+	r.linesMu.Lock()
+	for _, c := range changes {
+		r.lines = lineid.Apply(r.lines, c.Before, c.Changes.Edits(), now)
+	}
+	r.linesMu.Unlock()
+
 	if r.scheduled.CompareAndSwap(false, true) {
 		time.AfterFunc(settleDelay, r.settle)
 	}
+}
+
+// snapshot returns the text and its line IDs as of the same moment.
+func (r *room) snapshot() (string, []lineid.Line) {
+	var text string
+	var lines []lineid.Line
+	r.Inspect(func(doc []uint16) {
+		text = string(utf16.Decode(doc))
+		r.linesMu.Lock()
+		lines = r.lines // never modified afterwards (see lineid.Apply)
+		r.linesMu.Unlock()
+	})
+	return text, lines
+}
+
+// restoreLines adopts line IDs that were stored earlier, if there is one per
+// line of the text. Otherwise the room keeps the fresh IDs it has, which the
+// next save stores.
+func (r *room) restoreLines(saved []lineid.Line) {
+	r.Inspect(func(doc []uint16) {
+		r.linesMu.Lock()
+		defer r.linesMu.Unlock()
+		if len(saved) == lineid.Count(doc) {
+			r.lines = saved
+		}
+	})
 }
 
 // Message is the extra message of the collab stream. There is none.
@@ -81,18 +122,18 @@ func (r *room) save() error {
 	r.saveMu.Lock()
 	defer r.saveMu.Unlock()
 
-	text := r.Text()
+	text, lines := r.snapshot()
 	if raw := parser.Parse(text).Title(); raw != r.lastRaw {
 		r.lastRaw = raw
 		titleWatcherInstance.resolve(r.app, r.id, raw)
 	}
-	if text == r.saved {
+	if text == r.saved && slices.Equal(lines, r.savedLines) {
 		return nil
 	}
-	if err := persistNote(r.app, r.id, text); err != nil {
+	if err := persistNote(r.app, r.id, text, lines); err != nil {
 		return err
 	}
-	r.saved = text
+	r.saved, r.savedLines = text, lines
 	return nil
 }
 
@@ -121,16 +162,23 @@ func (m *rooms) acquire(cardID string) (*room, error) {
 	if err != nil {
 		return nil, err
 	}
+	saved, err := readLines(m.app, card)
+	if err != nil {
+		return nil, err
+	}
 
 	r := &room{
-		app:     m.app,
-		id:      cardID,
-		refs:    1,
-		saved:   text,
-		lastRaw: parser.Parse(text).Title(),
+		app:        m.app,
+		id:         cardID,
+		refs:       1,
+		lines:      lineid.New(1, time.Now().Unix()),
+		saved:      text,
+		savedLines: saved,
+		lastRaw:    parser.Parse(text).Title(),
 	}
 	r.Server = collab.New(collab.WithTracker(r))
 	r.Replace(text)
+	r.restoreLines(saved)
 	m.open[cardID] = r
 	return r, nil
 }
@@ -194,5 +242,5 @@ func saveCardText(app core.App, card *core.Record, text string) error {
 			return r.save()
 		}
 	}
-	return persistNote(app, card.Id, text)
+	return persistNote(app, card.Id, text, nil)
 }

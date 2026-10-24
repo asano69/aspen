@@ -30,6 +30,7 @@ func newImportTestApp(t *testing.T) core.App {
 		&core.TextField{Name: "card"},
 		&core.TextField{Name: "pot"},
 		&core.TextField{Name: "text"},
+		&core.JSONField{Name: "lines"},
 	)
 	if err := app.Save(contents); err != nil {
 		t.Fatalf("create card_contents collection: %v", err)
