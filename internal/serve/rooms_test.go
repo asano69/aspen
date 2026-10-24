@@ -1,15 +1,12 @@
 package serve
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
 const roomTestText = "Hello World\nbody"
 
-// Releasing the last editor of a card must leave its text in the note file
-// named after the card's pot and titleLc.
-func TestRooms_ReleaseWritesTheNoteFile(t *testing.T) {
+// Releasing the last editor of a card must leave its text in the card's
+// content row.
+func TestRooms_ReleaseStoresTheText(t *testing.T) {
 	app := newImportTestApp(t)
 	pot := createPot(t, app, "pot1")
 	card := createLinksTestCard(t, app, pot.Id, "Hello World", "")
@@ -22,16 +19,12 @@ func TestRooms_ReleaseWritesTheNoteFile(t *testing.T) {
 	r.Replace(roomTestText)
 	m.release(r)
 
-	data, err := os.ReadFile(notePath(app, pot.Id, "hello_world"))
-	if err != nil {
-		t.Fatalf("read note file: %v", err)
-	}
-	if string(data) != roomTestText {
-		t.Errorf("note file = %q, want %q", data, roomTestText)
+	if got := cardText(t, app, card.Id); got != roomTestText {
+		t.Errorf("stored text = %q, want %q", got, roomTestText)
 	}
 }
 
-// Opening a card again must start from what the note file holds.
+// Opening a card again must start from what the content row holds.
 func TestRooms_AcquireLoadsTheNoteFile(t *testing.T) {
 	app := newImportTestApp(t)
 	pot := createPot(t, app, "pot1")

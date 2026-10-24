@@ -1,8 +1,8 @@
 // rooms.go holds the cards that are open for live editing. Each open card is
 // one collab server (cmgo), which keeps the accepted change sets in memory and
-// relays them to every connected editor. The card's note file (see notes.go)
-// is written from it a moment after an edit, and once more when the last
-// editor leaves, which is also when the room is dropped.
+// relays them to every connected editor. The card's content row (see
+// contents.go) is written from it a moment after an edit, and once more when
+// the last editor leaves, which is also when the room is dropped.
 package serve
 
 import (
@@ -103,7 +103,7 @@ func (m *rooms) get(cardID string) *room {
 	return m.open[cardID]
 }
 
-// acquire returns the room of a card, opening it from its note file if needed.
+// acquire returns the room of a card, opening it from its stored text if needed.
 // Every acquire must be paired with a release.
 func (m *rooms) acquire(cardID string) (*room, error) {
 	m.mu.Lock()
@@ -175,7 +175,7 @@ func (m *rooms) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // loadCardText returns the current text of a card: the live copy when the card
-// is open, the note file otherwise.
+// the open card, the stored text otherwise.
 func loadCardText(app core.App, card *core.Record) (string, error) {
 	if liveRooms != nil {
 		if r := liveRooms.get(card.Id); r != nil {

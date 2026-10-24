@@ -5,7 +5,7 @@
 //   - serve.go:   route registration and server startup (this file)
 //   - handler.go: HTTP handlers
 //   - rooms.go:   open cards, edited live through cmgo's collab server
-//   - notes.go:   the note files that hold the text of every card
+//   - contents.go: the "card_contents" rows that hold the text of every card
 package serve
 
 import (
@@ -31,7 +31,6 @@ func Run(app *pocketbase.PocketBase, cfg *config.Config) error {
 	registerLinkCleanupHooks(app)
 	registerSearchHooks(app)
 	registerGeneratedImageHooks(app)
-	registerNoteHooks(app)
 
 	slog.Info("listening", "addr", addr)
 	return apis.Serve(app, apis.ServeConfig{

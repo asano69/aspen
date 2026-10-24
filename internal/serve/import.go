@@ -1,6 +1,6 @@
 // import.go implements "cardpod import": it loads pages from a JSON export
-// into one pot. A card body is written as a note file (see notes.go), the same
-// way a live editing session stores it. Only the card record itself (pot,
+// into one pot. A card body is written to its content row (see contents.go),
+// the same way a live editing session stores it. Only the card record itself (pot,
 // title, position) is created the way createCardHandler creates it.
 //
 // The command opens the data directory in its own process, so run it while

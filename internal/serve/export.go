@@ -4,7 +4,7 @@
 // holding the card's full text.
 //
 // Like import, the command opens the data directory in its own process, so run
-// it while the server is stopped: the text is read from the note files, which
+// it while the server is stopped: the text is read from the content rows, which
 // can be a moment behind a card the running server has open.
 package serve
 

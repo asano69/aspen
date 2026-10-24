@@ -10,7 +10,8 @@ import (
 )
 
 // newImportTestApp extends newLinksTestApp with what Import touches beyond
-// it: the cards' image field. A note is a file in the app's data directory.
+// it: the cards' image field and the card_contents collection. The relation
+// fields are plain text here, like the other test helpers.
 func newImportTestApp(t *testing.T) core.App {
 	t.Helper()
 	app := newLinksTestApp(t)
@@ -22,6 +23,16 @@ func newImportTestApp(t *testing.T) core.App {
 	cards.Fields.Add(&core.TextField{Name: "image"})
 	if err := app.Save(cards); err != nil {
 		t.Fatalf("extend cards collection: %v", err)
+	}
+
+	contents := core.NewBaseCollection("card_contents")
+	contents.Fields.Add(
+		&core.TextField{Name: "card"},
+		&core.TextField{Name: "pot"},
+		&core.TextField{Name: "text"},
+	)
+	if err := app.Save(contents); err != nil {
+		t.Fatalf("create card_contents collection: %v", err)
 	}
 	return app
 }
