@@ -9,6 +9,9 @@ import RelatedCards from "@/pages/cards/RelatedCards";
 import type { TitleCandidate } from "@/lib/models/card";
 import { extractLinks } from "@/lib/models/extractLinks";
 import { authToken } from "@/lib/api/auth";
+import { fetchTelomere } from "@/lib/api/cardApi";
+import { telomereEntries } from "@/lib/models/telomere";
+import { setTelomereBase } from "./plugins/decorations/telomere";
 import { cardsById } from "@/lib/stores/cardsStore";
 import { closeOwnLinks, setOwnLinks } from "@/lib/stores/relatedStore";
 
@@ -53,6 +56,19 @@ export default function ExistingCardEditor(props: ExistingCardEditorProps) {
   const currentText = () => view?.state.doc.toString() ?? "";
   props.onContentSnapshot?.(currentText);
 
+  // Loads who edited each line and which lines are unread (see
+  // internal/serve/telomere.go). The editor applies it as soon as its text has
+  // arrived and has the same number of lines.
+  let closed = false;
+  fetchTelomere(props.cardId)
+    .then((response) => {
+      if (closed || !view) return;
+      view.dispatch({
+        effects: setTelomereBase.of(telomereEntries(response.lines)),
+      });
+    })
+    .catch((err) => console.error("[telomere] failed to load:", err));
+
   // The editor is shown at once: the room's text fills it as it arrives.
   createEffect(() => props.onReady?.(true));
 
@@ -78,6 +94,7 @@ export default function ExistingCardEditor(props: ExistingCardEditorProps) {
   };
 
   onCleanup(() => {
+    closed = true;
     clearTimeout(linksTimer);
     props.onReady?.(false);
     closeOwnLinks(props.cardId);

@@ -76,6 +76,7 @@ func registerRoutes(e *core.ServeEvent) error {
 	admin.POST("/cards", createCardHandler)
 	admin.POST("/cards/move", moveCardsHandler)
 	admin.POST("/cards/{id}/rename-links", renameLinksHandler)
+	admin.GET("/cards/{id}/telomere", telomereHandler)
 	admin.POST("/attachments", uploadAttachmentHandler)
 
 	// Public-data-shaped but still gated behind authentication (any

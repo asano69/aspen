@@ -8,6 +8,7 @@ import type {
   RenameLinksRequest,
   RenameLinksResponse,
   SearchResponse,
+  TelomereResponse,
   UploadAttachmentResponse,
 } from "./generated";
 import { titleToSlug } from "../models/slugify";
@@ -138,6 +139,18 @@ export async function searchCards(
     query: { q },
     requestKey: null,
   });
+}
+
+// Fetches who edited each line of a card and which lines the user has not
+// seen yet (see internal/serve/telomere.go). requestKey: null keeps it from
+// being auto-cancelled by another request.
+export async function fetchTelomere(
+  cardId: string,
+): Promise<TelomereResponse> {
+  return await pb.send<TelomereResponse>(
+    `/api/admin/cards/${cardId}/telomere`,
+    { method: "GET", requestKey: null },
+  );
 }
 
 // Updates a card's own fields directly. The title is deliberately not

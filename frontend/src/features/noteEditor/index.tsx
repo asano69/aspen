@@ -12,6 +12,7 @@ import { collabExtension, cursorsExtension, type Channel } from "cm-websocket";
 import { hangingIndent } from "./plugins/decorations/hangingIndent";
 import { wordBreak } from "./plugins/decorations/wordBreak";
 import { codeBlockLines } from "./plugins/decorations/codeBlockLines";
+import { telomere } from "./plugins/decorations/telomere";
 import { imageWidget } from "./plugins/decorations/imageWidget";
 import { mermaidBlock } from "./plugins/decorations/mermaidBlock";
 import { emptyLinks, setLinkAlive } from "./plugins/decorations/emptyLinks";
@@ -138,6 +139,9 @@ export default function NoteEditor(props: NoteEditorProps) {
         // Controls how lines wrap (see wordBreak.ts / editorTheme.ts's
         // ".cm-line" rule).
         wordBreak,
+        // Bar left of each line: who edited it and whether it is unread (see
+        // plugins/decorations/telomere.ts).
+        telomere(() => currentUser()?.name ?? ""),
         codeBlockLines,
         imageWidget,
         mermaidBlock,

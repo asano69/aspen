@@ -78,3 +78,20 @@ type SearchResponse struct {
 	Total int          `json:"total"`
 	Items []SearchItem `json:"items"`
 }
+
+// TelomereLine is the edit record of one line of a card.
+type TelomereLine struct {
+	// Unix time of the last edit of the line.
+	Updated int64 `json:"updated"`
+	// Email address of the user who made that edit; empty if unknown.
+	User string `json:"user"`
+	// True when someone else edited the line after the requesting user last
+	// left the card.
+	Unread bool `json:"unread"`
+}
+
+// TelomereResponse is the body of GET /api/admin/cards/{id}/telomere. Lines
+// has one entry per line of the card's text, in order.
+type TelomereResponse struct {
+	Lines []TelomereLine `json:"lines"`
+}

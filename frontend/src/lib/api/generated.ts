@@ -95,3 +95,28 @@ export interface SearchResponse {
   total: number /* int */;
   items: SearchItem[];
 }
+/**
+ * TelomereLine is the edit record of one line of a card.
+ */
+export interface TelomereLine {
+  /**
+   * Unix time of the last edit of the line.
+   */
+  updated: number /* int64 */;
+  /**
+   * Email address of the user who made that edit; empty if unknown.
+   */
+  user: string;
+  /**
+   * True when someone else edited the line after the requesting user last
+   * left the card.
+   */
+  unread: boolean;
+}
+/**
+ * TelomereResponse is the body of GET /api/admin/cards/{id}/telomere. Lines
+ * has one entry per line of the card's text, in order.
+ */
+export interface TelomereResponse {
+  lines: TelomereLine[];
+}
