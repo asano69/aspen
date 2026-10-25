@@ -974,7 +974,7 @@ func init() {
 					},
 					{
 						"autogeneratePattern": "",
-						"help": "Because title → titleLc is deterministic, enforcing uniqueness on titleLc implicitly enforces uniqueness on title. As a result, the (pot, title) uniqueness constraint is redundant.",
+						"help": "Because title → titleLc is deterministic, enforcing uniqueness on titleLc implicitly enforces uniqueness on title. As a result, the (pod, title) uniqueness constraint is redundant.",
 						"hidden": false,
 						"id": "text293159488",
 						"max": 240,
@@ -1087,14 +1087,14 @@ func init() {
 				],
 				"id": "pbc_2527524235",
 				"indexes": [
-					"CREATE UNIQUE INDEX ` + "`" + `idx_cards_pot_normtitle` + "`" + ` ON ` + "`" + `cards` + "`" + ` (\n  ` + "`" + `pod` + "`" + `,\n  (CASE WHEN REPLACE(` + "`" + `title` + "`" + `, ' ', '_') = 'new' THEN 'new_' ELSE REPLACE(` + "`" + `title` + "`" + `, ' ', '_') END)\n) WHERE ` + "`" + `deleted` + "`" + ` = ''",
+					"CREATE UNIQUE INDEX ` + "`" + `idx_cards_pod_normtitle` + "`" + ` ON ` + "`" + `cards` + "`" + ` (\n  ` + "`" + `pod` + "`" + `,\n  (CASE WHEN REPLACE(` + "`" + `title` + "`" + `, ' ', '_') = 'new' THEN 'new_' ELSE REPLACE(` + "`" + `title` + "`" + `, ' ', '_') END)\n) WHERE ` + "`" + `deleted` + "`" + ` = ''",
 					"CREATE UNIQUE INDEX ` + "`" + `idx_x1tpfrw3fh` + "`" + ` ON ` + "`" + `cards` + "`" + ` (\n  ` + "`" + `pod` + "`" + `,\n  ` + "`" + `titleLc` + "`" + `\n) WHERE ` + "`" + `deleted` + "`" + ` = ''"
 				],
 				"listRule": "@request.auth.id != \"\"",
 				"name": "cards",
 				"system": false,
 				"type": "base",
-				"updateRule": "@request.auth.id != \"\" &&\n@request.body.pot:isset = false &&\n@request.body.title:isset = false &&\n@request.body.titleLc:isset = false &&\n@request.body.description:isset = false &&\n@request.body.image:isset = false &&\n@request.body.created:isset = false &&\n@request.body.updated:isset = false",
+				"updateRule": "@request.auth.id != \"\" &&\n@request.body.pod:isset = false &&\n@request.body.title:isset = false &&\n@request.body.titleLc:isset = false &&\n@request.body.description:isset = false &&\n@request.body.image:isset = false &&\n@request.body.created:isset = false &&\n@request.body.updated:isset = false",
 				"viewRule": "@request.auth.id != \"\""
 			},
 			{
