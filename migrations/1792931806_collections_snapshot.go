@@ -1014,19 +1014,6 @@ func init() {
 						"type": "text"
 					},
 					{
-						"help": "",
-						"hidden": false,
-						"id": "number3045404147",
-						"max": 9007199254740991,
-						"min": 0,
-						"name": "pin",
-						"onlyInt": false,
-						"presentable": false,
-						"required": false,
-						"system": false,
-						"type": "number"
-					},
-					{
 						"hidden": false,
 						"id": "autodate2990389176",
 						"name": "created",
