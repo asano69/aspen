@@ -167,6 +167,11 @@ func exportCard(dir string, entry manifestCard, text string, lines []lineid.Line
 // exportStem makes a card title safe as the readable part of a file name on
 // every OS, and short enough to leave room for the suffix.
 func exportStem(title string) string {
+	// pathologize.Clean turns an empty name into "file", which would hide
+	// the fallback below, so a blank title is handled first.
+	if strings.TrimSpace(title) == "" {
+		return fallbackStem
+	}
 	stem := strings.TrimSpace(truncateBytes(pathologize.Clean(title), maxStemBytes))
 	if stem == "" {
 		return fallbackStem

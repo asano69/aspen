@@ -12,7 +12,7 @@ import (
 
 func units(s string) []uint16 { return utf16.Encode([]rune(s)) }
 
-func newSigner(t *testing.T) *Signer {
+func loadTestSigner(t *testing.T) *Signer {
 	t.Helper()
 	s, err := Load(filepath.Join(t.TempDir(), "server_key.pem"))
 	if err != nil {
@@ -22,7 +22,7 @@ func newSigner(t *testing.T) *Signer {
 }
 
 func TestSignRecordsUserAndVerifies(t *testing.T) {
-	s := newSigner(t)
+	s := loadTestSigner(t)
 	doc := units("a\nb")
 	lines := lineid.New(2, 1)
 
@@ -41,7 +41,7 @@ func TestSignRecordsUserAndVerifies(t *testing.T) {
 }
 
 func TestSignKeepsUnchangedLines(t *testing.T) {
-	s := newSigner(t)
+	s := loadTestSigner(t)
 	first := s.Sign(units("a\nb"), lineid.New(2, 1), "bob@example.com", 5)
 
 	second := s.Sign(units("a\nc"), first, "alice@example.com", 9)
