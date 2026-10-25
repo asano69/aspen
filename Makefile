@@ -36,6 +36,11 @@ build-front: deps-front
 build: build-front
 	go build -ldflags="-X github.com/asano69/cardpod/internal/version.Version=$(VERSION)" -o $(BINARY) ./cmd/$(BINARY)
 
+.PHONY: build-back
+build-back:
+	go build -ldflags="-X github.com/asano69/cardpod/internal/version.Version=$(VERSION)" -o $(BINARY) ./cmd/$(BINARY)
+
+
 .PHONY: server
 server: 
 	#./cardpod migrate up --dir=pb_data

@@ -1,19 +1,17 @@
-// export.go implements "cardpod export": it writes one pot to a zip archive.
+// export.go implements "cardpod export": it writes one pot to a directory.
 //
-// The top folder of the archive is the pot's name, which the pots collection
-// limits to letters, digits and hyphens, so it is safe on every OS:
-//
-//	<pot-name>/
-//	├── manifest.json                       (empty for now)
-//	├── assets/<recordId>/<file>            attachments used by the cards
+//	<dir>/
+//	├── manifest.json                 cards and assets, in export order
+//	├── assets/<recordId>/<file>      attachments used by the cards
 //	└── cards/
-//	    ├── <stem>.<cardId>.csn             the text of a card
-//	    └── <stem>.<cardId>.sig.json        the signed lines of a card
+//	    ├── <stem>.csn                the text of a card
+//	    └── <stem>.json               the signed lines of a card
 //
-// <stem> is the card's title made safe as a file name and cut to
-// maxStemBytes. It is only there to be readable: the card id after it makes
-// every name unique, so titles that sanitize to the same stem never collide,
-// and the importer can ignore file names altogether.
+// Cards are written in titleLc order. <stem> is the card's title made safe as a
+// file name and cut to maxStemBytes. When two stems are the same (compared
+// case-insensitively, as some file systems do), a later one gets "(2)", "(3)", ...
+// so no name collides. The manifest lists every file, so an importer needs no
+// knowledge of the naming rules and reads cards in the listed order.
 //
 // Like import, the command opens the data directory in its own process, so run
 // it while the server is stopped: the text is read from the content rows, which
@@ -21,7 +19,6 @@
 package serve
 
 import (
-	"archive/zip"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -29,6 +26,8 @@ import (
 	"io"
 	"log/slog"
 	"maps"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"unicode/utf8"
@@ -43,17 +42,18 @@ import (
 )
 
 const (
-	exportTextExt = ".csn"
-	exportSigExt  = ".sig.json"
+	exportTextExt  = ".csn"
+	exportLinesExt = ".json"
 
-	// maxStemBytes caps the readable part of a file name. The suffix
-	// (".<15-char id>.sig.json", 25 bytes) is added after it. Most file
-	// systems limit a name to 255 bytes, so this leaves a wide margin for
-	// longer suffixes later.
-	maxStemBytes = 200
+	// maxStemBytes caps the readable part of a file name. Most file systems
+	// limit a name to 255 bytes, so the longest suffix (".json", 5 bytes) still
+	// fits. A "(<n>)" suffix is taken out of this budget, not added to it.
+	maxStemBytes = 240
 
 	// fallbackStem is used when a title has nothing left after sanitizing.
 	fallbackStem = "untitled"
+
+	manifestName = "manifest.json"
 )
 
 // ExportResult counts what an export wrote.
@@ -62,9 +62,22 @@ type ExportResult struct {
 	Assets int
 }
 
+// manifestCard lists the two files of one card.
+type manifestCard struct {
+	Text  string `json:"text"`
+	Lines string `json:"lines"`
+}
+
+// manifest is the content of manifest.json. Paths are relative to the export
+// directory and use "/".
+type manifest struct {
+	Cards  []manifestCard `json:"cards"`
+	Assets []string       `json:"assets"`
+}
+
 // Export writes every live card of the pot named potName, and the attachments
-// they use, to w as a zip archive.
-func Export(app core.App, potName string, w io.Writer) (ExportResult, error) {
+// they use, into dir.
+func Export(app core.App, potName, dir string) (ExportResult, error) {
 	var result ExportResult
 
 	pot, err := app.FindFirstRecordByFilter(
@@ -77,27 +90,23 @@ func Export(app core.App, potName string, w io.Writer) (ExportResult, error) {
 		return result, fmt.Errorf("find pot %q: %w", potName, err)
 	}
 
-	root := pot.GetString("name")
-	zw := zip.NewWriter(w)
-
-	// Explicit folder entries keep empty folders in the archive.
-	for _, dir := range []string{"", "assets/", "cards/"} {
-		if err := writeEntry(zw, root+"/"+dir, nil); err != nil {
-			return result, err
+	// Created up front, so empty folders exist too.
+	for _, sub := range []string{"cards", "assets"} {
+		if err := os.MkdirAll(filepath.Join(dir, sub), 0o755); err != nil {
+			return result, fmt.Errorf("create %s: %w", sub, err)
 		}
-	}
-	if err := writeEntry(zw, root+"/manifest.json", nil); err != nil {
-		return result, err
 	}
 
 	cards, err := app.FindRecordsByFilter(
-		"cards", "pot = {:pot} && "+notDeleted, "title", 0, 0,
+		"cards", "pot = {:pot} && "+notDeleted, "titleLc", 0, 0,
 		dbx.Params{"pot": pot.Id},
 	)
 	if err != nil {
 		return result, fmt.Errorf("list cards: %w", err)
 	}
 
+	m := manifest{Cards: []manifestCard{}, Assets: []string{}}
+	used := map[string]bool{}
 	assets := map[string]bool{}
 	for _, card := range cards {
 		text, err := loadCardText(app, card)
@@ -108,40 +117,51 @@ func Export(app core.App, potName string, w io.Writer) (ExportResult, error) {
 		if err != nil {
 			return result, fmt.Errorf("read the lines of card %s: %w", card.Id, err)
 		}
-		if err := exportCard(zw, root+"/cards/", card, text, lines); err != nil {
-			return result, err
+
+		stem := uniqueStem(exportStem(card.GetString("title")), used)
+		entry := manifestCard{
+			Text:  "cards/" + stem + exportTextExt,
+			Lines: "cards/" + stem + exportLinesExt,
 		}
-		result.Cards++
+		if err := exportCard(dir, entry, text, lines); err != nil {
+			return result, fmt.Errorf("export card %s: %w", card.Id, err)
+		}
+		m.Cards = append(m.Cards, entry)
 		for _, id := range attachmentIDs(text) {
 			assets[id] = true
 		}
 	}
 
-	result.Assets, err = exportAssets(app, zw, root, slices.Sorted(maps.Keys(assets)))
+	m.Assets, err = exportAssets(app, dir, slices.Sorted(maps.Keys(assets)))
 	if err != nil {
 		return result, err
 	}
-	if err := zw.Close(); err != nil {
-		return result, fmt.Errorf("finish archive: %w", err)
+
+	data, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		return result, fmt.Errorf("encode manifest: %w", err)
 	}
+	if err := writeFile(dir, manifestName, data); err != nil {
+		return result, err
+	}
+
+	result.Cards, result.Assets = len(m.Cards), len(m.Assets)
 	return result, nil
 }
 
-// exportCard writes the text and the signed lines of one card into dir.
-func exportCard(zw *zip.Writer, dir string, card *core.Record, text string, lines []lineid.Line) error {
-	base := dir + exportStem(card.GetString("title")) + "." + card.Id
-
-	if err := writeEntry(zw, base+exportTextExt, []byte(text)); err != nil {
+// exportCard writes the text and the signed lines of one card.
+func exportCard(dir string, entry manifestCard, text string, lines []lineid.Line) error {
+	if err := writeFile(dir, entry.Text, []byte(text)); err != nil {
 		return err
 	}
 	if lines == nil {
 		lines = []lineid.Line{} // encode "no lines" as [], not null
 	}
-	sig, err := json.Marshal(lines)
+	data, err := json.Marshal(lines)
 	if err != nil {
-		return fmt.Errorf("encode the lines of card %s: %w", card.Id, err)
+		return fmt.Errorf("encode lines: %w", err)
 	}
-	return writeEntry(zw, base+exportSigExt, sig)
+	return writeFile(dir, entry.Lines, data)
 }
 
 // exportStem makes a card title safe as the readable part of a file name on
@@ -152,6 +172,20 @@ func exportStem(title string) string {
 		return fallbackStem
 	}
 	return stem
+}
+
+// uniqueStem returns stem, or stem with "(2)", "(3)", ... when a name that
+// differs only in case is already in used, and records the result. The suffix
+// is taken out of the length budget by cutting stem, so the name never exceeds
+// maxStemBytes.
+func uniqueStem(stem string, used map[string]bool) string {
+	name := stem
+	for n := 2; used[strings.ToLower(name)]; n++ {
+		suffix := fmt.Sprintf("(%d)", n)
+		name = truncateBytes(stem, maxStemBytes-len(suffix)) + suffix
+	}
+	used[strings.ToLower(name)] = true
+	return name
 }
 
 // truncateBytes cuts s to at most max bytes without splitting a character.
@@ -190,71 +224,77 @@ func attachmentID(src string) (string, bool) {
 }
 
 // exportAssets writes the attachments with the given record ids to
-// <root>/assets/<recordId>/<file> and returns how many were written.
-func exportAssets(app core.App, zw *zip.Writer, root string, ids []string) (int, error) {
+// assets/<recordId>/<file> and returns their paths, relative to dir.
+func exportAssets(app core.App, dir string, ids []string) ([]string, error) {
+	written := []string{}
 	if len(ids) == 0 {
-		return 0, nil
+		return written, nil
 	}
 	fsys, err := app.NewFilesystem()
 	if err != nil {
-		return 0, fmt.Errorf("open file storage: %w", err)
+		return nil, fmt.Errorf("open file storage: %w", err)
 	}
 	defer fsys.Close()
 
-	written := 0
 	for _, id := range ids {
-		ok, err := exportAsset(app, fsys, zw, root, id)
+		rel, err := exportAsset(app, fsys, dir, id)
 		if err != nil {
-			return written, fmt.Errorf("export attachment %s: %w", id, err)
+			return nil, fmt.Errorf("export attachment %s: %w", id, err)
 		}
-		if ok {
-			written++
+		if rel != "" {
+			written = append(written, rel)
 		}
 	}
 	return written, nil
 }
 
-// exportAsset writes one attachment. An attachment that no longer exists is
-// skipped (the note keeps pointing at it, as it did before the export), and
-// reported as false.
-func exportAsset(app core.App, fsys *filesystem.System, zw *zip.Writer, root, id string) (bool, error) {
+// exportAsset writes one attachment and returns its path relative to dir. An
+// attachment that no longer exists is skipped (the note keeps pointing at it,
+// as it did before the export) and gives "".
+func exportAsset(app core.App, fsys *filesystem.System, dir, id string) (string, error) {
 	record, err := app.FindRecordById("attachments", id)
 	if errors.Is(err, sql.ErrNoRows) {
 		slog.Warn("export: attachment not found", "attachment", id)
-		return false, nil
+		return "", nil
 	}
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	name := record.GetString("image")
 	if name == "" {
-		return false, nil
+		return "", nil
 	}
 
 	reader, err := fsys.GetReader(record.BaseFilesPath() + "/" + name)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	defer reader.Close()
 
-	f, err := zw.Create(root + "/assets/" + id + "/" + name)
+	rel := "assets/" + id + "/" + name
+	path := filepath.Join(dir, filepath.FromSlash(rel))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return "", err
+	}
+	f, err := os.Create(path)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	if _, err := io.Copy(f, reader); err != nil {
-		return false, err
+		f.Close()
+		return "", err
 	}
-	return true, nil
+	return rel, f.Close()
 }
 
-// writeEntry adds one entry to the archive. A name ending in "/" is a folder.
-func writeEntry(zw *zip.Writer, name string, data []byte) error {
-	f, err := zw.Create(name)
-	if err != nil {
-		return fmt.Errorf("write %s: %w", name, err)
+// writeFile writes data to rel (a "/" path) inside dir, creating its folder.
+func writeFile(dir, rel string, data []byte) error {
+	path := filepath.Join(dir, filepath.FromSlash(rel))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("write %s: %w", rel, err)
 	}
-	if _, err := f.Write(data); err != nil {
-		return fmt.Errorf("write %s: %w", name, err)
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		return fmt.Errorf("write %s: %w", rel, err)
 	}
 	return nil
 }

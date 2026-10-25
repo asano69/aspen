@@ -1,13 +1,10 @@
 package serve
 
 import (
-	"archive/zip"
-	"bytes"
 	"encoding/json"
-	"fmt"
-	"io"
-	"maps"
-	"path"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -60,29 +57,6 @@ func createAttachment(t *testing.T, app core.App, content string) (record *core.
 	return record, "@/" + record.Id + "/" + record.GetString("image")
 }
 
-// readArchive returns the entries of a zip archive by name.
-func readArchive(t *testing.T, buf *bytes.Buffer) map[string]string {
-	t.Helper()
-	zr, err := zip.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
-	if err != nil {
-		t.Fatalf("open archive: %v", err)
-	}
-	got := map[string]string{}
-	for _, f := range zr.File {
-		r, err := f.Open()
-		if err != nil {
-			t.Fatalf("open %s: %v", f.Name, err)
-		}
-		data, err := io.ReadAll(r)
-		r.Close()
-		if err != nil {
-			t.Fatalf("read %s: %v", f.Name, err)
-		}
-		got[f.Name] = string(data)
-	}
-	return got
-}
-
 // importPages imports pages given as title -> lines into pot.
 func importPages(t *testing.T, app core.App, pot string, pages ...map[string]any) {
 	t.Helper()
@@ -93,7 +67,53 @@ func importPages(t *testing.T, app core.App, pot string, pages ...map[string]any
 	runImport(t, app, pot, string(data))
 }
 
-func TestExport_WritesOnePotInTheArchiveLayout(t *testing.T) {
+// runExport exports pot into a fresh directory.
+func runExport(t *testing.T, app core.App, pot string) (string, ExportResult) {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), "out")
+	result, err := Export(app, pot, dir)
+	if err != nil {
+		t.Fatalf("Export: %v", err)
+	}
+	return dir, result
+}
+
+// readFiles returns the files under dir by their "/" path (folders are left
+// out).
+func readFiles(t *testing.T, dir string) map[string]string {
+	t.Helper()
+	got := map[string]string{}
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+		got[filepath.ToSlash(rel)] = string(data)
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("read %s: %v", dir, err)
+	}
+	return got
+}
+
+func readManifest(t *testing.T, files map[string]string) manifest {
+	t.Helper()
+	var m manifest
+	if err := json.Unmarshal([]byte(files[manifestName]), &m); err != nil {
+		t.Fatalf("decode manifest %q: %v", files[manifestName], err)
+	}
+	return m
+}
+
+func TestExport_WritesOnePotInTheDirectoryLayout(t *testing.T) {
 	app := newExportTestApp(t)
 	src := createPot(t, app, "src")
 	createPot(t, app, "other")
@@ -103,40 +123,66 @@ func TestExport_WritesOnePotInTheArchiveLayout(t *testing.T) {
 	]}`)
 	runImport(t, app, "other", `{"pages":[{"title":"beta","lines":["beta"]}]}`)
 	softDelete(t, app, cardInPot(t, app, src.Id, "gone"))
-	alpha := cardInPot(t, app, src.Id, "alpha")
 
-	var buf bytes.Buffer
-	result, err := Export(app, "src", &buf)
-	if err != nil {
-		t.Fatalf("Export: %v", err)
-	}
+	dir, result := runExport(t, app, "src")
 	if result != (ExportResult{Cards: 1}) {
 		t.Errorf("result = %+v, want 1 card and no assets", result)
 	}
 
-	got := readArchive(t, &buf)
-
-	// One signed-lines entry per line of the text (title and body).
-	sigName := "src/cards/alpha." + alpha.Id + ".sig.json"
+	files := readFiles(t, dir)
+	if len(files) != 3 {
+		t.Errorf("files = %v, want manifest, one text and one lines file", files)
+	}
+	if files["cards/alpha.csn"] != "alpha\nbody" {
+		t.Errorf("text = %q, want %q", files["cards/alpha.csn"], "alpha\nbody")
+	}
 	var lines []lineid.Line
-	if err := json.Unmarshal([]byte(got[sigName]), &lines); err != nil || len(lines) != 2 {
-		t.Errorf("%s = %q, want a JSON array of 2 lines (err %v)", sigName, got[sigName], err)
+	if err := json.Unmarshal([]byte(files["cards/alpha.json"]), &lines); err != nil || len(lines) != 2 {
+		t.Errorf("lines = %q, want a JSON array of 2 lines (err %v)", files["cards/alpha.json"], err)
 	}
-	delete(got, sigName)
 
-	want := map[string]string{
-		"src/":              "",
-		"src/assets/":       "",
-		"src/cards/":        "",
-		"src/manifest.json": "",
-		"src/cards/alpha." + alpha.Id + ".csn": "alpha\nbody",
-	}
-	if !maps.Equal(got, want) {
-		t.Errorf("archive = %q, want %q", got, want)
+	m := readManifest(t, files)
+	want := manifestCard{Text: "cards/alpha.csn", Lines: "cards/alpha.json"}
+	if len(m.Cards) != 1 || m.Cards[0] != want || len(m.Assets) != 0 {
+		t.Errorf("manifest = %+v, want the card %+v and no assets", m, want)
 	}
 }
 
-func TestExport_TitlesThatSanitizeAlikeKeepDistinctNames(t *testing.T) {
+func TestExport_EmptyPotStillHasItsFolders(t *testing.T) {
+	app := newExportTestApp(t)
+	createPot(t, app, "src")
+
+	dir, _ := runExport(t, app, "src")
+
+	for _, sub := range []string{"cards", "assets"} {
+		if info, err := os.Stat(filepath.Join(dir, sub)); err != nil || !info.IsDir() {
+			t.Errorf("%s is not a folder (err %v)", sub, err)
+		}
+	}
+}
+
+func TestExport_CardsFollowTitleLcOrderInTheManifest(t *testing.T) {
+	app := newExportTestApp(t)
+	createPot(t, app, "src")
+	importPages(t, app, "src",
+		map[string]any{"title": "Banana", "lines": []string{"Banana"}},
+		map[string]any{"title": "apple", "lines": []string{"apple"}},
+		map[string]any{"title": "Cherry", "lines": []string{"Cherry"}},
+	)
+
+	dir, _ := runExport(t, app, "src")
+
+	var got []string
+	for _, c := range readManifest(t, readFiles(t, dir)).Cards {
+		got = append(got, c.Text)
+	}
+	want := []string{"cards/apple.csn", "cards/Banana.csn", "cards/Cherry.csn"}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Errorf("manifest order = %v, want %v", got, want)
+	}
+}
+
+func TestExport_TitlesThatSanitizeAlikeGetNumberedNames(t *testing.T) {
 	app := newExportTestApp(t)
 	createPot(t, app, "src")
 	importPages(t, app, "src",
@@ -145,54 +191,73 @@ func TestExport_TitlesThatSanitizeAlikeKeepDistinctNames(t *testing.T) {
 		map[string]any{"title": "a?b", "lines": []string{"a?b"}},
 	)
 
-	var buf bytes.Buffer
-	if _, err := Export(app, "src", &buf); err != nil {
-		t.Fatalf("Export: %v", err)
-	}
+	dir, _ := runExport(t, app, "src")
 
-	texts := 0
-	for name := range readArchive(t, &buf) {
-		if strings.HasSuffix(name, exportTextExt) {
-			texts++
-			if base := path.Base(name); strings.ContainsAny(base, `/\:*?"<>|`) {
-				t.Errorf("unsafe file name %q", base)
-			}
+	files := readFiles(t, dir)
+	m := readManifest(t, files)
+	seen := map[string]bool{}
+	for _, c := range m.Cards {
+		if seen[strings.ToLower(c.Text)] {
+			t.Errorf("name %q is used twice", c.Text)
+		}
+		seen[strings.ToLower(c.Text)] = true
+		if _, ok := files[c.Text]; !ok {
+			t.Errorf("manifest lists %q, which was not written", c.Text)
 		}
 	}
-	// A duplicate name would have replaced an entry in the map above.
-	if texts != 3 {
-		t.Errorf("got %d card files, want 3", texts)
+	if len(m.Cards) != 3 {
+		t.Errorf("got %d cards in the manifest, want 3", len(m.Cards))
 	}
 }
 
-func TestExport_LongTitleKeepsTheNameWithinTheLimit(t *testing.T) {
+func TestUniqueStem(t *testing.T) {
+	used := map[string]bool{}
+	got := []string{
+		uniqueStem("a", used),
+		uniqueStem("a", used),
+		uniqueStem("A", used), // differs only in case: still a collision
+		uniqueStem("b", used),
+	}
+	want := []string{"a", "a(2)", "A(3)", "b"}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Errorf("stems = %v, want %v", got, want)
+	}
+}
+
+func TestUniqueStem_LongStemKeepsItsSuffixWithinTheLimit(t *testing.T) {
+	used := map[string]bool{}
+	stem := exportStem(strings.Repeat("あ", 100)) // 300 bytes, cut by exportStem
+
+	for i := 1; i <= 105; i++ { // covers 1-, 2- and 3-digit suffixes
+		name := uniqueStem(stem, used)
+		if len(name) > maxStemBytes || !utf8.ValidString(name) {
+			t.Fatalf("name %d: %d bytes, valid UTF-8 %v; want at most %d and valid",
+				i, len(name), utf8.ValidString(name), maxStemBytes)
+		}
+	}
+	if len(used) != 105 {
+		t.Errorf("got %d distinct names, want 105", len(used))
+	}
+}
+
+func TestExport_LongTitleKeepsTheFileNameWithinTheLimit(t *testing.T) {
 	app := newExportTestApp(t)
-	pot := createPot(t, app, "src")
+	createPot(t, app, "src")
 	title := strings.Repeat("あ", 240) // 720 bytes
 	importPages(t, app, "src", map[string]any{"title": title, "lines": []string{title}})
-	card := cardInPot(t, app, pot.Id, strings.ToLower(title))
 
-	var buf bytes.Buffer
-	if _, err := Export(app, "src", &buf); err != nil {
-		t.Fatalf("Export: %v", err)
+	dir, _ := runExport(t, app, "src")
+
+	m := readManifest(t, readFiles(t, dir))
+	if len(m.Cards) != 1 {
+		t.Fatalf("got %d cards, want 1", len(m.Cards))
 	}
-
-	found := false
-	for name := range readArchive(t, &buf) {
-		if !strings.HasPrefix(name, "src/cards/") || name == "src/cards/" {
-			continue
-		}
-		found = true
-		base := path.Base(name)
+	for _, rel := range []string{m.Cards[0].Text, m.Cards[0].Lines} {
+		base := filepath.Base(rel)
 		if len(base) > 255 || !utf8.ValidString(base) {
-			t.Errorf("name %q: %d bytes, valid UTF-8 %v; want at most 255 and valid", base, len(base), utf8.ValidString(base))
+			t.Errorf("name %q: %d bytes, valid UTF-8 %v; want at most 255 and valid",
+				base, len(base), utf8.ValidString(base))
 		}
-		if !strings.Contains(base, "."+card.Id+".") {
-			t.Errorf("name %q lost the card id", base)
-		}
-	}
-	if !found {
-		t.Error("no card file was written")
 	}
 }
 
@@ -219,22 +284,22 @@ func TestExport_WritesTheAttachmentsOfTheCardsOnce(t *testing.T) {
 		map[string]any{"title": "two", "lines": []string{"two", "[[" + src + "]]"}},
 	)
 
-	var buf bytes.Buffer
-	result, err := Export(app, "src", &buf)
-	if err != nil {
-		t.Fatalf("Export: %v", err)
-	}
+	dir, result := runExport(t, app, "src")
 	if result.Cards != 2 || result.Assets != 1 {
 		t.Errorf("result = %+v, want 2 cards and 1 asset", result)
 	}
 
-	name := fmt.Sprintf("src/assets/%s/%s", attachment.Id, attachment.GetString("image"))
-	got := readArchive(t, &buf)
-	if got[name] != "png-bytes" {
-		t.Errorf("%s = %q, want %q", name, got[name], "png-bytes")
+	name := "assets/" + attachment.Id + "/" + attachment.GetString("image")
+	files := readFiles(t, dir)
+	if files[name] != "png-bytes" {
+		t.Errorf("%s = %q, want %q", name, files[name], "png-bytes")
 	}
-	for entry := range got {
-		if strings.HasPrefix(entry, "src/assets/") && !strings.HasSuffix(entry, "/") && entry != name {
+	m := readManifest(t, files)
+	if len(m.Assets) != 1 || m.Assets[0] != name {
+		t.Errorf("manifest assets = %v, want [%s]", m.Assets, name)
+	}
+	for entry := range files {
+		if strings.HasPrefix(entry, "assets/") && entry != name {
 			t.Errorf("unexpected asset %q", entry)
 		}
 	}
@@ -243,7 +308,7 @@ func TestExport_WritesTheAttachmentsOfTheCardsOnce(t *testing.T) {
 func TestExport_UnknownPot(t *testing.T) {
 	app := newExportTestApp(t)
 
-	_, err := Export(app, "missing", &bytes.Buffer{})
+	_, err := Export(app, "missing", filepath.Join(t.TempDir(), "out"))
 	if err == nil || !strings.Contains(err.Error(), `pot "missing" not found`) {
 		t.Errorf("err = %v, want a pot-not-found error", err)
 	}
