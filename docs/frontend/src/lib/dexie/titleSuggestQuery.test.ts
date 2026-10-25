@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { db, type CachedCard } from "./db";
 import { suggestTitles } from "./titleSuggestQuery";
 
-function card(id: string, pot: string, title: string): CachedCard {
+function card(id: string, pod: string, title: string): CachedCard {
   return {
     id,
-    pot,
+    pod,
     title: title as CachedCard["title"],
     titleLc: title.toLowerCase().replaceAll(" ", "_"),
     description: [],
@@ -47,7 +47,7 @@ describe("suggestTitles", () => {
     expect(await suggestTitles("p", "", 2)).toEqual(["a", "b"]);
   });
 
-  it("keeps pots apart", async () => {
+  it("keeps pods apart", async () => {
     await db.cards.put(card("1", "p1", "apple"));
     expect(await suggestTitles("p2", "ap")).toEqual([]);
   });

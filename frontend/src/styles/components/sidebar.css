@@ -1,8 +1,8 @@
 /* Public classes: .sidebar, .sidebar-body,
  * .sidebar-logo, .sidebar-nav, .sidebar-link, .sidebar-create, .sidebar-search,
- * .sidebar-pot-list, .sidebar-pot, .sidebar-footer.
+ * .sidebar-pod-list, .sidebar-pod, .sidebar-footer.
  * The overlay sidebar (see components/layout/Sidebar.tsx and
- * SidebarPotList.tsx). It is open while it has [data-open]. */
+ * SidebarPodList.tsx). It is open while it has [data-open]. */
 @layer components {
   /* Translated off-screen while closed. Its shadow only exists while open,
    * so the blur does not bleed into the viewport from past the left edge. */
@@ -46,19 +46,19 @@
     padding: 0 8px;
   }
 
-  /* The pot filter above the list (see SidebarPotList.tsx). */
+  /* The pod filter above the list (see SidebarPodList.tsx). */
   .sidebar-search {
     padding: 8px 8px 0;
   }
 
-  .sidebar-pot-list {
+  .sidebar-pod-list {
     display: flex;
     flex-direction: column;
     gap: 4px;
     padding: 8px;
   }
 
-  .sidebar-pot[data-dragging] {
+  .sidebar-pod[data-dragging] {
     opacity: 0.4;
   }
 
@@ -88,12 +88,12 @@
     background-color: var(--color-hover-bg);
   }
 
-  /* A card is being dragged over this pot (see SidebarPotList.tsx). */
+  /* A card is being dragged over this pod (see SidebarPodList.tsx). */
   .sidebar-link[data-drop-target] {
     background-color: var(--color-active-bg);
   }
 
-  /* The "create pot" button is a .sidebar-link rendered as a <button>. */
+  /* The "create pod" button is a .sidebar-link rendered as a <button>. */
   .sidebar-create {
     width: 100%;
     text-align: left;
@@ -109,7 +109,7 @@
     flex-shrink: 0;
   }
 
-  /* The pot icon is the same avatar as in TopBar, shrunk to fit a row. */
+  /* The pod icon is the same avatar as in TopBar, shrunk to fit a row. */
   .sidebar-link > .avatar,
   .sidebar-link .avatar-img {
     width: 24px;

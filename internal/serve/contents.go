@@ -91,7 +91,7 @@ func writeNote(app core.App, card *core.Record, text string, lines []lineid.Line
 		}
 		record = core.NewRecord(collection)
 		record.Set("card", card.Id)
-		record.Set("pot", card.GetString("pot"))
+		record.Set("pod", card.GetString("pod"))
 	case err != nil:
 		return fmt.Errorf("find the text of card %s: %w", card.Id, err)
 	}

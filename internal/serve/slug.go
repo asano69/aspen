@@ -8,8 +8,8 @@
 // A card's URL segment is no longer a separate stored field -- it's
 // derived from this same title on demand (see internal/slug.FromTitle
 // and its frontend mirror, frontend/src/lib/slugify.ts), since the
-// (pot, title) unique index already guarantees a title never collides
-// within a pot.
+// (pod, title) unique index already guarantees a title never collides
+// within a pod.
 package serve
 
 import (
@@ -27,11 +27,11 @@ import (
 // defaultTitle is used when a candidate resolves to no usable text at
 // all -- e.g. an empty draft confirmed with Enter. Duplicate defaults
 // are disambiguated the same way any other title is (see
-// resolveUniqueTitleInPot).
+// resolveUniqueTitleInPod).
 const defaultTitle = "Untitled"
 
-// resolveUniqueTitleInPot returns a value derived from base that is
-// unique among "cards" records in pot -- unique on its DERIVED
+// resolveUniqueTitleInPod returns a value derived from base that is
+// unique among "cards" records in pod -- unique on its DERIVED
 // titleLc (see internal/slug.ToLowerKey), not on the raw title
 // string. This matters because ToLowerKey is not injective: "a b"
 // and "a_b" both normalize to "a_b" (case-insensitive, spaces mapped
@@ -45,10 +45,10 @@ const defaultTitle = "Untitled"
 // "_3", ...) appended to the title. Soft-deleted cards are ignored: they
 // no longer occupy a title (so the unique indexes on "cards" must only
 // cover live cards, i.e. WHERE deleted = '').
-func resolveUniqueTitleInPot(app core.App, pot, base, excludeID string) (string, error) {
+func resolveUniqueTitleInPod(app core.App, pod, base, excludeID string) (string, error) {
 	value := base
 	for suffix := 2; ; suffix++ {
-		_, err := findLiveCardByTitleLc(app, pot, slug.ToLowerKey(value), excludeID)
+		_, err := findLiveCardByTitleLc(app, pod, slug.ToLowerKey(value), excludeID)
 		if errors.Is(err, sql.ErrNoRows) {
 			return value, nil
 		}
@@ -63,15 +63,15 @@ func resolveUniqueTitleInPot(app core.App, pot, base, excludeID string) (string,
 	}
 }
 
-// findLiveCardByTitleLc returns the live card of pot whose titleLc is
+// findLiveCardByTitleLc returns the live card of pod whose titleLc is
 // titleLc, other than excludeID, or sql.ErrNoRows. The values are bound as
 // query parameters instead of being written into a PocketBase filter string:
 // a filter string is parsed, and a title holding a backslash was altered by
 // that parse, so the lookup missed a card that exists.
-func findLiveCardByTitleLc(app core.App, pot, titleLc, excludeID string) (*core.Record, error) {
+func findLiveCardByTitleLc(app core.App, pod, titleLc, excludeID string) (*core.Record, error) {
 	record := &core.Record{}
 	err := app.RecordQuery("cards").
-		AndWhere(dbx.HashExp{"pot": pot, "titleLc": titleLc, "deleted": ""}).
+		AndWhere(dbx.HashExp{"pod": pod, "titleLc": titleLc, "deleted": ""}).
 		AndWhere(dbx.NewExp("id != {:id}", dbx.Params{"id": excludeID})).
 		Limit(1).
 		One(record)
@@ -79,7 +79,7 @@ func findLiveCardByTitleLc(app core.App, pot, titleLc, excludeID string) (*core.
 }
 
 // resolveTitle returns a title derived from candidate that is unique
-// within pot, matching the "cards" collection's unique (pot, title)
+// within pod, matching the "cards" collection's unique (pod, title)
 // index. excludeID lets a card keep resolving against its own current
 // title without colliding with itself.
 //
@@ -91,8 +91,8 @@ func findLiveCardByTitleLc(app core.App, pot, titleLc, excludeID string) (*core.
 // TestResolveTitle_PreservesCandidateWhitespaceVariants): only the
 // presence of brackets triggers normalization, so plain whitespace
 // variants are never altered.
-func resolveTitle(app core.App, pot string, candidate TitleCandidate, excludeID string) (CardTitle, error) {
-	value, err := resolveUniqueTitleInPot(app, pot, titleBase(candidate), excludeID)
+func resolveTitle(app core.App, pod string, candidate TitleCandidate, excludeID string) (CardTitle, error) {
+	value, err := resolveUniqueTitleInPod(app, pod, titleBase(candidate), excludeID)
 	return CardTitle(value), err
 }
 
@@ -127,11 +127,11 @@ func titleBase(candidate TitleCandidate) string {
 // findMergeTarget returns the title of the card that candidate collided
 // with, or "" when it did not. A collision means resolveTitle had to
 // disambiguate: the resolved title differs from the base title the
-// candidate asks for, because another live card of the pot (excluding
+// candidate asks for, because another live card of the pod (excluding
 // excludeID) already holds that base's titleLc. Comparing against the base
 // instead of looking at a "_<number>" suffix keeps a title the user typed
 // as "p_2" from being reported as a duplicate of "p".
-func findMergeTarget(app core.App, pot string, candidate TitleCandidate, title CardTitle, excludeID string) (CardTitle, error) {
+func findMergeTarget(app core.App, pod string, candidate TitleCandidate, title CardTitle, excludeID string) (CardTitle, error) {
 	base := titleBase(candidate)
 	if string(title) == base {
 		return "", nil
@@ -139,8 +139,8 @@ func findMergeTarget(app core.App, pot string, candidate TitleCandidate, title C
 
 	other, err := app.FindFirstRecordByFilter(
 		"cards",
-		"pot = {:pot} && id != {:id} && titleLc = {:titleLc} && "+notDeleted,
-		dbx.Params{"pot": pot, "id": excludeID, "titleLc": slug.ToLowerKey(base)},
+		"pod = {:pod} && id != {:id} && titleLc = {:titleLc} && "+notDeleted,
+		dbx.Params{"pod": pod, "id": excludeID, "titleLc": slug.ToLowerKey(base)},
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", nil

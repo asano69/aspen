@@ -10,7 +10,7 @@ export interface PageMenuProps {
   // Id of the open card. Undefined for a draft, which has no record to
   // pin or delete yet, so every button is disabled.
   cardId: string | undefined;
-  potSlug: string;
+  podSlug: string;
   // Keeps the menu's space but hides it (see CardForm's editorReady).
   hidden: boolean;
   // Getter for the open card's live Yjs text (see ExistingCardEditor's
@@ -40,7 +40,7 @@ export default function PageMenu(props: PageMenuProps) {
     const id = props.cardId;
     if (!id) return;
     await removeCard(id);
-    navigate(`/${props.potSlug}`);
+    navigate(`/${props.podSlug}`);
   };
 
   const saveQuery = async (value: string) => {

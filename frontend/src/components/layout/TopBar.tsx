@@ -3,15 +3,15 @@ import { A, useNavigate } from "@solidjs/router";
 import { Menu, Plus, PackageOpen } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
 import { suggestTitles } from "@/lib/dexie/titleIndex";
-import { addPot, orderedPots } from "@/lib/stores/potsStore";
+import { addPod, orderedPods } from "@/lib/stores/podsStore";
 import { normalizeForSearch, searchTitles } from "@/lib/search/titleSearch";
-import PotIcon from "../PotIcon";
+import PodIcon from "../PodIcon";
 
 import TitleSearch from "./TitleSearch";
 
 import UserMenu from "./UserMenu";
-import PotMenu from "./PotMenu";
-import { topBarActions, topBarPotLink } from "@/lib/topBarSlot";
+import PodMenu from "./PodMenu";
+import { topBarActions, topBarPodLink } from "@/lib/topBarSlot";
 
 export interface TopBarProps {
   sidebarOpen: boolean;
@@ -27,7 +27,7 @@ export default function TopBar(props: TopBarProps) {
   // opens, otherwise a draft with that title starts (see CardForm).
   const [query, setQuery] = createSignal("");
   const addCardHref = () => {
-    const slug = topBarPotLink()!.slug;
+    const slug = topBarPodLink()!.slug;
     const title = query().trim();
     return title ? `/${slug}/${titleToSegment(title)}` : `/${slug}/new`;
   };
@@ -35,48 +35,48 @@ export default function TopBar(props: TopBarProps) {
   // Text typed for one scope must not leak into the other.
   createEffect(
     on(
-      () => topBarPotLink() !== undefined,
+      () => topBarPodLink() !== undefined,
       () => setQuery(""),
       { defer: true },
     ),
   );
 
-  // Outside a pot the same search and add button work on the pots. Pot titles
-  // are not unique, so picking one opens the first pot with that title.
+  // Outside a pod the same search and add button work on the pods. Pod titles
+  // are not unique, so picking one opens the first pod with that title.
   const navigate = useNavigate();
-  const suggestPots = async (text: string) =>
+  const suggestPods = async (text: string) =>
     searchTitles(
-      orderedPots().map((pot) => ({
-        title: pot.title,
-        key: normalizeForSearch(pot.title),
+      orderedPods().map((pod) => ({
+        title: pod.title,
+        key: normalizeForSearch(pod.title),
       })),
       text,
       20,
     );
-  const openPot = (title: string) => {
-    const pot = orderedPots().find((p) => p.title === title);
-    if (pot) navigate(`/${pot.name}`);
+  const openPod = (title: string) => {
+    const pod = orderedPods().find((p) => p.title === title);
+    if (pod) navigate(`/${pod.name}`);
   };
-  const addPotFromQuery = async () => {
+  const addPodFromQuery = async () => {
     const title = query().trim();
     if (!title) return;
     try {
-      navigate(`/${(await addPot(title)).name}`);
+      navigate(`/${(await addPod(title)).name}`);
     } catch (err) {
-      console.error("[top-bar] failed to add the pot:", err);
-      window.alert("Failed to add the pot.");
+      console.error("[top-bar] failed to add the pod:", err);
+      window.alert("Failed to add the pod.");
     }
   };
 
-  // Creates a pot titled with the current unix time that links to the open
-  // pot (if any), so it shows up in that pot's quick launch bar.
-  const addLinkedPot = async () => {
-    const links = topBarPotLink() ? [topBarPotLink()!.id] : [];
+  // Creates a pod titled with the current unix time that links to the open
+  // pod (if any), so it shows up in that pod's quick launch bar.
+  const addLinkedPod = async () => {
+    const links = topBarPodLink() ? [topBarPodLink()!.id] : [];
     try {
-      await addPot(String(Math.floor(Date.now() / 1000)), links);
+      await addPod(String(Math.floor(Date.now() / 1000)), links);
     } catch (err) {
-      console.error("[top-bar] failed to add the linked pot:", err);
-      window.alert("Failed to add the pot.");
+      console.error("[top-bar] failed to add the linked pod:", err);
+      window.alert("Failed to add the pod.");
     }
   };
 
@@ -90,7 +90,7 @@ export default function TopBar(props: TopBarProps) {
         <div class="topbar-left">
           {/* The sidebar is always collapsed by default, so this
               toggle is shown on every device. Its icon is the current
-              pot's cover, mirroring the user icon on the right. */}
+              pod's cover, mirroring the user icon on the right. */}
 
           <button
             type="button"
@@ -102,40 +102,40 @@ export default function TopBar(props: TopBarProps) {
             <Menu />
           </button>
 
-          {/* Current pot, when the active page registered one (see
-              CardList/CardForm's useTopBarPotLink call): its icon and
-              name form one link back to that pot's card list, followed
-              by the pot's menu. */}
-          <Show when={topBarPotLink()}>
-            <A href={`/${topBarPotLink()!.slug}`} class="topbar-pot-link">
-              <PotIcon src={topBarPotLink()!.cover} />
-              <span class="title">{topBarPotLink()!.name}</span>
+          {/* Current pod, when the active page registered one (see
+              CardList/CardForm's useTopBarPodLink call): its icon and
+              name form one link back to that pod's card list, followed
+              by the pod's menu. */}
+          <Show when={topBarPodLink()}>
+            <A href={`/${topBarPodLink()!.slug}`} class="topbar-pod-link">
+              <PodIcon src={topBarPodLink()!.cover} />
+              <span class="title">{topBarPodLink()!.name}</span>
             </A>
           </Show>
         </div>
 
         {/* Center slot: "add" and the title search are shared by every page.
-            While a pot is in context (CardList and CardForm register a pot
-            link via useTopBarPotLink) they work on its cards; otherwise on
-            the pots themselves. */}
+            While a pod is in context (CardList and CardForm register a pod
+            link via useTopBarPodLink) they work on its cards; otherwise on
+            the pods themselves. */}
         <div class="col-search">
           <Show
-            when={topBarPotLink()}
+            when={topBarPodLink()}
             fallback={
               <>
                 <button
                   type="button"
-                  aria-label="Add pot"
+                  aria-label="Add pod"
                   title="New"
                   class="new-button"
                   disabled={query().trim() === ""}
-                  onClick={addPotFromQuery}
+                  onClick={addPodFromQuery}
                 >
                   <Plus size={20} strokeWidth={4} />
                 </button>
                 <TitleSearch
-                  suggest={suggestPots}
-                  onSelect={openPot}
+                  suggest={suggestPods}
+                  onSelect={openPod}
                   onQueryChange={setQuery}
                 />
               </>
@@ -150,9 +150,9 @@ export default function TopBar(props: TopBarProps) {
               <Plus size={20} strokeWidth={4} />
             </A>
             <TitleSearch
-              suggest={(text) => suggestTitles(topBarPotLink()!.id, text)}
+              suggest={(text) => suggestTitles(topBarPodLink()!.id, text)}
               onSelect={(title) =>
-                navigate(`/${topBarPotLink()!.slug}/${titleToSegment(title)}`)
+                navigate(`/${topBarPodLink()!.slug}/${titleToSegment(title)}`)
               }
               onQueryChange={setQuery}
             />
@@ -167,15 +167,15 @@ export default function TopBar(props: TopBarProps) {
           {topBarActions()}
           <button
             type="button"
-            aria-label="Add linked pot"
-            title="Add linked pot"
+            aria-label="Add linked pod"
+            title="Add linked pod"
             class="icon-btn"
-            onClick={addLinkedPot}
+            onClick={addLinkedPod}
           >
             <PackageOpen />
           </button>
-          <Show when={topBarPotLink()}>
-            <PotMenu id={topBarPotLink()!.id} title={topBarPotLink()!.name} />
+          <Show when={topBarPodLink()}>
+            <PodMenu id={topBarPodLink()!.id} title={topBarPodLink()!.name} />
           </Show>
 
           <UserMenu />

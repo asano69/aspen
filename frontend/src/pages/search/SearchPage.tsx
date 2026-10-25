@@ -1,11 +1,11 @@
 import { createResource, For, Show } from "solid-js";
 import { A, useSearchParams } from "@solidjs/router";
-import { usePot } from "../pots/PotContext";
+import { usePod } from "../pods/PodContext";
 import { searchCards } from "../../lib/api/cardApi";
 import { titleToSegment } from "../../lib/models/slugify";
 
 export default function SearchPage() {
-  const pot = usePot();
+  const pod = usePod();
   const [params, setParams] = useSearchParams();
   // A repeated "?q=a&q=b" arrives as an array: only the first value is used.
   const query = () => {
@@ -13,7 +13,7 @@ export default function SearchPage() {
     return (Array.isArray(q) ? q[0] : q) ?? "";
   };
   const [res] = createResource(
-    () => [pot()?.name, query()] as const,
+    () => [pod()?.name, query()] as const,
     ([name, q]) => (name && q ? searchCards(name, q) : undefined),
   );
 
@@ -34,7 +34,7 @@ export default function SearchPage() {
             <For each={r().items} fallback={<li>No results.</li>}>
               {(it) => (
                 <li>
-                  <A href={`/${pot()?.name}/${titleToSegment(it.title)}`}>
+                  <A href={`/${pod()?.name}/${titleToSegment(it.title)}`}>
                     {it.title}
                   </A>
                   <p>{it.preview.join(" ")}</p>

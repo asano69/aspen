@@ -4,34 +4,34 @@ import { DropdownMenu } from "@kobalte/core/dropdown-menu";
 import { Settings, Pencil, Trash2 } from "@/lib/icons";
 import PromptDialog from "@/components/dialogs/PromptDialog";
 import ConfirmDialog from "@/components/dialogs/ConfirmDialog";
-import { removePot, renamePot } from "@/lib/stores/potsStore";
+import { removePod, renamePod } from "@/lib/stores/podsStore";
 
-export interface PotMenuProps {
+export interface PodMenuProps {
   id: string;
   title: string;
 }
 
-// Dropdown menu of the open pot, right of its name in the TopBar. Mirrors
+// Dropdown menu of the open pod, right of its name in the TopBar. Mirrors
 // UserMenu: an icon-button trigger plus a list of actions. The dialogs are
 // siblings of the menu, not children of its items, so they stay mounted
 // after the menu closes.
-export default function PotMenu(props: PotMenuProps) {
+export default function PodMenu(props: PodMenuProps) {
   const navigate = useNavigate();
   const [renameOpen, setRenameOpen] = createSignal(false);
   const [deleteOpen, setDeleteOpen] = createSignal(false);
 
-  const handleRename = (title: string) => renamePot(props.id, title);
+  const handleRename = (title: string) => renamePod(props.id, title);
 
-  // The pot is gone, so there is nothing left to show on its page.
+  // The pod is gone, so there is nothing left to show on its page.
   const handleDelete = async () => {
-    await removePot(props.id);
+    await removePod(props.id);
     navigate("/");
   };
 
   return (
     <>
       <DropdownMenu>
-        <DropdownMenu.Trigger aria-label="Pot actions" class="icon-btn">
+        <DropdownMenu.Trigger aria-label="Pod actions" class="icon-btn">
           <Settings size={24} />
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
@@ -58,23 +58,23 @@ export default function PotMenu(props: PotMenuProps) {
       <PromptDialog
         open={renameOpen()}
         onOpenChange={setRenameOpen}
-        title="Rename pot"
+        title="Rename pod"
         label="Title"
         initialValue={props.title}
         onSubmit={handleRename}
-        errorMessage="Failed to rename the pot."
+        errorMessage="Failed to rename the pod."
       />
-      {/* Deleting a pot cascade-deletes every card inside it, so this is
+      {/* Deleting a pod cascade-deletes every card inside it, so this is
           confirmed before it happens. */}
       <ConfirmDialog
         open={deleteOpen()}
         onOpenChange={setDeleteOpen}
-        title="Delete pot"
-        description="This will permanently delete this pot and all its cards."
+        title="Delete pod"
+        description="This will permanently delete this pod and all its cards."
         onConfirm={handleDelete}
         confirmLabel="Delete"
         submittingLabel="Deleting…"
-        errorMessage="Failed to delete the pot."
+        errorMessage="Failed to delete the pod."
       />
     </>
   );

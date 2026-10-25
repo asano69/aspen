@@ -10,7 +10,7 @@ import type { ExtractedLink } from "../models/extractLinks";
 // fits it, so the replica's rows can be used as they are.
 export type OwnLink = Pick<
   CardLinkRecord,
-  "target_pot" | "target_title" | "target_titleLc"
+  "target_pod" | "target_title" | "target_titleLc"
 >;
 
 // The 1 hop / 2 hop rows are derived from the replica (see
@@ -69,13 +69,13 @@ export function createOwnLinks(
 // that card calls this while it is open; closeOwnLinks ends it.
 export function setOwnLinks(
   cardId: string,
-  pot: string,
+  pod: string,
   links: ExtractedLink[],
 ): void {
   setLiveOwnLinks({
     cardId,
     links: links.map((link) => ({
-      target_pot: pot,
+      target_pod: pod,
       target_title: link.title,
       target_titleLc: link.titleLc,
     })),

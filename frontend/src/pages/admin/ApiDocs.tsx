@@ -51,7 +51,7 @@ export default function ApiDocs() {
           type="text"
           value={url()}
           onInput={(e) => setUrl(e.currentTarget.value)}
-          placeholder="/api/pages/pot/slug/links1hop"
+          placeholder="/api/pages/pod/slug/links1hop"
           class="input input-mono"
         />
         <button type="submit" class="btn" disabled={loading()}>

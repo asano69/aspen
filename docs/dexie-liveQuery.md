@@ -14,7 +14,7 @@ flowchart LR
     end
 
     subgraph Writers["書き込み経路 (Replica 経由)"]
-        SYNC["syncReplica<br/>(pot を開いたとき / 再同期)"]
+        SYNC["syncReplica<br/>(pod を開いたとき / 再同期)"]
         EVT["handleCardEvent<br/>watchDataReplicas"]
         WT["mergeCards<br/>(ローカル操作の write-through)"]
     end
@@ -92,7 +92,7 @@ sequenceDiagram
 
 挙動のまとめ:
 
-- **再購読**: `args()` が読むシグナル（pot、title、cardId、ownLinks など）のどれかが変わると、前の購読を破棄して新しい引数で購読し直す。
+- **再購読**: `args()` が読むシグナル（pod、title、cardId、ownLinks など）のどれかが変わると、前の購読を破棄して新しい引数で購読し直す。
 - **値の更新**: `reconcile(value, { key: "id" })` で store を更新する。変化のないカードは同一オブジェクトのままなので、`<For>` が DOM を作り直さない。
 - **エラー**: `console.error` に出すだけで、最後の値を保つ。次の変更で成功すれば回復する。
 - **破棄**: コンポーネントが消えると `onCleanup` で購読解除する。
@@ -104,15 +104,15 @@ sequenceDiagram
 ```mermaid
 flowchart TB
     subgraph SolidLayer["Solid の層: args() の中で読んだもの"]
-        P["pot()"]
+        P["pod()"]
         T["props.title"]
         ID["props.cardId"]
         OL["ownLinks()<br/>= liveOwnLinks ?? replica"]
     end
 
     subgraph DexieLayer["Dexie の層: query() の中で読んだもの"]
-        C["db.cards の index 範囲<br/>[pot+titleLc]"]
-        L["db.card_links の index 範囲<br/>[target_pot+target_titleLc]"]
+        C["db.cards の index 範囲<br/>[pod+titleLc]"]
+        L["db.card_links の index 範囲<br/>[target_pod+target_titleLc]"]
     end
 
     SolidLayer -->|"変化 → 再購読"| RESUB["liveQuery を作り直す"]
@@ -130,7 +130,7 @@ flowchart TB
 
 | 場所 | `query` | 追跡する Dexie の範囲 | 備考 |
 | --- | --- | --- | --- |
-| `RelatedCards` | `computeRelated`（`relatedQuery.ts`） | `cards` の `[pot+titleLc]`、`card_links` の `[target_pot+target_titleLc]` | 1 hop / 2 hop。`ownTargets` は `args` で渡す |
+| `RelatedCards` | `computeRelated`（`relatedQuery.ts`） | `cards` の `[pod+titleLc]`、`card_links` の `[target_pod+target_titleLc]` | 1 hop / 2 hop。`ownTargets` は `args` で渡す |
 | `createOwnLinks`（`relatedStore.ts`） | `readOwnLinks`（`cardLinksCollection.ts`） | `card_links` の `source` | 開いたカードの発リンク（replica 側） |
 
 ### 発リンクの合成
@@ -176,12 +176,12 @@ flowchart TD
 3. **Dexie にクライアント導出値を書かない。** `cards` / `card_links` はサーバーのミラーに保つ。
 4. **規則の二重実装は共有フィクスチャで固定する。** 1 hop / 2 hop は Go の `links1Hop` / `links2Hop` が基準で、`testdata/link-graph.json` を TS（`relatedQuery.test.ts`）と Go（`link_graph_test.go`）が読む。
 5. **タイトルの並びはコードポイント順**（`compareTitles`）。`localeCompare` や JS の `<`（UTF-16 順）は使わない。SQLite の `ORDER BY title` と揃えるため。
-6. **`args` が `undefined` を返す間は何もしない。** pot やタイトルが未確定の間は購読しない。
+6. **`args` が `undefined` を返す間は何もしない。** pod やタイトルが未確定の間は購読しない。
 
 ## 7. 既知の制約
 
 - ハブになるターゲット（何千枚ものカードがリンクする `#tag` など）では、2 hop の `bulkGet` が重くなり、関連テーブルが変わるたびに再実行される。現状は上限を設けない。重いと分かった時点で、件数上限と「もっと見る」、または再実行のデバウンスを検討する。
-- 初回同期が終わっていない pot では、関連カードの行が足りないだけで誤表示は出ない。同期が進むと自動で埋まる。
+- 初回同期が終わっていない pod では、関連カードの行が足りないだけで誤表示は出ない。同期が進むと自動で埋まる。
 - `args` が返すオブジェクトは依存が変わるたびに新しくなり、そのつど再購読になる。入力が頻繁に変わる箇所では `ownLinks` のデバウンス（300ms）が実質の歯止めになる。
 
 ## 8. テスト

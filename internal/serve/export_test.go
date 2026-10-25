@@ -16,18 +16,18 @@ import (
 )
 
 // newExportTestApp extends newImportTestApp with what Export reads beyond it:
-// the soft-delete field of pots and the attachments collection.
+// the soft-delete field of pods and the attachments collection.
 func newExportTestApp(t *testing.T) core.App {
 	t.Helper()
 	app := newImportTestApp(t)
 
-	pots, err := app.FindCollectionByNameOrId("pots")
+	pods, err := app.FindCollectionByNameOrId("pods")
 	if err != nil {
-		t.Fatalf("find pots collection: %v", err)
+		t.Fatalf("find pods collection: %v", err)
 	}
-	pots.Fields.Add(&core.DateField{Name: "deleted"})
-	if err := app.Save(pots); err != nil {
-		t.Fatalf("extend pots collection: %v", err)
+	pods.Fields.Add(&core.DateField{Name: "deleted"})
+	if err := app.Save(pods); err != nil {
+		t.Fatalf("extend pods collection: %v", err)
 	}
 
 	attachments := core.NewBaseCollection("attachments")
@@ -57,21 +57,21 @@ func createAttachment(t *testing.T, app core.App, content string) (record *core.
 	return record, "@/" + record.Id + "/" + record.GetString("image")
 }
 
-// importPages imports pages given as title -> lines into pot.
-func importPages(t *testing.T, app core.App, pot string, pages ...map[string]any) {
+// importPages imports pages given as title -> lines into pod.
+func importPages(t *testing.T, app core.App, pod string, pages ...map[string]any) {
 	t.Helper()
 	data, err := json.Marshal(map[string]any{"pages": pages})
 	if err != nil {
 		t.Fatalf("encode pages: %v", err)
 	}
-	runImport(t, app, pot, string(data))
+	runImport(t, app, pod, string(data))
 }
 
-// runExport exports pot into a fresh directory.
-func runExport(t *testing.T, app core.App, pot string) (string, ExportResult) {
+// runExport exports pod into a fresh directory.
+func runExport(t *testing.T, app core.App, pod string) (string, ExportResult) {
 	t.Helper()
 	dir := filepath.Join(t.TempDir(), "out")
-	result, err := Export(app, pot, dir)
+	result, err := Export(app, pod, dir)
 	if err != nil {
 		t.Fatalf("Export: %v", err)
 	}
@@ -113,16 +113,16 @@ func readManifest(t *testing.T, files map[string]string) manifest {
 	return m
 }
 
-func TestExport_WritesOnePotInTheDirectoryLayout(t *testing.T) {
+func TestExport_WritesOnePodInTheDirectoryLayout(t *testing.T) {
 	app := newExportTestApp(t)
-	src := createPot(t, app, "src")
-	createPot(t, app, "other")
+	src := createPod(t, app, "src")
+	createPod(t, app, "other")
 	runImport(t, app, "src", `{"pages":[
 		{"title":"alpha","lines":["alpha","body"]},
 		{"title":"gone","lines":["gone"]}
 	]}`)
 	runImport(t, app, "other", `{"pages":[{"title":"beta","lines":["beta"]}]}`)
-	softDelete(t, app, cardInPot(t, app, src.Id, "gone"))
+	softDelete(t, app, cardInPod(t, app, src.Id, "gone"))
 
 	dir, result := runExport(t, app, "src")
 	if result != (ExportResult{Cards: 1}) {
@@ -148,9 +148,9 @@ func TestExport_WritesOnePotInTheDirectoryLayout(t *testing.T) {
 	}
 }
 
-func TestExport_EmptyPotStillHasItsFolders(t *testing.T) {
+func TestExport_EmptyPodStillHasItsFolders(t *testing.T) {
 	app := newExportTestApp(t)
-	createPot(t, app, "src")
+	createPod(t, app, "src")
 
 	dir, _ := runExport(t, app, "src")
 
@@ -163,7 +163,7 @@ func TestExport_EmptyPotStillHasItsFolders(t *testing.T) {
 
 func TestExport_CardsFollowTitleLcOrderInTheManifest(t *testing.T) {
 	app := newExportTestApp(t)
-	createPot(t, app, "src")
+	createPod(t, app, "src")
 	importPages(t, app, "src",
 		map[string]any{"title": "Banana", "lines": []string{"Banana"}},
 		map[string]any{"title": "apple", "lines": []string{"apple"}},
@@ -184,7 +184,7 @@ func TestExport_CardsFollowTitleLcOrderInTheManifest(t *testing.T) {
 
 func TestExport_TitlesThatSanitizeAlikeGetNumberedNames(t *testing.T) {
 	app := newExportTestApp(t)
-	createPot(t, app, "src")
+	createPod(t, app, "src")
 	importPages(t, app, "src",
 		map[string]any{"title": "a/b", "lines": []string{"a/b"}},
 		map[string]any{"title": "a:b", "lines": []string{"a:b"}},
@@ -242,7 +242,7 @@ func TestUniqueStem_LongStemKeepsItsSuffixWithinTheLimit(t *testing.T) {
 
 func TestExport_LongTitleKeepsTheFileNameWithinTheLimit(t *testing.T) {
 	app := newExportTestApp(t)
-	createPot(t, app, "src")
+	createPod(t, app, "src")
 	title := strings.Repeat("あ", 240) // 720 bytes
 	importPages(t, app, "src", map[string]any{"title": title, "lines": []string{title}})
 
@@ -276,7 +276,7 @@ func TestExportStem(t *testing.T) {
 
 func TestExport_WritesTheAttachmentsOfTheCardsOnce(t *testing.T) {
 	app := newExportTestApp(t)
-	createPot(t, app, "src")
+	createPod(t, app, "src")
 	attachment, src := createAttachment(t, app, "png-bytes")
 	missing := "@/zzzzzzzzzzzzzzz/gone.png"
 	importPages(t, app, "src",
@@ -305,11 +305,11 @@ func TestExport_WritesTheAttachmentsOfTheCardsOnce(t *testing.T) {
 	}
 }
 
-func TestExport_UnknownPot(t *testing.T) {
+func TestExport_UnknownPod(t *testing.T) {
 	app := newExportTestApp(t)
 
 	_, err := Export(app, "missing", filepath.Join(t.TempDir(), "out"))
-	if err == nil || !strings.Contains(err.Error(), `pot "missing" not found`) {
-		t.Errorf("err = %v, want a pot-not-found error", err)
+	if err == nil || !strings.Contains(err.Error(), `pod "missing" not found`) {
+		t.Errorf("err = %v, want a pod-not-found error", err)
 	}
 }

@@ -1,21 +1,21 @@
 import { createSignal, For } from "solid-js";
 import { A } from "@solidjs/router";
 import { DropdownMenu } from "@kobalte/core/dropdown-menu";
-import PotIcon from "@/components/PotIcon";
-import { potCoverURL } from "@/lib/api/pots";
+import PodIcon from "@/components/PodIcon";
+import { podCoverURL } from "@/lib/api/pods";
 import { Check, ChevronDown } from "@/lib/icons";
-import { orderedPots } from "@/lib/stores/potsStore";
+import { orderedPods } from "@/lib/stores/podsStore";
 import { cardSort, setCardSort } from "@/lib/stores/cardsStore";
 import type { CardSort } from "@/lib/models/card";
 import {
   DISPLAY_MODES,
-  potsDisplayMode,
-  setPotsDisplayMode,
+  podsDisplayMode,
+  setPodsDisplayMode,
   type DisplayMode,
 } from "@/lib/stores/displayModeStore";
-import { usePot } from "../pots/PotContext";
+import { usePod } from "../pods/PodContext";
 
-// The orders a pot's card list supports, by the label the menu shows.
+// The orders a pod's card list supports, by the label the menu shows.
 const CARD_SORTS: Record<string, CardSort> = {
   Modified: "updated",
   Created: "created",
@@ -24,7 +24,7 @@ const CARD_SORTS: Record<string, CardSort> = {
 const sortLabel = (sort: CardSort) =>
   sort === "updated" ? "Modified" : "Created";
 
-// Outside a pot (the root page) the sort menu is still a dummy.
+// Outside a pod (the root page) the sort menu is still a dummy.
 const DUMMY_SORT_OPTIONS = [
   "Modified",
   "Created",
@@ -89,31 +89,31 @@ function QuickMenu(props: QuickMenuProps) {
   );
 }
 
-// Bar above the card grid. Left: the pots whose "links" reference the open
-// pot, as round icons (the title shows on hover). Right: dropdown menus
+// Bar above the card grid. Left: the pods whose "links" reference the open
+// pod, as round icons (the title shows on hover). Right: dropdown menus
 // (display mode, sort, filter), dummy for now: none of the choices affects
-// the grid yet. Outside a pot (the root page) there is no open pot, so the
+// the grid yet. Outside a pod (the root page) there is no open pod, so the
 // left side stays empty.
 export default function QuickLaunch() {
-  const pot = usePot();
-  const linkingPots = () => {
-    const id = pot()?.id;
-    return id ? orderedPots().filter((p) => p.links?.includes(id)) : [];
+  const pod = usePod();
+  const linkingPods = () => {
+    const id = pod()?.id;
+    return id ? orderedPods().filter((p) => p.links?.includes(id)) : [];
   };
 
   return (
     <div class="quick-launch">
       <div class="flex-box">
-        <div class="quick-launch-pots">
-          <For each={linkingPots()}>
+        <div class="quick-launch-pods">
+          <For each={linkingPods()}>
             {(linking) => (
               <A
                 href={`/${linking.name}`}
-                class="quick-launch-pot"
+                class="quick-launch-pod"
                 title={linking.title}
                 aria-label={linking.title}
               >
-                <PotIcon src={potCoverURL(linking)} />
+                <PodIcon src={podCoverURL(linking)} />
               </A>
             )}
           </For>
@@ -123,19 +123,19 @@ export default function QuickLaunch() {
             menuClass="page-list-mode-menu"
             header="Display by"
             options={[...DISPLAY_MODES]}
-            // Only the root page (no open pot) has a graph view so far.
-            value={pot() ? undefined : potsDisplayMode()}
+            // Only the root page (no open pod) has a graph view so far.
+            value={pod() ? undefined : podsDisplayMode()}
             onChange={(mode) => {
-              if (!pot()) setPotsDisplayMode(mode as DisplayMode);
+              if (!pod()) setPodsDisplayMode(mode as DisplayMode);
             }}
           />
           <QuickMenu
             menuClass="page-sort-menu"
             header="Sort by"
-            options={pot() ? Object.keys(CARD_SORTS) : DUMMY_SORT_OPTIONS}
-            value={pot() ? sortLabel(cardSort()) : undefined}
+            options={pod() ? Object.keys(CARD_SORTS) : DUMMY_SORT_OPTIONS}
+            value={pod() ? sortLabel(cardSort()) : undefined}
             onChange={(label) => {
-              if (pot()) setCardSort(CARD_SORTS[label]);
+              if (pod()) setCardSort(CARD_SORTS[label]);
             }}
           />
           <QuickMenu

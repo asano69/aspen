@@ -73,7 +73,7 @@ func TestUpdatePreview_UpdatesDescriptionAndFirstImage(t *testing.T) {
 		t.Fatalf("add preview fields: %v", err)
 	}
 
-	record := createCard(t, app, "pot1", "Title")
+	record := createCard(t, app, "pod1", "Title")
 	text := "Title\n`[https://example.com/hidden.png]`\n[https://example.com/first.png]\n[https://example.com/later.jpg]"
 	if err := updatePreview(app, record.Id, text); err != nil {
 		t.Fatalf("updatePreview: %v", err)

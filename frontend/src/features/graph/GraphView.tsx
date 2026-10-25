@@ -30,7 +30,7 @@ export interface GraphViewProps {
 
 // Draws any GraphData as a directed graph: each node is a filled circle with
 // its image inside. Nodes can be dragged while a live force layout keeps
-// running; a click selects a node. It knows nothing about pots or cards. The
+// running; a click selects a node. It knows nothing about pods or cards. The
 // Sigma instance is rebuilt (and laid out again) whenever `data` changes,
 // which is cheap at this size and keeps the component simple.
 export default function GraphView(props: GraphViewProps) {

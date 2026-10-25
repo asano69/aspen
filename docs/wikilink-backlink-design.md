@@ -38,7 +38,7 @@
 ```
 UPDATE card_links
 SET target = <新カードID>
-WHERE pot経由でsourceが同じpot内 AND target IS NULL AND target_title = <新タイトル>
+WHERE pod経由でsourceが同じpod内 AND target IS NULL AND target_title = <新タイトル>
 ```
 
 ### タイトルリネーム時の扱い
@@ -67,9 +67,9 @@ if doc := yjsServer.GetDoc(room); doc != nil {
 
    ```go
    existingTargets, err := app.FindRecordsByFilter(
-       "cards", "pot = {:pot} && title IN ({:titles})",
+       "cards", "pod = {:pod} && title IN ({:titles})",
        "", 0, 0,
-       dbx.Params{"pot": potID, "titles": extractedTitles},
+       dbx.Params{"pod": podID, "titles": extractedTitles},
    )
    ```
 
@@ -105,7 +105,7 @@ Goのgoroutineスケジューリングにより「重いページの解析が他
 
 以下の理由で今回は見送り。
 
-- `(pot, title)` に既存のユニークインデックス（`idx_r30t04lu5q`）があるため、単発クエリのコストはもともと低い（実測せず最適化する必要性が薄い）
+- `(pod, title)` に既存のユニークインデックス（`idx_r30t04lu5q`）があるため、単発クエリのコストはもともと低い（実測せず最適化する必要性が薄い）
 - ボトルネックの本体はSQLiteの単一writerロック（書き込み側）であり、読み取りキャッシュはそこに効かない
 - キャッシュ同期（起動時ロード、3フックでの更新、起動直後のリークウィンドウ）の複雑さに対して効果が見合わない
 - 将来マルチプロセス構成にした場合、プロセス間でのキャッシュ無効化の仕組みが別途必要になる

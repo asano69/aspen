@@ -1,6 +1,6 @@
 // validate.go rejects saving a record whose name/title is a reserved
 // word, since such a value would collide with a static frontend route
-// or API path segment. It also rejects a pot that links to itself. Every
+// or API path segment. It also rejects a pod that links to itself. Every
 // reserved-word list and its
 // case-insensitive comparison rule live in internal/slug (see
 // reserved.go there) -- this file only wires each collection/field
@@ -23,14 +23,14 @@ func registerValidationHooks(app *pocketbase.PocketBase) {
 	// "cards" titles must avoid the "/:slug/new" draft-creation route
 	// (see frontend/src/lib/router.tsx).
 	registerReservedNameValidation(app, "cards", "title", slug.IsReserved)
-	// "pots" names must avoid top-level static routes and API path
+	// "pods" names must avoid top-level static routes and API path
 	// segments (see frontend/src/lib/router.tsx and
 	// internal/serve/handler.go's "/api/..." route groups).
-	registerReservedNameValidation(app, "pots", "name", slug.IsReservedPotName)
-	// A pot's "links" relation must never point back at the pot itself.
-	app.OnRecordValidate("pots").BindFunc(func(e *core.RecordEvent) error {
+	registerReservedNameValidation(app, "pods", "name", slug.IsReservedPodName)
+	// A pod's "links" relation must never point back at the pod itself.
+	app.OnRecordValidate("pods").BindFunc(func(e *core.RecordEvent) error {
 		if slices.Contains(e.Record.GetStringSlice("links"), e.Record.Id) {
-			return fmt.Errorf("a pot cannot link to itself")
+			return fmt.Errorf("a pod cannot link to itself")
 		}
 		return e.Next()
 	})

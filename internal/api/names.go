@@ -9,5 +9,5 @@ package api
 // document, before it has been normalized into a CardTitle.
 type TitleCandidate string
 
-// CardTitle is a card's display title, unique within a pot.
+// CardTitle is a card's display title, unique within a pod.
 type CardTitle string

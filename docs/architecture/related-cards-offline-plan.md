@@ -20,7 +20,7 @@ New Links だけが動くのは、ytext から直接導出しているから。�
 
 - **オフライン中の新規作成・編集・削除は禁止とみなす（読み取り専用）。** 実装は次回以降。したがって、ローカルで作った行とサーバーのエコーの突き合わせ、楽観更新の整合は考えなくてよい。導出が読むのは、Dexie（サーバーのミラー）と、開いているカードの発リンクだけ。
 - Dexie の `cards` / `card_links` は**サーバーの純粋なミラー**のまま。クライアントが導出した値は書き込まない（`link-extraction.md` §5）。
-- 一度も同期していない pot は、オフラインでは空として扱う（§7 判断 1）。
+- 一度も同期していない pod は、オフラインでは空として扱う（§7 判断 1）。
 
 ### 今回やること
 
@@ -36,7 +36,7 @@ New Links だけが動くのは、ytext から直接導出しているから。�
 
 ## 3. Go の links1hop / links2hop API は残す
 
-- ルート `/api/pages/{pot}/{slug}/links1hop`、`/links2hop` と Go の実装・テストは**削除しない**。Agent など AI から使える API として残す。
+- ルート `/api/pages/{pod}/{slug}/links1hop`、`/links2hop` と Go の実装・テストは**削除しない**。Agent など AI から使える API として残す。
 - フロントエンドは今回から**呼ばない**。`cardApi.ts` の `fetchLinks1Hop` / `fetchLinks2Hop` / `fetchHop` は未使用のデッドコードになるので削除する（ルートはサーバー側に残るので、API の存在はこの文書と `handler.go` のコメントで示す）。
 - 結果として、同じ規則が **Go（SQL）と TS（Dexie）の二重実装**になる。CLAUDE.md の方針（二重実装は許容、よくテストして常に同じ結果にする）に従い、共有フィクスチャで契約を固定する（Phase 0）。
 - 基準は **Go**。理由は、Go が既存で、既にテストされている挙動だから（`link-extraction` は TS が基準だったので向きが逆になる）。TS が Go に合わせる。
@@ -50,7 +50,7 @@ Go の `links1Hop` / `links2Hop`（`internal/serve/links.go`）と同じ規則�
 
 ```ts
 interface RelatedInput {
-  pot: string;
+  pod: string;
   // Id of the open card. Undefined for a draft or a page that does not exist yet.
   selfId: string | undefined;
   // titleToLowerKey(title) of the open card.
@@ -67,12 +67,12 @@ interface RelatedInput {
 
 次の 2 つの和集合から、自分自身を除き、`title` 順に並べる。
 
-1. 発: `cards` の `[pot+titleLc]` を `ownTargets` で引く（存在するカードだけ）。
-2. 着: `card_links` の `[target_pot+target_titleLc] = [pot, selfTitleLc]` の `source` を `cards` から id で引く。
+1. 発: `cards` の `[pod+titleLc]` を `ownTargets` で引く（存在するカードだけ）。
+2. 着: `card_links` の `[target_pod+target_titleLc] = [pod, selfTitleLc]` の `source` を `cards` から id で引く。
 
 ### 2 hop
 
-- 各 `ownTargets` の X について、`card_links` の `[target_pot+target_titleLc] = [pot, X]` の `source`（= X にリンクしているカード）を集める。
+- 各 `ownTargets` の X について、`card_links` の `[target_pod+target_titleLc] = [pod, X]` の `source`（= X にリンクしているカード）を集める。
 - 自分自身と、1 hop に含まれるカードは除く（1 hop と 2 hop に同じカードを出さない）。
 - 複数の X を共有するカードは、`ownTargets` の中で**最初に当たる X の下に 1 回だけ**出す。
 - X はカードとして存在しなくてよい。他に誰もリンクしていない X は行を作らない。
@@ -136,7 +136,7 @@ export function createLiveQuery<A, T>(
 
 - `ownTargets`（ytext → 300ms デバウンスの `setOwnLinks`）
 - `selfTitleLc`（title 変更。サーバー解決 → realtime で `cardsById` が更新 → `props.title` が変わる）
-- `selfId`、`pot`
+- `selfId`、`pod`
 
 これらは `args` の中で読む。
 
@@ -169,15 +169,15 @@ RelatedCards
 
 ## 7. 設計判断
 
-### 判断 1: 一度も同期していない pot をオフラインで開いたとき
+### 判断 1: 一度も同期していない pod をオフラインで開いたとき
 
-導出は Dexie だけを読むので、オフラインで初めて開く pot の関連カードは空になる（カード一覧自体も `ensurePotSynced` が失敗して空）。完全オフライン対応の前提は「**そのデバイスで一度は pot を開いている**」とする。pot 単位の事前ダウンロードは別課題。
+導出は Dexie だけを読むので、オフラインで初めて開く pod の関連カードは空になる（カード一覧自体も `ensurePodSynced` が失敗して空）。完全オフライン対応の前提は「**そのデバイスで一度は pod を開いている**」とする。pod 単位の事前ダウンロードは別課題。
 
-### 判断 2: pot の初回同期中の表示
+### 判断 2: pod の初回同期中の表示
 
-`linkAliveStore` は半端なレプリカで「死んだリンク」と誤判定するのを避けるため、`markLinkAlivePotReady` まで評価を待つ。関連カードは、半端なレプリカでは「行が足りない」だけで、誤った表示は出さない。同期が進むと `liveQuery` が自動で埋める。
+`linkAliveStore` は半端なレプリカで「死んだリンク」と誤判定するのを避けるため、`markLinkAlivePodReady` まで評価を待つ。関連カードは、半端なレプリカでは「行が足りない」だけで、誤った表示は出さない。同期が進むと `liveQuery` が自動で埋める。
 
-**案: 同期完了を待たず、段階的に表示する**（待つ仕組みを足さず、シンプル）。巨大な pot の初回同期は時間がかかるが、その間は関連カードが徐々に増える。
+**案: 同期完了を待たず、段階的に表示する**（待つ仕組みを足さず、シンプル）。巨大な pod の初回同期は時間がかかるが、その間は関連カードが徐々に増える。
 
 ### 判断 3: ハブになるターゲットの重さ
 
@@ -220,7 +220,7 @@ RelatedCards
   [
     {
       "name": "...",
-      // Cards of one pot; links are written by title.
+      // Cards of one pod; links are written by title.
       "cards": [{ "title": "A", "pin": false, "deleted": false, "links": ["B", "X"] }],
       // The open card: an existing title, or a title with no card yet.
       "open": "A",
@@ -231,11 +231,11 @@ RelatedCards
   ```
 
 - Go: 既存の `links1Hop` / `links2Hop` をフィクスチャで検証するテストを追加する（`links_test.go` のヘルパーを使う）。**この時点で Go のコードは変更しない**。
-- ケース: 発・着の和集合、自己リンクと自己の除外、削除済みカード、他 pot、存在しないカード宛リンクと着信、1 hop との重複除外、複数ターゲット共有（最初の X の下に 1 回）、X の順序、タイトル順（日本語・絵文字・大小文字）、下書き（`open` が未存在のタイトル）。
+- ケース: 発・着の和集合、自己リンクと自己の除外、削除済みカード、他 pod、存在しないカード宛リンクと着信、1 hop との重複除外、複数ターゲット共有（最初の X の下に 1 回）、X の順序、タイトル順（日本語・絵文字・大小文字）、下書き（`open` が未存在のタイトル）。
 
 ### Phase 1: TS の導出関数
 
-- `lib/dexie/relatedQuery.ts`: `computeRelated(input): Promise<{ oneHop; twoHop }>`。§4 の規則を、`[pot+titleLc]` と `[target_pot+target_titleLc]` の index で実装する。`bulkGet` で必要なカードだけ取る。新しい index は要らない。
+- `lib/dexie/relatedQuery.ts`: `computeRelated(input): Promise<{ oneHop; twoHop }>`。§4 の規則を、`[pod+titleLc]` と `[target_pod+target_titleLc]` の index で実装する。`bulkGet` で必要なカードだけ取る。新しい index は要らない。
 - テスト: `fake-indexeddb` に `link-graph.json` の行を入れて `computeRelated` を呼ぶ（`linkAliveQuery.test.ts` と同じ方式）。TS と Go が同じフィクスチャで緑になることを確認する。
 - コードポイント順の比較関数と、そのテスト。
 

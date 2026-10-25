@@ -227,7 +227,7 @@
     z-index: 3;
   }
 
-  /* Fades the card being dragged (set by CardItem and PotGridItem). */
+  /* Fades the card being dragged (set by CardItem and PodGridItem). */
   .card-grid-item[data-dragging] {
     opacity: 0.4;
   }

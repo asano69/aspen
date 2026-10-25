@@ -20,7 +20,7 @@ import { titleToSegment } from "@/lib/models/slugify";
 const WIKILINK_CLASS = "page-link";
 
 export function wikiLinkNavigation(
-  potSlug: () => string,
+  podSlug: () => string,
   navigate: (path: string) => void,
 ) {
   return EditorView.domEventHandlers({
@@ -54,7 +54,7 @@ export function wikiLinkNavigation(
       const title =
         node.type === HashTag ? hashTagTitle(text) : text.slice(1, -1);
       event.preventDefault();
-      navigate(`/${potSlug()}/${titleToSegment(title)}`);
+      navigate(`/${podSlug()}/${titleToSegment(title)}`);
       return true;
     },
   });

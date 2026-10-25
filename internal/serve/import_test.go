@@ -28,7 +28,7 @@ func newImportTestApp(t *testing.T) core.App {
 	contents := core.NewBaseCollection("card_contents")
 	contents.Fields.Add(
 		&core.TextField{Name: "card"},
-		&core.TextField{Name: "pot"},
+		&core.TextField{Name: "pod"},
 		&core.TextField{Name: "text"},
 		&core.JSONField{Name: "lines"},
 	)
@@ -38,9 +38,9 @@ func newImportTestApp(t *testing.T) core.App {
 	return app
 }
 
-func runImport(t *testing.T, app core.App, pot, json string) ImportResult {
+func runImport(t *testing.T, app core.App, pod, json string) ImportResult {
 	t.Helper()
-	result, err := Import(app, pot, strings.NewReader(json), nil)
+	result, err := Import(app, pod, strings.NewReader(json), nil)
 	if err != nil {
 		t.Fatalf("Import: %v", err)
 	}
@@ -61,11 +61,11 @@ func cardText(t *testing.T, app core.App, cardID string) string {
 	return text
 }
 
-func cardInPot(t *testing.T, app core.App, pot, titleLc string) *core.Record {
+func cardInPod(t *testing.T, app core.App, pod, titleLc string) *core.Record {
 	t.Helper()
 	card, err := app.FindFirstRecordByFilter(
-		"cards", "pot = {:pot} && titleLc = {:titleLc}",
-		dbx.Params{"pot": pot, "titleLc": titleLc},
+		"cards", "pod = {:pod} && titleLc = {:titleLc}",
+		dbx.Params{"pod": pod, "titleLc": titleLc},
 	)
 	if err != nil {
 		t.Fatalf("find card %q: %v", titleLc, err)
@@ -152,9 +152,9 @@ func TestIndexPages_ObjectLines(t *testing.T) {
 
 func TestImport_CreatesCardsInFileOrder(t *testing.T) {
 	app := newImportTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
-	result := runImport(t, app, "pot1", `{"pages":[
+	result := runImport(t, app, "pod1", `{"pages":[
 		{"title":"page1title","lines":["page1title","line2","line3"]},
 		{"title":"page2title","lines":["page2title"]}
 	]}`)
@@ -162,8 +162,8 @@ func TestImport_CreatesCardsInFileOrder(t *testing.T) {
 		t.Errorf("result = %+v, want 2 created", result)
 	}
 
-	first := cardInPot(t, app, pot.Id, "page1title")
-	cardInPot(t, app, pot.Id, "page2title")
+	first := cardInPod(t, app, pod.Id, "page1title")
+	cardInPod(t, app, pod.Id, "page2title")
 	if got := cardText(t, app, first.Id); got != "page1title\nline2\nline3" {
 		t.Errorf("first card text = %q", got)
 	}
@@ -174,17 +174,17 @@ func TestImport_CreatesCardsInFileOrder(t *testing.T) {
 
 func TestImport_OverwritesCardWithSameTitle(t *testing.T) {
 	app := newImportTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
-	runImport(t, app, "pot1", `{"pages":[{"title":"a","lines":["a","😀 old"]}]}`)
-	before := cardInPot(t, app, pot.Id, "a")
+	runImport(t, app, "pod1", `{"pages":[{"title":"a","lines":["a","😀 old"]}]}`)
+	before := cardInPod(t, app, pod.Id, "a")
 
-	result := runImport(t, app, "pot1", `{"pages":[{"title":"A","lines":["A","new [link]"]}]}`)
+	result := runImport(t, app, "pod1", `{"pages":[{"title":"A","lines":["A","new [link]"]}]}`)
 	if result != (ImportResult{Overwritten: 1}) {
 		t.Errorf("result = %+v, want 1 overwritten", result)
 	}
 
-	after := cardInPot(t, app, pot.Id, "a")
+	after := cardInPod(t, app, pod.Id, "a")
 	if after.Id != before.Id {
 		t.Errorf("card id changed: %s -> %s", before.Id, after.Id)
 	}
@@ -202,7 +202,7 @@ func TestImport_OverwritesCardWithSameTitle(t *testing.T) {
 		t.Errorf("links = %v, want [link]", links)
 	}
 
-	cards, err := app.FindRecordsByFilter("cards", "pot = {:pot}", "", 0, 0, dbx.Params{"pot": pot.Id})
+	cards, err := app.FindRecordsByFilter("cards", "pod = {:pod}", "", 0, 0, dbx.Params{"pod": pod.Id})
 	if err != nil {
 		t.Fatalf("list cards: %v", err)
 	}
@@ -216,49 +216,49 @@ func TestImport_TitleWithBackslashIsOverwritten(t *testing.T) {
 	// into a filter string, so the existing card was not found and the second
 	// import failed with "titleLc: Value must be unique".
 	app := newImportTestApp(t)
-	createPot(t, app, "pot1")
+	createPod(t, app, "pod1")
 	const file = "{\"pages\":[{\"title\":\"\\\\`abdu'l-bahá\",\"lines\":[\"x\"]}]}"
 
-	if got := runImport(t, app, "pot1", file); got != (ImportResult{Created: 1}) {
+	if got := runImport(t, app, "pod1", file); got != (ImportResult{Created: 1}) {
 		t.Fatalf("first import = %+v, want 1 created", got)
 	}
-	if got := runImport(t, app, "pot1", file); got != (ImportResult{Overwritten: 1}) {
+	if got := runImport(t, app, "pod1", file); got != (ImportResult{Overwritten: 1}) {
 		t.Errorf("second import = %+v, want 1 overwritten", got)
 	}
 }
 
 func TestImport_LaterDuplicateInFileWins(t *testing.T) {
 	app := newImportTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
 	// Pages are imported in reverse, so the file's last "a" lands first and
 	// the earlier one overwrites it.
-	result := runImport(t, app, "pot1", `{"pages":[
+	result := runImport(t, app, "pod1", `{"pages":[
 		{"title":"a","lines":["a","first"]},
 		{"title":"a","lines":["a","second"]}
 	]}`)
 	if result != (ImportResult{Created: 1, Overwritten: 1}) {
 		t.Errorf("result = %+v, want 1 created and 1 overwritten", result)
 	}
-	if got := cardText(t, app, cardInPot(t, app, pot.Id, "a").Id); got != "a\nfirst" {
+	if got := cardText(t, app, cardInPod(t, app, pod.Id, "a").Id); got != "a\nfirst" {
 		t.Errorf("text = %q, want %q", got, "a\nfirst")
 	}
 }
 
 func TestImport_IgnoresDeletedCardWithSameTitle(t *testing.T) {
 	app := newImportTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
-	runImport(t, app, "pot1", `{"pages":[{"title":"a","lines":["a","old"]}]}`)
-	softDelete(t, app, cardInPot(t, app, pot.Id, "a"))
+	runImport(t, app, "pod1", `{"pages":[{"title":"a","lines":["a","old"]}]}`)
+	softDelete(t, app, cardInPod(t, app, pod.Id, "a"))
 
-	result := runImport(t, app, "pot1", `{"pages":[{"title":"a","lines":["a","new"]}]}`)
+	result := runImport(t, app, "pod1", `{"pages":[{"title":"a","lines":["a","new"]}]}`)
 	if result != (ImportResult{Created: 1}) {
 		t.Errorf("result = %+v, want 1 created", result)
 	}
 
 	live, err := app.FindRecordsByFilter(
-		"cards", "pot = {:pot} && "+notDeleted, "", 0, 0, dbx.Params{"pot": pot.Id},
+		"cards", "pod = {:pod} && "+notDeleted, "", 0, 0, dbx.Params{"pod": pod.Id},
 	)
 	if err != nil {
 		t.Fatalf("list live cards: %v", err)
@@ -273,10 +273,10 @@ func TestImport_IgnoresDeletedCardWithSameTitle(t *testing.T) {
 
 func TestImport_ReportsProgress(t *testing.T) {
 	app := newImportTestApp(t)
-	createPot(t, app, "pot1")
+	createPod(t, app, "pod1")
 
 	var got [][2]int
-	_, err := Import(app, "pot1", strings.NewReader(`{"pages":[
+	_, err := Import(app, "pod1", strings.NewReader(`{"pages":[
 		{"title":"a","lines":["a"]},
 		{"title":"b","lines":["b"]}
 	]}`), func(done, total int) { got = append(got, [2]int{done, total}) })
@@ -288,11 +288,11 @@ func TestImport_ReportsProgress(t *testing.T) {
 	}
 }
 
-func TestImport_UnknownPot(t *testing.T) {
+func TestImport_UnknownPod(t *testing.T) {
 	app := newImportTestApp(t)
 
 	_, err := Import(app, "missing", strings.NewReader(`{"pages":[]}`), nil)
-	if err == nil || !strings.Contains(err.Error(), `pot "missing" not found`) {
-		t.Errorf("err = %v, want a pot-not-found error", err)
+	if err == nil || !strings.Contains(err.Error(), `pod "missing" not found`) {
+		t.Errorf("err = %v, want a pod-not-found error", err)
 	}
 }

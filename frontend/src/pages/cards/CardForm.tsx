@@ -20,7 +20,7 @@ import {
   dismissRenameAlert,
   renameAlertOf,
 } from "@/lib/stores/renameAlertStore";
-import { usePot } from "../pots/PotContext";
+import { usePod } from "../pods/PodContext";
 import PageMenu from "./PageMenu";
 import { isRenameOfOpenCard, type SyncedCard } from "./cardUrlSync";
 
@@ -32,7 +32,7 @@ type Draft = { initialTitle?: string };
 // wrong room id.
 export default function CardForm() {
   const params = useParams();
-  const pot = usePot();
+  const pod = usePod();
   const [cardId, setCardId] = createSignal<string>();
   const [draft, setDraft] = createSignal<Draft | undefined>(
     params.cardSlug ? undefined : {},
@@ -112,8 +112,8 @@ export default function CardForm() {
       setFocusSelection(undefined);
       return;
     }
-    const potId = pot()?.id;
-    if (!potId) return;
+    const podId = pod()?.id;
+    if (!podId) return;
 
     // Compare decoded forms: urlSegment holds the raw (unencoded) slug,
     // but params.cardSlug reflects the URL's actual path, which the
@@ -135,7 +135,7 @@ export default function CardForm() {
     // here depends on which cards happen to be loaded. The loading
     // fallback below shows until the lookup settles.
     const request = ++openRequest;
-    openCardBySlug(potId, slug)
+    openCardBySlug(podId, slug)
       .then((record) => {
         if (request !== openRequest) return;
         urlSegment = slug;
@@ -207,12 +207,12 @@ export default function CardForm() {
   };
 
   useTitle(() => {
-    const potTitle = pot()?.title;
+    const podTitle = pod()?.title;
     const card = cardId() ? cardsById[cardId()!] : undefined;
-    return potTitle
+    return podTitle
       ? card
-        ? `${deriveCardGridTitle(card)} - ${potTitle}`
-        : potTitle
+        ? `${deriveCardGridTitle(card)} - ${podTitle}`
+        : podTitle
       : undefined;
   });
   // Footer's status-bar slot: the open card's own title. Only shown
@@ -297,8 +297,8 @@ export default function CardForm() {
               <Show when={draft()} keyed>
                 {(value) => (
                   <DraftCardEditor
-                    potId={() => pot()?.id}
-                    potSlug={() => params.slug}
+                    podId={() => pod()?.id}
+                    podSlug={() => params.slug}
                     initialTitle={value.initialTitle}
                     onCreated={handleCreated}
                   />
@@ -309,7 +309,7 @@ export default function CardForm() {
             {(id) => (
               <ExistingCardEditor
                 cardId={id}
-                potSlug={() => params.slug}
+                podSlug={() => params.slug}
                 initialText={draftText()}
                 onContentSnapshot={(fn) => setContentSnapshot(() => fn)}
                 onReady={setEditorReady}
@@ -323,7 +323,7 @@ export default function CardForm() {
             its buttons are disabled. */}
         <PageMenu
           cardId={cardId()}
-          potSlug={params.slug}
+          podSlug={params.slug}
           hidden={!menuReady()}
           getContent={contentSnapshot()}
         />

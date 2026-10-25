@@ -4,8 +4,8 @@ export interface CardLinkRecord {
   // Id of the card that contains the link.
   source: string;
   // A link's target is only stored as text: the target card may not exist
-  // (yet), so it is matched to a card by (target_pot, target_titleLc).
-  target_pot: string;
+  // (yet), so it is matched to a card by (target_pod, target_titleLc).
+  target_pod: string;
   target_title: string;
   target_titleLc: string;
   // Order in which the target first appears in the source card (0-based).

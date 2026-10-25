@@ -44,11 +44,11 @@ func (w *titleWatcher) resolve(app core.App, room, raw string) {
 	if err != nil {
 		return // card deleted concurrently -- nothing to update
 	}
-	pot := record.GetString("pot")
+	pod := record.GetString("pod")
 
 	candidate := TitleCandidate(raw)
 	for attempt := 0; attempt < maxTitleRetries; attempt++ {
-		title, err := resolveTitle(app, pot, candidate, room)
+		title, err := resolveTitle(app, pod, candidate, room)
 		if err != nil {
 			slog.Warn("resolve title", "room", room, "error", err)
 			return
@@ -71,11 +71,11 @@ func (w *titleWatcher) resolve(app core.App, room, raw string) {
 				slog.Warn("save resolved title", "room", room, "error", err)
 				return
 			}
-			w.alertRename(app, pot, room, previous, string(title))
+			w.alertRename(app, pod, room, previous, string(title))
 		}
 		// Reported even when the title did not change: a card created from
 		// a draft already holds its disambiguated title by now.
-		w.alert(app, pot, room, TitleCandidate(raw), title)
+		w.alert(app, pod, room, TitleCandidate(raw), title)
 		return
 	}
 }
@@ -84,11 +84,11 @@ func (w *titleWatcher) resolve(app core.App, room, raw string) {
 // card's title (see findMergeTarget). A card that does not collide is
 // reported too, with an empty target, so a shown alert is cleared. A failure
 // is only logged: it must never affect the title itself.
-func (w *titleWatcher) alert(app core.App, pot, room string, raw TitleCandidate, title CardTitle) {
+func (w *titleWatcher) alert(app core.App, pod, room string, raw TitleCandidate, title CardTitle) {
 	if w.notify == nil {
 		return
 	}
-	target, err := findMergeTarget(app, pot, raw, title, room)
+	target, err := findMergeTarget(app, pod, raw, title, room)
 	if err != nil {
 		slog.Warn("find merge target", "room", room, "error", err)
 		return
@@ -102,7 +102,7 @@ func (w *titleWatcher) alert(app core.App, pot, room string, raw TitleCandidate,
 // just left. Nothing is sent when no live card links to it, or when only the
 // case changed (links match by titleLc, so they stay valid). A failure is only
 // logged: it must never affect the title itself.
-func (w *titleWatcher) alertRename(app core.App, pot, room, oldTitle, newTitle string) {
+func (w *titleWatcher) alertRename(app core.App, pod, room, oldTitle, newTitle string) {
 	if w.notifyRename == nil {
 		return
 	}
@@ -110,7 +110,7 @@ func (w *titleWatcher) alertRename(app core.App, pot, room, oldTitle, newTitle s
 	if oldLc == slug.ToLowerKey(newTitle) {
 		return
 	}
-	linking, err := linkingCards(app, pot, oldLc)
+	linking, err := linkingCards(app, pod, oldLc)
 	if err != nil {
 		slog.Warn("find linking cards", "room", room, "error", err)
 		return
@@ -134,18 +134,18 @@ type linkingCard struct {
 	Title string `db:"title"`
 }
 
-// linkingCards returns the live cards whose text links to the target (pot,
+// linkingCards returns the live cards whose text links to the target (pod,
 // titleLc), sorted by title. The renamed card is included: its own text may
 // link to its old title too.
-func linkingCards(app core.App, pot, titleLc string) ([]linkingCard, error) {
+func linkingCards(app core.App, pod, titleLc string) ([]linkingCard, error) {
 	cards := []linkingCard{}
 	err := app.DB().NewQuery(`
 		SELECT DISTINCT c.id, c.title FROM card_links l
 		JOIN cards c ON c.id = l.source
-		WHERE l.target_pot = {:pot} AND l.target_titleLc = {:titleLc}
+		WHERE l.target_pod = {:pod} AND l.target_titleLc = {:titleLc}
 			AND l.deleted = '' AND c.deleted = ''
 		ORDER BY c.title`).
-		Bind(dbx.Params{"pot": pot, "titleLc": titleLc}).
+		Bind(dbx.Params{"pod": pod, "titleLc": titleLc}).
 		All(&cards)
 	return cards, err
 }

@@ -21,7 +21,7 @@ const LINKS_DEBOUNCE_MS = 300;
 
 export interface ExistingCardEditorProps {
   cardId: string;
-  potSlug: () => string;
+  podSlug: () => string;
   // The text of the draft this card was just created from, if any. The room
   // of a new card is empty, so it is pushed as the first edit.
   initialText?: string;
@@ -84,9 +84,9 @@ export default function ExistingCardEditor(props: ExistingCardEditorProps) {
   let linksTimer: ReturnType<typeof setTimeout> | undefined;
   const updateOwnLinks = () => {
     const text = currentText();
-    const pot = cardsById[props.cardId]?.pot;
-    if (text === "" || !pot) return;
-    setOwnLinks(props.cardId, pot, extractLinks(text));
+    const pod = cardsById[props.cardId]?.pod;
+    if (text === "" || !pod) return;
+    setOwnLinks(props.cardId, pod, extractLinks(text));
   };
   const scheduleOwnLinks = () => {
     clearTimeout(linksTimer);
@@ -106,12 +106,12 @@ export default function ExistingCardEditor(props: ExistingCardEditorProps) {
       channel={channel}
       onView={(v) => (view = v)}
       onDocChanged={scheduleOwnLinks}
-      potSlug={props.potSlug}
+      podSlug={props.podSlug}
       onConfirmedTitle={confirm}
       initialText={props.initialText}
       initialSelection={props.initialSelection}
     >
-      <RelatedCards cardId={props.cardId} title={cardsById[props.cardId]?.title} potSlug={props.potSlug()} />
+      <RelatedCards cardId={props.cardId} title={cardsById[props.cardId]?.title} podSlug={props.podSlug()} />
     </NoteEditor>
   );
 }

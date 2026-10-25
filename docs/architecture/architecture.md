@@ -20,7 +20,7 @@ Cardpodの全体構成をまとめる。個々の設計判断の経緯は各機�
 
 | コレクション | 役割 |
 | --- | --- |
-| `pots` | カードの入れ物。`name`がURLセグメント |
+| `pods` | カードの入れ物。`name`がURLセグメント |
 | `cards` | 1枚のカード。`title`/`titleLc`/`description`/`image`/`position`/`pin`/`deleted`(ソフトデリート) |
 | `card_ydocs` | カード本文のYjs更新ログ（base64、append-only。一定件数でコンパクション） |
 | `card_links` | wiki-linkのグラフ (`source` -> `target_titleLc`)。1-hop/2-hopリンク表示用 |
@@ -45,23 +45,23 @@ Cardpodの全体構成をまとめる。個々の設計判断の経緯は各機�
 
 カード一覧は「1ポット最大10万件」を想定しており、全件を常時メモリ・IndexedDBに展開しつつも、無限スクロールのUXは維持する必要がある。設計の経緯は`docs/signaldb-offline-sync.md`に詳しいが、最終形は以下の通り：
 
-- **サーバー側**: `internal/serve/replication.go`が`GET /api/pages/{potId}/cards/pull`を提供する。`(updated, id)`のcheckpointベースで、変更されたカード（ソフトデリートされたカードも含む）を`updated,id`昇順で返す。返却件数が`limit`未満なら「それが最後のページ」というシンプルな終了条件。
+- **サーバー側**: `internal/serve/replication.go`が`GET /api/pages/{podId}/cards/pull`を提供する。`(updated, id)`のcheckpointベースで、変更されたカード（ソフトデリートされたカードも含む）を`updated,id`昇順で返す。返却件数が`limit`未満なら「それが最後のページ」というシンプルな終了条件。
 - **クライアント側 (`frontend/src/lib/`)**:
   - `api/replication.ts`: checkpointをループしてpullし切る`pullAll`。
-  - `signaldb/cardsCollection.ts`: pot単位のカードコレクション（IndexedDB永続化、`@signaldb/core`+`@signaldb/indexeddb`+`@signaldb/solid`）と、pot単位のcheckpointを保持する別コレクション。SignalDBはpotの**全カードを保持する完全レプリカ**として機能する。
-  - `stores/cardsStore.ts`: UIが実際に読む唯一のソース。外部インターフェース（`potWindow`/`cardsById`/`loadNextCardsPage`/`resyncPot`）はSignalDB移行の前後で変えていない。
-    - `loadNextCardsPage`: pot初回オープン時に`ensurePotSynced`でSignalDBレプリカを最新化してから、`queryCardsPage`(skip/limitのローカルクエリ)でwindowを1ページずつ読み進める。
-    - `resyncPot`: Centrifugeの履歴切れ時に呼ばれる。`pullAndApplyDiff`（保存済みcheckpointからの差分pull→SignalDBへの反映→checkpoint更新）でレプリカを最新化し、その後windowが元々カバーしていた件数を**1回のローカルクエリ**で読み直す。REST側への再フェッチは発生しない。
+  - `signaldb/cardsCollection.ts`: pod単位のカードコレクション（IndexedDB永続化、`@signaldb/core`+`@signaldb/indexeddb`+`@signaldb/solid`）と、pod単位のcheckpointを保持する別コレクション。SignalDBはpodの**全カードを保持する完全レプリカ**として機能する。
+  - `stores/cardsStore.ts`: UIが実際に読む唯一のソース。外部インターフェース（`podWindow`/`cardsById`/`loadNextCardsPage`/`resyncPod`）はSignalDB移行の前後で変えていない。
+    - `loadNextCardsPage`: pod初回オープン時に`ensurePodSynced`でSignalDBレプリカを最新化してから、`queryCardsPage`(skip/limitのローカルクエリ)でwindowを1ページずつ読み進める。
+    - `resyncPod`: Centrifugeの履歴切れ時に呼ばれる。`pullAndApplyDiff`（保存済みcheckpointからの差分pull→SignalDBへの反映→checkpoint更新）でレプリカを最新化し、その後windowが元々カバーしていた件数を**1回のローカルクエリ**で読み直す。REST側への再フェッチは発生しない。
   - リアルタイムイベント（Centrifuge）や自分自身のミューテーション（作成/更新/削除）も、Solidストアへの反映と同時にSignalDBキャッシュへ書き込む(`mergeCards`/`dropCard`)ので、両者は常に同期している。
 - **設計上の要点**:
   - SignalDBコレクションはreactiveなUIソースとして直接バインドせず、`queryCardsPage`/`countCards`という明示的な関数呼び出しでのみ読む「ページング用のローカルインデックス」として位置づけている。Solidストア(`cardsById`/`windows`)が実際にUIが読むミラー。
-  - 初回オープン時の「古いキャッシュをまず一瞬見せる」二段階ペイントは行わない。`ensurePotSynced`の完了を待ってから最初のページを描画する（オフライン時はSignalDBの前回同期時点のデータがそのまま使われる）。
-  - 同一potの同時オープンによる重複pullは`potSyncPromises`（pot単位のin-flight Promiseキャッシュ）で防いでいる。
+  - 初回オープン時の「古いキャッシュをまず一瞬見せる」二段階ペイントは行わない。`ensurePodSynced`の完了を待ってから最初のページを描画する（オフライン時はSignalDBの前回同期時点のデータがそのまま使われる）。
+  - 同一podの同時オープンによる重複pullは`podSyncPromises`（pod単位のin-flight Promiseキャッシュ）で防いでいる。
 
 ## 6. フロントエンドのルーティングとレイアウト
 
-- `lib/router.tsx`がルート定義の唯一の場所。`AppShell`(`components/layout/AppShell.tsx`)がRouterの`root`として全ページを包み、pot一覧のロードとリアルタイム購読をここで開始する。
-- `/:slug`配下は`PotLayout`(`pages/pots/PotLayout.tsx`)がpotのフェッチとTopBarのpotリンク登録を一度だけ行い、`CardList`/`CardForm`間の遷移で再フェッチや表示のちらつきが起きないようにしている。
+- `lib/router.tsx`がルート定義の唯一の場所。`AppShell`(`components/layout/AppShell.tsx`)がRouterの`root`として全ページを包み、pod一覧のロードとリアルタイム購読をここで開始する。
+- `/:slug`配下は`PodLayout`(`pages/pods/PodLayout.tsx`)がpodのフェッチとTopBarのpodリンク登録を一度だけ行い、`CardList`/`CardForm`間の遷移で再フェッチや表示のちらつきが起きないようにしている。
 - `/:slug/new`と`/:slug/:cardSlug`は同一の`<Route>`（`CardForm`）にまとめてあり、下書き作成からタイトル確定後の既存カード編集への遷移でエディタ（WebsocketProvider/Y.Doc）を再マウントしないようにしている。
 
 ## 7. 認証

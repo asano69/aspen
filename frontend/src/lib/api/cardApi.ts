@@ -25,24 +25,24 @@ export interface CardMutationResult {
 // Used by NoteEditor's draft mode, which needs a real record id before
 // Yjs sync can start.
 export async function createCard(
-  pot: string,
+  pod: string,
   titleCandidate: TitleCandidate,
 ): Promise<CardMutationResult> {
-  const body: CreateCardRequest = { pot, titleCandidate };
+  const body: CreateCardRequest = { pod, titleCandidate };
   return await pb.send<CardMutationResult>("/api/admin/cards", {
     method: "POST",
     body,
   });
 }
 
-// Moves cards to another pot (see internal/serve/move_cards.go). The server
-// soft-deletes each card and creates a copy in the target pot, so the copies
+// Moves cards to another pod (see internal/serve/move_cards.go). The server
+// soft-deletes each card and creates a copy in the target pod, so the copies
 // have new ids and arrive through the ordinary realtime events.
 export async function moveCards(
   ids: string[],
-  pot: string,
+  pod: string,
 ): Promise<MoveCardsResponse> {
-  const body: MoveCardsRequest = { ids, pot };
+  const body: MoveCardsRequest = { ids, pod };
   return await pb.send<MoveCardsResponse>("/api/admin/cards/move", {
     method: "POST",
     body,
@@ -80,9 +80,9 @@ export async function uploadAttachment(file: File): Promise<string> {
 }
 
 // Resolves a single card by its URL slug, without fetching the rest
-// of the pot -- replaces the old approach of scanning every already-
+// of the pod -- replaces the old approach of scanning every already-
 // loaded card with titleToSlug (see cardsStore.ts's
-// findCardByPotAndSlug).
+// findCardByPodAndSlug).
 //
 // titleLc (see internal/slug.ToLowerKey) is a fast, indexed candidate
 // lookup: lowercase, spaces mapped to underscores. It is not
@@ -93,15 +93,15 @@ export async function uploadAttachment(file: File): Promise<string> {
 // verification failed. Any other failure (network, auth, ...) is
 // rethrown, so a caller never mistakes it for "no such card".
 export async function fetchCardBySlug(
-  potId: string,
+  podId: string,
   slug: string,
 ): Promise<CardRecord | undefined> {
   const candidateTitleLc = slug.toLowerCase();
   let record: CardRecord;
   try {
     record = await pb.collection("cards").getFirstListItem<CardRecord>(
-      pb.filter('pot = {:pot} && titleLc = {:titleLc} && deleted = ""', {
-        pot: potId,
+      pb.filter('pod = {:pod} && titleLc = {:titleLc} && deleted = ""', {
+        pod: podId,
         titleLc: candidateTitleLc,
       }),
       { requestKey: null },
@@ -127,14 +127,14 @@ export async function fetchRelatedCards(cardId: string): Promise<CardRecord[]> {
   return res.cards;
 }
 
-// Full-text search over the cards of a pot (see internal/serve/search.go).
-// `pot` is the pot's unique name, as in the URL. requestKey: null keeps a
+// Full-text search over the cards of a pod (see internal/serve/search.go).
+// `pod` is the pod's unique name, as in the URL. requestKey: null keeps a
 // newer search from auto-cancelling an older one still in flight.
 export async function searchCards(
-  pot: string,
+  pod: string,
   q: string,
 ): Promise<SearchResponse> {
-  return await pb.send<SearchResponse>(`/api/pages/${pot}/search/query`, {
+  return await pb.send<SearchResponse>(`/api/pages/${pod}/search/query`, {
     method: "GET",
     query: { q },
     requestKey: null,

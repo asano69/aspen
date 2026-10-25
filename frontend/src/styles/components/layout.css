@@ -1,5 +1,5 @@
 /* Public classes: .app, .app-body, .app-main, .app-content, .topbar,
- * .topbar-grid, .topbar-left, .topbar-pot-link, .topbar-actions,
+ * .topbar-grid, .topbar-left, .topbar-pod-link, .topbar-actions,
  * .new-button.
  * The page skeleton (see components/layout/MainLayout.tsx and TopBar.tsx).
  *
@@ -106,8 +106,8 @@
     justify-self: end;
   }
 
-  /* The pot's icon and name as one link: the hover tint covers both. */
-  .topbar-pot-link {
+  /* The pod's icon and name as one link: the hover tint covers both. */
+  .topbar-pod-link {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -121,11 +121,11 @@
     transition: background-color 0.15s;
   }
 
-  .topbar-pot-link:hover {
+  .topbar-pod-link:hover {
     background-color: var(--color-hover-bg);
   }
 
-  .topbar-pot-link .title {
+  .topbar-pod-link .title {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

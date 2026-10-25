@@ -1,5 +1,5 @@
 // Fractional-indexing helper for drag-to-reorder lists backed by a
-// single "position" float column (see pages/pots/CardForm.tsx and
+// single "position" float column (see pages/pods/CardForm.tsx and
 // CardList.tsx). Inserting between two existing positions is just
 // their average; appending past either end steps by POSITION_STEP so
 // ordinary appends don't immediately eat into float precision. This

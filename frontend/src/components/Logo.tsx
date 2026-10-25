@@ -19,8 +19,8 @@ export interface LogoProps {
   onClick?: () => void;
 }
 
-// The app's own icon. Also used as the fallback of PotIcon and of a pot's
-// cover in the pot grid. Without `size` it has no fixed pixel size, so the
+// The app's own icon. Also used as the fallback of PodIcon and of a pod's
+// cover in the pod grid. Without `size` it has no fixed pixel size, so the
 // caller sizes it through `class`.
 export function LogoIcon(props: { size?: number; class?: string }) {
   return (

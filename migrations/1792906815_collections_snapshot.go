@@ -951,7 +951,7 @@ func init() {
 						"id": "relation2541086472",
 						"maxSelect": 0,
 						"minSelect": 0,
-						"name": "pot",
+						"name": "pod",
 						"presentable": true,
 						"required": false,
 						"system": false,
@@ -974,7 +974,7 @@ func init() {
 					},
 					{
 						"autogeneratePattern": "",
-						"help": "Because title → titleLc is deterministic, enforcing uniqueness on titleLc implicitly enforces uniqueness on title. As a result, the (pot, title) uniqueness constraint is redundant.",
+						"help": "Because title → titleLc is deterministic, enforcing uniqueness on titleLc implicitly enforces uniqueness on title. As a result, the (pod, title) uniqueness constraint is redundant.",
 						"hidden": false,
 						"id": "text293159488",
 						"max": 240,
@@ -1087,14 +1087,14 @@ func init() {
 				],
 				"id": "pbc_2527524235",
 				"indexes": [
-					"CREATE UNIQUE INDEX ` + "`" + `idx_cards_pot_normtitle` + "`" + ` ON ` + "`" + `cards` + "`" + ` (\n  ` + "`" + `pot` + "`" + `,\n  (CASE WHEN REPLACE(` + "`" + `title` + "`" + `, ' ', '_') = 'new' THEN 'new_' ELSE REPLACE(` + "`" + `title` + "`" + `, ' ', '_') END)\n) WHERE ` + "`" + `deleted` + "`" + ` = ''",
-					"CREATE UNIQUE INDEX ` + "`" + `idx_x1tpfrw3fh` + "`" + ` ON ` + "`" + `cards` + "`" + ` (` + "`" + `pot` + "`" + `, ` + "`" + `titleLc` + "`" + `) WHERE ` + "`" + `deleted` + "`" + ` = ''"
+					"CREATE UNIQUE INDEX ` + "`" + `idx_cards_pod_normtitle` + "`" + ` ON ` + "`" + `cards` + "`" + ` (\n  ` + "`" + `pod` + "`" + `,\n  (CASE WHEN REPLACE(` + "`" + `title` + "`" + `, ' ', '_') = 'new' THEN 'new_' ELSE REPLACE(` + "`" + `title` + "`" + `, ' ', '_') END)\n) WHERE ` + "`" + `deleted` + "`" + ` = ''",
+					"CREATE UNIQUE INDEX ` + "`" + `idx_x1tpfrw3fh` + "`" + ` ON ` + "`" + `cards` + "`" + ` (` + "`" + `pod` + "`" + `, ` + "`" + `titleLc` + "`" + `) WHERE ` + "`" + `deleted` + "`" + ` = ''"
 				],
 				"listRule": "@request.auth.id != \"\"",
 				"name": "cards",
 				"system": false,
 				"type": "base",
-				"updateRule": "@request.auth.id != \"\" &&\n@request.body.pot:isset = false &&\n@request.body.title:isset = false &&\n@request.body.titleLc:isset = false &&\n@request.body.description:isset = false &&\n@request.body.image:isset = false &&\n@request.body.created:isset = false &&\n@request.body.updated:isset = false",
+				"updateRule": "@request.auth.id != \"\" &&\n@request.body.pod:isset = false &&\n@request.body.title:isset = false &&\n@request.body.titleLc:isset = false &&\n@request.body.description:isset = false &&\n@request.body.image:isset = false &&\n@request.body.created:isset = false &&\n@request.body.updated:isset = false",
 				"viewRule": "@request.auth.id != \"\""
 			},
 			{
@@ -1223,11 +1223,11 @@ func init() {
 				],
 				"id": "pbc_575754128",
 				"indexes": [
-					"CREATE UNIQUE INDEX ` + "`" + `idx_1zt5k21ybq` + "`" + `\nON ` + "`" + `pots` + "`" + ` (` + "`" + `name` + "`" + ` COLLATE NOCASE)\nWHERE ` + "`" + `deleted` + "`" + ` = '';",
-					"CREATE UNIQUE INDEX ` + "`" + `idx_8nhmy9s1sd` + "`" + ` ON ` + "`" + `pots` + "`" + ` (` + "`" + `position` + "`" + `) WHERE ` + "`" + `deleted` + "`" + ` = ''"
+					"CREATE UNIQUE INDEX ` + "`" + `idx_1zt5k21ybq` + "`" + `\nON ` + "`" + `pods` + "`" + ` (` + "`" + `name` + "`" + ` COLLATE NOCASE)\nWHERE ` + "`" + `deleted` + "`" + ` = '';",
+					"CREATE UNIQUE INDEX ` + "`" + `idx_8nhmy9s1sd` + "`" + ` ON ` + "`" + `pods` + "`" + ` (` + "`" + `position` + "`" + `) WHERE ` + "`" + `deleted` + "`" + ` = ''"
 				],
 				"listRule": "@request.auth.id != \"\"",
-				"name": "pots",
+				"name": "pods",
 				"system": false,
 				"type": "base",
 				"updateRule": "@request.auth.id != \"\"",
@@ -1273,7 +1273,7 @@ func init() {
 						"id": "text3517796858",
 						"max": 240,
 						"min": 1,
-						"name": "target_pot",
+						"name": "target_pod",
 						"pattern": "",
 						"presentable": false,
 						"primaryKey": false,
@@ -1360,8 +1360,8 @@ func init() {
 				"id": "pbc_449060851",
 				"indexes": [
 					"CREATE INDEX ` + "`" + `idx_xpwo6k1rx9` + "`" + ` ON ` + "`" + `card_links` + "`" + ` (` + "`" + `source` + "`" + `)",
-					"CREATE INDEX ` + "`" + `idx_vqvthaafz5` + "`" + ` ON ` + "`" + `card_links` + "`" + ` (\n  ` + "`" + `target_title` + "`" + `,\n  ` + "`" + `target_pot` + "`" + `\n)",
-					"CREATE INDEX ` + "`" + `idx_4alpksbb3u` + "`" + ` ON ` + "`" + `card_links` + "`" + ` (\n  ` + "`" + `target_pot` + "`" + `,\n  ` + "`" + `target_titleLc` + "`" + `\n)"
+					"CREATE INDEX ` + "`" + `idx_vqvthaafz5` + "`" + ` ON ` + "`" + `card_links` + "`" + ` (\n  ` + "`" + `target_title` + "`" + `,\n  ` + "`" + `target_pod` + "`" + `\n)",
+					"CREATE INDEX ` + "`" + `idx_4alpksbb3u` + "`" + ` ON ` + "`" + `card_links` + "`" + ` (\n  ` + "`" + `target_pod` + "`" + `,\n  ` + "`" + `target_titleLc` + "`" + `\n)"
 				],
 				"listRule": null,
 				"name": "card_links",
@@ -1843,7 +1843,7 @@ func init() {
 						"id": "relation515732239",
 						"maxSelect": 0,
 						"minSelect": 0,
-						"name": "pot",
+						"name": "pod",
 						"presentable": false,
 						"required": false,
 						"system": false,
@@ -1945,7 +1945,7 @@ func init() {
 						"id": "relation515732239",
 						"maxSelect": 0,
 						"minSelect": 0,
-						"name": "pot",
+						"name": "pod",
 						"presentable": false,
 						"required": true,
 						"system": false,

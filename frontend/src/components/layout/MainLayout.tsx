@@ -13,7 +13,7 @@ import Footer from "./Footer";
 // start tracking; the default per-pointer-type activation constraint (5px of
 // movement for mouse) still lets a plain click with no movement fall through
 // to the link's normal navigation, and only real dragging hijacks it. The
-// same goes for the sidebar's pot rows.
+// same goes for the sidebar's pod rows.
 const sensors = [
   PointerSensor.configure({
     preventActivation: () => false,
@@ -30,7 +30,7 @@ export default function MainLayout(props: ParentProps) {
 
   return (
     // One provider for the whole app, so a card can be dragged from the card
-    // list onto a pot in the sidebar (see lib/dragEnd.ts).
+    // list onto a pod in the sidebar (see lib/dragEnd.ts).
     <DragDropProvider sensors={sensors} onDragEnd={dispatchDragEnd}>
       {/* .app is bounded to the viewport height, so Sidebar and <main> below
         can each scroll independently instead of the whole page scrolling as

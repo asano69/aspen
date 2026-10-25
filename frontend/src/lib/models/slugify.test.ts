@@ -17,7 +17,7 @@ describe("slugify", () => {
   });
 
   it("keeps underscores literal, including a backend dedup suffix", () => {
-    // Regression test: resolveUniqueTitleInPot
+    // Regression test: resolveUniqueTitleInPod
     // (internal/serve/slug.go) literally appends "_2" to disambiguate
     // a duplicate title -- so a URL segment's underscores are never
     // encoded spaces and must never be decoded back into spaces.

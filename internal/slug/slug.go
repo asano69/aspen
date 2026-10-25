@@ -2,8 +2,8 @@
 // This is a pure, stateless text transform with no database access:
 // any given title always slugifies to the same string, on both the
 // frontend and the backend. It replaces the old persisted, uniqueness-
-// disambiguated "slug" field entirely -- with the (pot, titleLc) index
-// already guaranteeing a card's title is unique per pot, the URL
+// disambiguated "slug" field entirely -- with the (pod, titleLc) index
+// already guaranteeing a card's title is unique per pod, the URL
 // segment can simply be derived from that title on demand instead of
 // being stored and kept in sync.
 //
@@ -71,10 +71,10 @@ func StripBracketLinks(candidate string) string {
 // FromTitle never needs a database round-trip to avoid that collision.
 // NOTE: a SQL expression index mirroring this function's no-bracket
 // branch also exists on the "cards" collection
-// (idx_cards_pot_normtitle, added via the PocketBase admin UI), so two
+// (idx_cards_pod_normtitle, added via the PocketBase admin UI), so two
 // titles that would derive the same URL segment can never coexist in
-// the same pot even though the segment itself is never stored (see
-// resolveUniqueTitleInPot in internal/serve/slug.go, which relies on
+// the same pod even though the segment itself is never stored (see
+// resolveUniqueTitleInPod in internal/serve/slug.go, which relies on
 // titleLc for the same purpose). That SQL expression assumes title
 // never contains brackets (guaranteed by resolveTitle -- see this
 // function's own comment above) and therefore only mirrors the "else"

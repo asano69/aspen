@@ -51,12 +51,12 @@
     "twoHop": []
   },
   {
-    "name": "self-and-other-pots-are-excluded",
-    "description": "Self links never list the open card. A card of another pot is not linked even when its title matches, and its own links count only inside its pot.",
+    "name": "self-and-other-pods-are-excluded",
+    "description": "Self links never list the open card. A card of another pod is not linked even when its title matches, and its own links count only inside its pod.",
     "cards": [
       { "title": "Center", "links": ["Center", "Same"] },
-      { "title": "Same", "pot": "p2", "links": [] },
-      { "title": "Elsewhere", "pot": "p2", "links": ["Center", "Same"] }
+      { "title": "Same", "pod": "p2", "links": [] },
+      { "title": "Elsewhere", "pod": "p2", "links": ["Center", "Same"] }
     ],
     "open": "Center",
     "oneHop": [],
@@ -76,13 +76,13 @@
   },
   {
     "name": "two-hop-shared-target",
-    "description": "The target X does not have to exist. Deleted cards and cards of other pots do not count as sharing it.",
+    "description": "The target X does not have to exist. Deleted cards and cards of other pods do not count as sharing it.",
     "cards": [
       { "title": "A", "links": ["X"] },
       { "title": "B", "links": ["X"] },
       { "title": "C", "links": ["Y"] },
       { "title": "D", "deleted": true, "links": ["X"] },
-      { "title": "E", "pot": "p2", "links": ["X"] }
+      { "title": "E", "pod": "p2", "links": ["X"] }
     ],
     "open": "A",
     "oneHop": [],

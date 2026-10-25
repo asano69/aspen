@@ -1,6 +1,6 @@
 // import.go implements "cardpod import": it loads pages from a JSON export
-// into one pot. A card body is written to its content row (see contents.go),
-// the same way a live editing session stores it. Only the card record itself (pot,
+// into one pod. A card body is written to its content row (see contents.go),
+// the same way a live editing session stores it. Only the card record itself (pod,
 // title, position) is created the way createCardHandler creates it.
 //
 // The command opens the data directory in its own process, so run it while
@@ -170,8 +170,8 @@ func readPage(r io.ReaderAt, span pageSpan) (importPage, error) {
 	return page, checkPage(&page)
 }
 
-// Import reads a JSON export from r and imports its pages into the pot named
-// potName. A page whose title matches an existing card in that pot
+// Import reads a JSON export from r and imports its pages into the pod named
+// podName. A page whose title matches an existing card in that pod
 // overwrites the card's body; any other page becomes a new card.
 //
 // The file is read twice, one page at a time (see indexPages and readPage),
@@ -179,7 +179,7 @@ func readPage(r io.ReaderAt, span pageSpan) (importPage, error) {
 //
 // progress, when not nil, is called after each page with the number of pages
 // done so far and the total.
-func Import(app core.App, potName string, r io.ReaderAt, progress func(done, total int)) (ImportResult, error) {
+func Import(app core.App, podName string, r io.ReaderAt, progress func(done, total int)) (ImportResult, error) {
 	var result ImportResult
 
 	spans, err := indexPages(r)
@@ -187,12 +187,12 @@ func Import(app core.App, potName string, r io.ReaderAt, progress func(done, tot
 		return result, err
 	}
 
-	pot, err := app.FindFirstRecordByFilter("pots", "name = {:name}", dbx.Params{"name": potName})
+	pod, err := app.FindFirstRecordByFilter("pods", "name = {:name}", dbx.Params{"name": podName})
 	if errors.Is(err, sql.ErrNoRows) {
-		return result, fmt.Errorf("pot %q not found", potName)
+		return result, fmt.Errorf("pod %q not found", podName)
 	}
 	if err != nil {
-		return result, fmt.Errorf("find pot %q: %w", potName, err)
+		return result, fmt.Errorf("find pod %q: %w", podName, err)
 	}
 
 	// New cards get ever-higher positions and the card grid lists the
@@ -209,7 +209,7 @@ func Import(app core.App, potName string, r io.ReaderAt, progress func(done, tot
 				if err != nil {
 					return fmt.Errorf("read page %d: %w", i, err)
 				}
-				created, err := importImportedPage(tx, pot.Id, page)
+				created, err := importImportedPage(tx, pod.Id, page)
 				if err != nil {
 					return fmt.Errorf("import page %q: %w", page.Title, err)
 				}
@@ -235,17 +235,17 @@ func Import(app core.App, potName string, r io.ReaderAt, progress func(done, tot
 // It reports whether the card was newly created. A failure after the card
 // record was created leaves a card without a note; re-running the import
 // fills it in.
-func importImportedPage(app core.App, pot string, page importPage) (created bool, err error) {
+func importImportedPage(app core.App, pod string, page importPage) (created bool, err error) {
 	text := pageText(page)
 	stop := stages.start("find card")
-	card, err := findCardByTitle(app, pot, page.Title)
+	card, err := findCardByTitle(app, pod, page.Title)
 	stop()
 	if err != nil {
 		return false, err
 	}
 	if card == nil {
 		stop = stages.start("create card")
-		card, err = createImportedCard(app, pot, page.Title, text)
+		card, err = createImportedCard(app, pod, page.Title, text)
 		stop()
 		if err != nil {
 			return false, err
@@ -269,12 +269,12 @@ func pageText(page importPage) string {
 	return strings.Join(page.Lines, "\n")
 }
 
-// findCardByTitle returns the card in pot that title resolves to, or nil.
+// findCardByTitle returns the card in pod that title resolves to, or nil.
 // Matching goes through titleLc, so it is case-insensitive like every
 // other title lookup. Soft-deleted cards are ignored.
-func findCardByTitle(app core.App, pot, title string) (*core.Record, error) {
+func findCardByTitle(app core.App, pod, title string) (*core.Record, error) {
 	titleLc := slug.ToLowerKey(titleBase(TitleCandidate(title)))
-	card, err := findLiveCardByTitleLc(app, pot, titleLc, "")
+	card, err := findLiveCardByTitleLc(app, pod, titleLc, "")
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -284,14 +284,14 @@ func findCardByTitle(app core.App, pot, title string) (*core.Record, error) {
 // createImportedCard saves a new "cards" record, mirroring createCardHandler.
 // Its preview (description and image) is derived from text and stored right
 // away, so syncDerived does not have to write the record a second time.
-func createImportedCard(app core.App, pot, title, text string) (*core.Record, error) {
+func createImportedCard(app core.App, pod, title, text string) (*core.Record, error) {
 	// Cached: the lookup would otherwise re-read and re-parse the schema for
 	// every imported page.
 	collection, err := app.FindCachedCollectionByNameOrId("cards")
 	if err != nil {
 		return nil, fmt.Errorf("load cards collection: %w", err)
 	}
-	resolved, err := resolveTitle(app, pot, TitleCandidate(title), "")
+	resolved, err := resolveTitle(app, pod, TitleCandidate(title), "")
 	if err != nil {
 		return nil, fmt.Errorf("resolve title: %w", err)
 	}
@@ -302,7 +302,7 @@ func createImportedCard(app core.App, pot, title, text string) (*core.Record, er
 	}
 
 	record := core.NewRecord(collection)
-	record.Set("pot", pot)
+	record.Set("pod", pod)
 	record.Set("title", string(resolved))
 	record.Set("titleLc", slug.ToLowerKey(string(resolved)))
 	record.Set("description", description)

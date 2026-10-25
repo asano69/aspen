@@ -13,7 +13,7 @@ PocketBase の REST API、centrifuge、y-websocket の 3 つの通信が、ど�
 | 認可 | ユーザーがそのカードを開いてよいか | `internal/auth.CanAccessCard`（1 か所） |
 | 運搬 | 経路ごとに token の載せ方が違う（§3） | 各トランスポート |
 
-pot 単位の権限を入れるときは `CanAccessCard`（と将来の `CanAccessPot`）だけを変える。トランスポート側は変えない。
+pod 単位の権限を入れるときは `CanAccessCard`（と将来の `CanAccessPod`）だけを変える。トランスポート側は変えない。
 
 ## 2. 全体像
 
@@ -129,7 +129,7 @@ sequenceDiagram
 
 - `getToken` は `pb.authStore.isValid` が偽なら `UnauthorizedError` を投げ、SDK は再接続をやめる。
 - クライアントが publish することはできない（`OnPublish` を設定していない）。
-- チャンネルは `cards` などの全 pot 共通。pot ごとに絞る場合は、チャンネルを `cards:{potId}` のように分けて `OnSubscribe` で認可する変更が要る。
+- チャンネルは `cards` などの全 pod 共通。pod ごとに絞る場合は、チャンネルを `cards:{podId}` のように分けて `OnSubscribe` で認可する変更が要る。
 
 ## 6. y-websocket
 
@@ -177,7 +177,7 @@ flowchart TD
     K -- "REST" --> Rule["コレクションルール<br/>(ログイン済みなら許可)"]
     K -- "centrifuge の subscribe" --> L{"許可リストにあるチャンネルか"}
     L -- いいえ --> Deny["PermissionDenied"]
-    L -- はい --> OK1["許可 (全 pot のイベントを受け取る)"]
+    L -- はい --> OK1["許可 (全 pod のイベントを受け取る)"]
     K -- "y-websocket" --> C{"auth.CanAccessCard<br/>カードが存在し未削除か"}
     C -- いいえ --> R404["404"]
     C -- はい --> OK2["許可 (今はログイン済みなら全カード)"]
@@ -187,7 +187,7 @@ flowchart TD
 
 - **URL に token が載る**: y-websocket の token は URL に載るため、リバースプロキシや PocketBase のリクエストログに残りうる。クッキーを使わないので CSRF や CSWSH の心配はないが、このログ漏れは残る。対策はログ側のマスク、または寿命の短い room 限定 token（使い捨て JWT）の導入。その場合も入口は `yjsAuth` だけで済む。
 - **張られた接続は失効しても exp まで生きる**: パスワード変更などで token が無効になっても、すでに張られた接続は `exp` まで通信できる（最大でユーザー 5 日、superuser 1 日）。即時に切りたい場合は、接続の登録簿を持って明示的に閉じる仕組みが別途要る。
-- **pot 単位の権限はない**: 認可は「ログイン済みなら全許可」。入れる場所は `CanAccessCard` と、centrifuge のチャンネル分割。
+- **pod 単位の権限はない**: 認可は「ログイン済みなら全許可」。入れる場所は `CanAccessCard` と、centrifuge のチャンネル分割。
 - **y-websocket の認証失敗はブラウザから見えない**: 401/404 でも 1006 としか分からない。y-websocket は再接続し続けるので、ログイン切れは `AuthGate` が `authStore` の変化で検知する。カードが削除された場合は再接続が繰り返されるため、エディタ側の対処は別途必要。
 - **再接続時の token 更新は y-websocket の実装に依存する**: `connection-close` で `provider.params.token` を書き換えており、v2 の `url` getter が `params` を読む前提。バージョンを上げるときは再確認する。
 
@@ -208,6 +208,6 @@ flowchart TD
 ## 10. 変更時のチェックリスト
 
 - 検証規則を変える: `internal/auth.Verify` だけを変え、centrifuge と y-websocket の両方のテストが通ることを確認する。
-- 認可を変える（pot 権限など）: `CanAccessCard` を変える。centrifuge も絞るならチャンネルの分割と `OnSubscribe` の変更を同時に行う。
+- 認可を変える（pod 権限など）: `CanAccessCard` を変える。centrifuge も絞るならチャンネルの分割と `OnSubscribe` の変更を同時に行う。
 - 新しい WebSocket を足す: token の運び方だけを決め、検証は `auth.Verify` を呼ぶ。独自の検証を書かない。
 - token の運び方を変える（使い捨て token など）: 入口（`yjsAuth` や `OnConnecting`）だけを差し替える。`Session` の形は変えない。

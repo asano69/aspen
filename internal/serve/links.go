@@ -1,7 +1,7 @@
-// links.go implements the /api/pages/{pot}/{slug}/links1hop and /links2hop
+// links.go implements the /api/pages/{pod}/{slug}/links1hop and /links2hop
 // routes. The related cards are found with SQL over the "cards" and
-// "card_links" collections, using the (pot, titleLc) index of "cards" and
-// the (target_pot, target_titleLc) and (source) indexes of "card_links".
+// "card_links" collections, using the (pod, titleLc) index of "cards" and
+// the (target_pod, target_titleLc) and (source) indexes of "card_links".
 // Each route runs one query for the related cards and one for their link
 // targets, however many cards it returns.
 package serve
@@ -27,9 +27,9 @@ import (
 // frontend's generated types).
 type linkedCard = api.LinkedCard
 
-// findCardBySlug looks up the card in pot whose title slugifies (see
+// findCardBySlug looks up the card in pod whose title slugifies (see
 // internal/slug.FromTitle) to targetSlug, using the "cards" collection's
-// existing (pot, titleLc) unique index instead of a full linear scan.
+// existing (pod, titleLc) unique index instead of a full linear scan.
 //
 // titleLc is derived from title via internal/slug.ToLowerKey: lowercase,
 // spaces replaced with underscores. Since a card's title can never contain
@@ -45,11 +45,11 @@ type linkedCard = api.LinkedCard
 // matched candidate since titleLc is case-insensitive but targetSlug is not:
 // it guards against a different-case title that happens to share the same
 // titleLc. Returns (nil, nil) when no card matches.
-func findCardBySlug(app core.App, potID, targetSlug string) (*core.Record, error) {
+func findCardBySlug(app core.App, podID, targetSlug string) (*core.Record, error) {
 	candidateTitleLc := strings.ToLower(targetSlug)
 	candidate, err := app.FindFirstRecordByFilter(
-		"cards", "pot = {:pot} && titleLc = {:titleLc} && "+notDeleted,
-		dbx.Params{"pot": potID, "titleLc": candidateTitleLc},
+		"cards", "pod = {:pod} && titleLc = {:titleLc} && "+notDeleted,
+		dbx.Params{"pod": podID, "titleLc": candidateTitleLc},
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
@@ -67,14 +67,14 @@ func findCardBySlug(app core.App, potID, targetSlug string) (*core.Record, error
 // link queries below can answer for it: it has no id, so it links to nothing,
 // but other cards may already link to its title. Its titleLc is derived from
 // the slug the same way findCardBySlug derives its candidate.
-func absentCard(app core.App, potID, targetSlug string) (*core.Record, error) {
+func absentCard(app core.App, podID, targetSlug string) (*core.Record, error) {
 	collection, err := app.FindCollectionByNameOrId("cards")
 	if err != nil {
 		return nil, err
 	}
 	card := core.NewRecord(collection)
 	card.Set("id", "")
-	card.Set("pot", potID)
+	card.Set("pod", podID)
 	card.Set("titleLc", strings.ToLower(targetSlug))
 	return card, nil
 }
@@ -101,20 +101,20 @@ func ownTargetTitleLcs(app core.App, cardID string) ([]string, error) {
 // for too (see absentCard), since other cards may already link to it.
 func relatedCardsHandler[T any](key string, find func(core.App, *core.Record) (T, error)) func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
-		pot, err := e.App.FindFirstRecordByFilter(
-			"pots", "name = {:name}", dbx.Params{"name": e.Request.PathValue("pot")},
+		pod, err := e.App.FindFirstRecordByFilter(
+			"pods", "name = {:name}", dbx.Params{"name": e.Request.PathValue("pod")},
 		)
 		if errors.Is(err, sql.ErrNoRows) {
-			return e.NotFoundError("pot not found", nil)
+			return e.NotFoundError("pod not found", nil)
 		}
 		if err != nil {
-			return e.InternalServerError("find pot", err)
+			return e.InternalServerError("find pod", err)
 		}
 
 		slugParam := e.Request.PathValue("slug")
-		card, err := findCardBySlug(e.App, pot.Id, slugParam)
+		card, err := findCardBySlug(e.App, pod.Id, slugParam)
 		if err == nil && card == nil {
-			card, err = absentCard(e.App, pot.Id, slugParam)
+			card, err = absentCard(e.App, pod.Id, slugParam)
 		}
 		if err != nil {
 			return e.InternalServerError("find card", err)
@@ -136,11 +136,11 @@ func relatedCardsHandler[T any](key string, find func(core.App, *core.Record) (T
 // evaluates it once per query.
 const oneHopIDs = `
 	SELECT c.id FROM cards c
-	JOIN card_links l ON l.target_pot = c.pot AND l.target_titleLc = c.titleLc
+	JOIN card_links l ON l.target_pod = c.pod AND l.target_titleLc = c.titleLc
 	WHERE l.source = {:id} AND l.deleted = ''
 	UNION
 	SELECT source FROM card_links
-	WHERE target_pot = {:pot} AND target_titleLc = {:titleLc} AND deleted = ''`
+	WHERE target_pod = {:pod} AND target_titleLc = {:titleLc} AND deleted = ''`
 
 // links1Hop returns the live cards one wiki-link hop away from card (see
 // oneHopIDs).
@@ -148,7 +148,7 @@ func links1Hop(app core.App, card *core.Record) ([]linkedCard, error) {
 	return relatedCards(app, card, "cards.id IN ("+oneHopIDs+")")
 }
 
-// links2Hop returns the live cards of the same pot that link to at least one
+// links2Hop returns the live cards of the same pod that link to at least one
 // of the targets card links to (A --> X <-- B), one row per card. X does not
 // have to exist. A card sharing several targets appears only once, under the
 // shared target that comes first in card; targets nobody else links to
@@ -159,7 +159,7 @@ func links2Hop(app core.App, card *core.Record) ([]api.Link2HopCard, error) {
 	cards, err := relatedCards(app, card, `cards.id IN (
 		SELECT l2.source FROM card_links l1
 		JOIN card_links l2
-			ON l2.target_pot = l1.target_pot AND l2.target_titleLc = l1.target_titleLc
+			ON l2.target_pod = l1.target_pod AND l2.target_titleLc = l1.target_titleLc
 		WHERE l1.source = {:id} AND l1.deleted = '' AND l2.deleted = ''
 	) AND cards.id NOT IN (`+oneHopIDs+")")
 	if err != nil {
@@ -198,17 +198,17 @@ func links2Hop(app core.App, card *core.Record) ([]api.Link2HopCard, error) {
 	return rows, nil
 }
 
-// relatedCards loads the live cards of card's pot, other than card itself,
+// relatedCards loads the live cards of card's pod, other than card itself,
 // that match condition, sorted by title. condition may use the {:id},
-// {:pot} and {:titleLc} parameters of card.
+// {:pod} and {:titleLc} parameters of card.
 func relatedCards(app core.App, card *core.Record, condition string) ([]linkedCard, error) {
 	var records []*core.Record
 	err := app.RecordQuery("cards").
 		AndWhere(dbx.NewExp(
-			"cards.pot = {:pot} AND cards.deleted = '' AND cards.id != {:id} AND ("+condition+")",
+			"cards.pod = {:pod} AND cards.deleted = '' AND cards.id != {:id} AND ("+condition+")",
 			dbx.Params{
 				"id":      card.Id,
-				"pot":     card.GetString("pot"),
+				"pod":     card.GetString("pod"),
 				"titleLc": card.GetString("titleLc"),
 			},
 		)).

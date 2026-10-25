@@ -7,8 +7,8 @@ import type { TitleCandidate } from "@/lib/models/card";
 import { mergeCards } from "@/lib/stores/cardsStore";
 
 export interface DraftCardEditorProps {
-  potId: () => string | undefined;
-  potSlug: () => string;
+  podId: () => string | undefined;
+  podSlug: () => string;
   initialTitle?: string;
   onCreated: (
     cardId: string,
@@ -31,9 +31,9 @@ export default function DraftCardEditor(props: DraftCardEditorProps) {
     if (creating || created) return;
     creating = true;
     try {
-      const potId = props.potId();
-      if (!potId) return;
-      const result = await createCard(potId, candidate);
+      const podId = props.podId();
+      if (!podId) return;
+      const result = await createCard(podId, candidate);
       mergeCards([result.card]);
       created = true;
       setSaveError(false);
@@ -63,7 +63,7 @@ export default function DraftCardEditor(props: DraftCardEditorProps) {
       )}
       <NoteEditor
         onView={(v) => (view = v)}
-        potSlug={props.potSlug}
+        podSlug={props.podSlug}
         initialTitle={props.initialTitle}
         // A draft seeded from a URL slug (a wiki link or the address bar)
         // is a page the user has not chosen to write yet, so nothing is
@@ -76,7 +76,7 @@ export default function DraftCardEditor(props: DraftCardEditorProps) {
             that title can already have incoming links. It is not
             refetched while the header is edited: once the card is
             created, ExistingCardEditor shows the relations instead. */}
-        <RelatedCards title={props.initialTitle} potSlug={props.potSlug()} />
+        <RelatedCards title={props.initialTitle} podSlug={props.podSlug()} />
       </NoteEditor>
     </>
   );

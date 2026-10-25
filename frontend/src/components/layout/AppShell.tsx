@@ -1,6 +1,6 @@
 import { onCleanup, onMount, type ParentProps } from "solid-js";
 import MainLayout from "./MainLayout";
-import { loadAllPots } from "@/lib/stores/potsStore";
+import { loadAllPods } from "@/lib/stores/podsStore";
 import { watchCards } from "@/lib/stores/cardsStore";
 import { watchConnection } from "@/lib/stores/connectionStore";
 import { watchMergeAlerts } from "@/lib/stores/mergeAlertStore";
@@ -14,14 +14,14 @@ import { installHotkeys } from "@/lib/hotkeys";
 // inside the router context (e.g. Logo's <A> links).
 //
 // Realtime is started here and stays on while the app is open: each
-// replicated collection has one channel that carries every pot's events (see
+// replicated collection has one channel that carries every pod's events (see
 // lib/stores/cardsStore.ts and lib/dexie/dataReplicas.ts).
 export default function AppShell(props: ParentProps) {
-  // Cards are no longer loaded here: each pot's card list pages in on
-  // demand (see lib/stores/cardsStore.ts). Only the pot list is
-  // fetched up front (see lib/stores/potsStore.ts).
+  // Cards are no longer loaded here: each pod's card list pages in on
+  // demand (see lib/stores/cardsStore.ts). Only the pod list is
+  // fetched up front (see lib/stores/podsStore.ts).
   onMount(() => {
-    loadAllPots();
+    loadAllPods();
     onCleanup(watchCards());
     onCleanup(watchDataReplicas());
     onCleanup(watchConnection());

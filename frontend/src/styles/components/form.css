@@ -1,5 +1,5 @@
 /* Public classes: .input, .input-mono, .form-error.
- * Shared form controls (Login, PotForm, ApiDocs, Md2sb). Layout beyond the
+ * Shared form controls (Login, PodForm, ApiDocs, Md2sb). Layout beyond the
  * full width, such as flex sizing, is set by the parent. */
 @layer components {
   .input {

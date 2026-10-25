@@ -109,7 +109,7 @@ export function subscribeToChannel<T>(
 }
 
 // Subscribes to every event of one replicated collection (see
-// internal/replica), across all pots. The channel is named after the
+// internal/replica), across all pods. The channel is named after the
 // collection.
 export function subscribeToCollection<T>(
   name: string,

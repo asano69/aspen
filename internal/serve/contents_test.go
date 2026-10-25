@@ -10,8 +10,8 @@ import (
 // The text of a card must survive a rename: the row follows the card's id.
 func TestContents_FollowTheCardAcrossARename(t *testing.T) {
 	app := newImportTestApp(t)
-	pot := createPot(t, app, "pot1")
-	card := createLinksTestCard(t, app, pot.Id, "Old", "")
+	pod := createPod(t, app, "pod1")
+	card := createLinksTestCard(t, app, pod.Id, "Old", "")
 
 	if err := persistNote(app, card.Id, "Old\nbody", nil); err != nil {
 		t.Fatalf("persistNote: %v", err)
@@ -30,8 +30,8 @@ func TestContents_FollowTheCardAcrossARename(t *testing.T) {
 // Saving the same text again must not touch the row.
 func TestContents_UnchangedTextIsNotWrittenAgain(t *testing.T) {
 	app := newImportTestApp(t)
-	pot := createPot(t, app, "pot1")
-	card := createLinksTestCard(t, app, pot.Id, "A", "")
+	pod := createPod(t, app, "pod1")
+	card := createLinksTestCard(t, app, pod.Id, "A", "")
 
 	for range 2 {
 		if err := persistNote(app, card.Id, "A\nbody", nil); err != nil {
@@ -62,8 +62,8 @@ func storedLineIDs(t *testing.T, app core.App, cardID string) []string {
 // count is unchanged, and renew them when it is not.
 func TestContents_NilLinesKeepTheStoredIDsWhileTheyFit(t *testing.T) {
 	app := newImportTestApp(t)
-	pot := createPot(t, app, "pot1")
-	card := createLinksTestCard(t, app, pot.Id, "A", "")
+	pod := createPod(t, app, "pod1")
+	card := createLinksTestCard(t, app, pod.Id, "A", "")
 
 	if err := persistNote(app, card.Id, "A\nb", nil); err != nil {
 		t.Fatalf("persistNote: %v", err)

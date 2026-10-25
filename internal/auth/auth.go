@@ -56,7 +56,7 @@ func Verify(app core.App, token string) (Session, error) {
 // returns ErrCardNotFound for a card that does not exist or is deleted, so a
 // room can never be created for an arbitrary name.
 //
-// Every authenticated user may access every card for now. Per-pot
+// Every authenticated user may access every card for now. Per-pod
 // permissions will be decided here, and nowhere else.
 func CanAccessCard(app core.App, userID, cardID string) error {
 	card, err := app.FindRecordById("cards", cardID)

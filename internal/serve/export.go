@@ -1,4 +1,4 @@
-// export.go implements "cardpod export": it writes one pot to a directory.
+// export.go implements "cardpod export": it writes one pod to a directory.
 //
 //	<dir>/
 //	├── manifest.json                 cards and assets, in export order
@@ -75,19 +75,19 @@ type manifest struct {
 	Assets []string       `json:"assets"`
 }
 
-// Export writes every live card of the pot named potName, and the attachments
+// Export writes every live card of the pod named podName, and the attachments
 // they use, into dir.
-func Export(app core.App, potName, dir string) (ExportResult, error) {
+func Export(app core.App, podName, dir string) (ExportResult, error) {
 	var result ExportResult
 
-	pot, err := app.FindFirstRecordByFilter(
-		"pots", "name = {:name} && "+notDeleted, dbx.Params{"name": potName},
+	pod, err := app.FindFirstRecordByFilter(
+		"pods", "name = {:name} && "+notDeleted, dbx.Params{"name": podName},
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return result, fmt.Errorf("pot %q not found", potName)
+		return result, fmt.Errorf("pod %q not found", podName)
 	}
 	if err != nil {
-		return result, fmt.Errorf("find pot %q: %w", potName, err)
+		return result, fmt.Errorf("find pod %q: %w", podName, err)
 	}
 
 	// Created up front, so empty folders exist too.
@@ -98,8 +98,8 @@ func Export(app core.App, potName, dir string) (ExportResult, error) {
 	}
 
 	cards, err := app.FindRecordsByFilter(
-		"cards", "pot = {:pot} && "+notDeleted, "titleLc", 0, 0,
-		dbx.Params{"pot": pot.Id},
+		"cards", "pod = {:pod} && "+notDeleted, "titleLc", 0, 0,
+		dbx.Params{"pod": pod.Id},
 	)
 	if err != nil {
 		return result, fmt.Errorf("list cards: %w", err)

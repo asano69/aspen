@@ -27,7 +27,7 @@ func newTestApp(t *testing.T) core.App {
 	t.Cleanup(func() { _ = app.ResetBootstrapState() })
 
 	cards := core.NewBaseCollection("cards")
-	cards.Fields.Add(&core.TextField{Name: "pot"}, &core.DateField{Name: "deleted"})
+	cards.Fields.Add(&core.TextField{Name: "pod"}, &core.DateField{Name: "deleted"})
 	if err := app.Save(cards); err != nil {
 		t.Fatalf("create cards collection: %v", err)
 	}
@@ -37,7 +37,7 @@ func newTestApp(t *testing.T) core.App {
 		&core.TextField{Name: "source"},
 		&core.TextField{Name: "target_title"},
 		&core.TextField{Name: "target_titleLc"},
-		&core.TextField{Name: "target_pot"},
+		&core.TextField{Name: "target_pod"},
 		&core.NumberField{Name: "position"},
 		&core.DateField{Name: "deleted"},
 	)
@@ -54,7 +54,7 @@ func createCard(t *testing.T, app core.App) *core.Record {
 		t.Fatalf("find cards collection: %v", err)
 	}
 	record := core.NewRecord(collection)
-	record.Set("pot", "pot1")
+	record.Set("pod", "pod1")
 	if err := app.Save(record); err != nil {
 		t.Fatalf("save card: %v", err)
 	}
@@ -87,8 +87,8 @@ func TestSync_StoresLinksWithoutCheckingTargets(t *testing.T) {
 	got := map[string]string{}
 	for _, record := range linksFrom(t, app, a.Id) {
 		got[record.GetString("target_titleLc")] = record.GetString("target_title")
-		if record.GetString("target_pot") != "pot1" {
-			t.Errorf("target_pot = %q, want %q", record.GetString("target_pot"), "pot1")
+		if record.GetString("target_pod") != "pod1" {
+			t.Errorf("target_pod = %q, want %q", record.GetString("target_pod"), "pod1")
 		}
 	}
 	want := map[string]string{"b": "B", "a_b": "a b"}

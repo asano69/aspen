@@ -3,8 +3,8 @@
 // Converts a card's title into the URL path segment used to display
 // it (see pages/cards/CardForm.tsx and CardItem.tsx). This replaces
 // the old persisted, server-disambiguated "slug" field entirely: since
-// a card's title is already guaranteed unique within its pot (see the
-// "cards" collection's (pot, title) unique index), the URL segment can
+// a card's title is already guaranteed unique within its pod (see the
+// "cards" collection's (pod, title) unique index), the URL segment can
 // simply be derived from that title on demand.
 //
 // The backend has its own mirror of the exact same algorithm (see
@@ -90,14 +90,14 @@ export function titleToSegment(title: string): string {
 
 // Decodes a URL path segment back into its raw slug form, so it can
 // be compared against titleToSlug(card.title) for every candidate
-// card in the pot (see CardForm.tsx).
+// card in the pod (see CardForm.tsx).
 export function segmentToSlug(segment: string): string {
   return decodeURIComponent(segment);
 }
 
 // Best-effort reverse of titleToSlug, used when a URL's cardSlug
 // matches no existing card (see CardForm.tsx): reconstructs a title
-// candidate to pre-fill a new draft with, so opening /:pot/test seeds
+// candidate to pre-fill a new draft with, so opening /:pod/test seeds
 // the header with "test" instead of showing "not found".
 //
 // This is NOT a true inverse of titleToSlug: an underscore in `slug`

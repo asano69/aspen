@@ -11,7 +11,7 @@ import (
 func TestResolveTitle_LongCandidateIsTruncated(t *testing.T) {
 	app := newSlugTestApp(t)
 
-	got, err := resolveTitle(app, "pot1", TitleCandidate(strings.Repeat("あ", 300)), "")
+	got, err := resolveTitle(app, "pod1", TitleCandidate(strings.Repeat("あ", 300)), "")
 	if err != nil {
 		t.Fatalf("resolveTitle: %v", err)
 	}
@@ -31,7 +31,7 @@ func TestResolveTitle_LongCollisionsKeepTheirSuffix(t *testing.T) {
 	var last string
 	// 105 cards cover the 1-, 2- and 3-digit suffixes ("_2" .. "_105").
 	for i := 0; i < 105; i++ {
-		card := saveResolvedCard(t, app, "pot1", long, nil)
+		card := saveResolvedCard(t, app, "pod1", long, nil)
 		title, titleLc := card.GetString("title"), card.GetString("titleLc")
 		if n := utf8.RuneCountInString(title); n > slug.MaxTitleRunes {
 			t.Fatalf("card %d: title has %d runes, want at most %d", i+1, n, slug.MaxTitleRunes)

@@ -13,20 +13,20 @@ tygo turns this package into frontend/src/lib/api/generated.ts
  * CreateCardRequest is the body of POST /api/admin/cards.
  */
 export interface CreateCardRequest {
-  pot: string;
+  pod: string;
   titleCandidate: TitleCandidate;
 }
 /**
  * MoveCardsRequest is the body of POST /api/admin/cards/move. Each card is
- * moved to the pot Pot, in the order of IDs.
+ * moved to the pod Pod, in the order of IDs.
  */
 export interface MoveCardsRequest {
   ids: string[];
-  pot: string;
+  pod: string;
 }
 /**
  * MoveCardsResponse reports how many cards were moved. Cards that are missing,
- * deleted or already in the pot are skipped and not counted.
+ * deleted or already in the pod are skipped and not counted.
  */
 export interface MoveCardsResponse {
   moved: number /* int */;
@@ -89,7 +89,7 @@ export interface SearchItem {
   preview: string[];
 }
 /**
- * SearchResponse is the body of GET /api/pages/{pot}/search/query.
+ * SearchResponse is the body of GET /api/pages/{pod}/search/query.
  */
 export interface SearchResponse {
   total: number /* int */;

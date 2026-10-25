@@ -5,14 +5,14 @@ import { cardsReplica } from "./cardsCollection";
 import { db } from "./db";
 import { releaseTitleIndex, suggestTitles } from "./titleIndex";
 
-function card(id: string, pot: string, title: string): CardRecord {
+function card(id: string, pod: string, title: string): CardRecord {
   return {
     id,
     title: title as CardRecord["title"],
     titleLc: title.toLowerCase().replaceAll(" ", "_"),
     description: [],
     image: "",
-    pot,
+    pod,
     deleted: "",
     created: "",
     updated: "",
@@ -21,7 +21,7 @@ function card(id: string, pot: string, title: string): CardRecord {
 
 beforeEach(async () => {
   await db.cards.clear();
-  for (const pot of ["p", "p2"]) releaseTitleIndex(pot);
+  for (const pod of ["p", "p2"]) releaseTitleIndex(pod);
 });
 
 describe("suggestTitles", () => {
@@ -39,7 +39,7 @@ describe("suggestTitles", () => {
     expect(await suggestTitles("p", "語入")).toEqual(["日本語入力"]);
   });
 
-  it("keeps pots apart", async () => {
+  it("keeps pods apart", async () => {
     await cardsReplica.put([card("1", "p", "apple")]);
     expect(await suggestTitles("p2", "ap")).toEqual([]);
   });

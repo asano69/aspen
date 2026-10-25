@@ -68,7 +68,7 @@ func registerRoutes(e *core.ServeEvent) error {
 	// Custom API routes that return or mutate user data go under this
 	// group so RequireAuth only has to be declared once here, instead of
 	// on every individual route. Any authenticated record (a regular user
-	// or a superuser) is accepted; per-pot permissions do not exist yet.
+	// or a superuser) is accepted; per-pod permissions do not exist yet.
 	// The path keeps its "admin" name only to avoid churn in the frontend,
 	// scripts and generated types.
 	admin := e.Router.Group("/api/admin")
@@ -84,22 +84,22 @@ func registerRoutes(e *core.ServeEvent) error {
 	// the "cards"/"card_links" collections themselves do.
 	pages := e.Router.Group("/api/pages")
 	pages.Bind(apis.RequireAuth())
-	pages.GET("/{pot}/search/query", searchHandler)
+	pages.GET("/{pod}/search/query", searchHandler)
 	// links1hop / links2hop are meant for external callers such as agents. The
 	// frontend does not use them: it derives the same rows from its Dexie
 	// replica (see frontend/src/lib/dexie/relatedQuery.ts), checked against
 	// the same fixture (testdata/link-graph.json).
-	pages.GET("/{pot}/{slug}/links1hop", relatedCardsHandler("links1hop", links1Hop))
-	pages.GET("/{pot}/{slug}/links2hop", relatedCardsHandler("links2hop", links2Hop))
+	pages.GET("/{pod}/{slug}/links1hop", relatedCardsHandler("links1hop", links1Hop))
+	pages.GET("/{pod}/{slug}/links2hop", relatedCardsHandler("links2hop", links2Hop))
 	// Checkpoint-based pull for the frontend's Dexie replication (see
-	// replication.go), one route per replicated collection. {potId} is a
-	// pot's id, unlike {pot} above. A global collection (e.g. pots) has no
-	// pot segment.
+	// replication.go), one route per replicated collection. {podId} is a
+	// pod's id, unlike {pod} above. A global collection (e.g. pods) has no
+	// pod segment.
 	for _, c := range replica.Collections {
-		if c.PotField == "" {
+		if c.PodField == "" {
 			pages.GET("/"+c.Name+"/pull", pullHandler(c))
 		} else {
-			pages.GET("/{potId}/"+c.Name+"/pull", pullHandler(c))
+			pages.GET("/{podId}/"+c.Name+"/pull", pullHandler(c))
 		}
 	}
 

@@ -41,7 +41,7 @@ superuser は PocketBase のルールを常にバイパスし、`apis.RequireAut
 | コレクション | list / view | create | update | delete |
 | --- | --- | --- | --- | --- |
 | `users` | 本人のみ (現状) | **`""` から null に変更** | 本人のみ (現状) | null (自己削除を禁止) |
-| `pots` | 認証済み | 認証済み | 認証済み | 認証済み (または null) |
+| `pods` | 認証済み | 認証済み | 認証済み | 認証済み (または null) |
 | `cards` | 認証済み | null | 認証済み + 下記の項目制限 | null |
 | その他すべて | null のまま | null | null | null |
 
@@ -57,7 +57,7 @@ superuser は PocketBase のルールを常にバイパスし、`apis.RequireAut
 
 ```
 @request.auth.id != "" &&
-@request.body.pot:isset = false &&
+@request.body.pod:isset = false &&
 @request.body.title:isset = false &&
 @request.body.titleLc:isset = false &&
 @request.body.description:isset = false &&
@@ -82,7 +82,7 @@ superuser は PocketBase のルールを常にバイパスし、`apis.RequireAut
 
 ```go
 // /api/admin and /api/pages accept any authenticated record (a regular
-// user or a superuser). Per-pot permissions do not exist yet.
+// user or a superuser). Per-pod permissions do not exist yet.
 admin.Bind(apis.RequireAuth())
 pages.Bind(apis.RequireAuth())
 ```
@@ -95,7 +95,7 @@ pages.Bind(apis.RequireAuth())
 
 ```go
 // authenticate accepts any valid PocketBase auth token. There is no
-// per-pot filtering yet: every client receives the events of all pots.
+// per-pod filtering yet: every client receives the events of all pods.
 func authenticate(app core.App, token string) (userID string, err error) {
 	record, err := app.FindAuthRecordByToken(token, core.TokenTypeAuth)
 	if err != nil {
@@ -167,9 +167,9 @@ export async function login(email: string, password: string): Promise<void> {
 
 | 問題 | 内容 |
 | --- | --- |
-| ポット一覧が即時反映されない | `potsStore` に realtime がなく、他人の作成・改名・削除は再読み込みまで見えない |
-| `pots.position` の一意制約 | 同時にポットを作ると `nextPotPosition` が衝突して失敗し得る (「Failed to add the pot」) |
+| ポット一覧が即時反映されない | `podsStore` に realtime がなく、他人の作成・改名・削除は再読み込みまで見えない |
+| `pods.position` の一意制約 | 同時にポットを作ると `nextPodPosition` が衝突して失敗し得る (「Failed to add the pod」) |
 | ログアウト後のデータ残り | Dexie、y-indexeddb、モジュール変数にデータが残る。全員が同権限なので漏洩ではないが、ACL を入れる時点で必須 (logout 時のクリアまたは reload) |
 | Yjs / centrifuge の認可 | ルーム・チャネル単位の認可が未実装。別途設計する |
-| ポット ACL | `pots.members` と各ルールへの組み込みに加え、`createCardHandler` のポット検証、pull / realtime のフィルタが要る |
+| ポット ACL | `pods.members` と各ルールへの組み込みに加え、`createCardHandler` のポット検証、pull / realtime のフィルタが要る |
 | `query` (datalog) | サーバーで評価されるため、重い式による負荷が一般ユーザーにも向く。タイムアウトを検討する |

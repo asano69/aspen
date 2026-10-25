@@ -25,9 +25,9 @@ import {
 //   composition" means the editor was torn down while the IME was converting
 //   (e.g. a draft turning into an existing card).
 // - "update during composition": every CodeMirror update while composing, with
-//   its user events and effects, to spot dispatches that should not happen.
+//   its user events and effects, to spod dispatches that should not happen.
 // - "DOM mutation during composition": nodes added or removed under the
-//   composing content, to spot decorations that rewrite the DOM.
+//   composing content, to spod decorations that rewrite the DOM.
 // - "focus" / "blur": where the focus went, and whether the window has it.
 // - "composition did not end": a composition stuck for too long.
 

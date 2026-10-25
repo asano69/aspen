@@ -19,7 +19,7 @@ import (
 
 
 // maxTitleRetries bounds how many times a create/update retries after
-// a database-level unique constraint violation on (pot, title) -- the
+// a database-level unique constraint violation on (pod, title) -- the
 // final defense against a TOCTOU race between resolveTitle's existence
 // check and the actual save (see slug.go).
 const maxTitleRetries = 3
@@ -41,8 +41,8 @@ func createCardHandler(e *core.RequestEvent) error {
 	if err := e.BindBody(&req); err != nil {
 		return e.BadRequestError("invalid request body", err)
 	}
-	if req.Pot == "" {
-		return e.BadRequestError("pot is required", nil)
+	if req.Pod == "" {
+		return e.BadRequestError("pod is required", nil)
 	}
 
 	collection, err := e.App.FindCollectionByNameOrId("cards")
@@ -53,13 +53,13 @@ func createCardHandler(e *core.RequestEvent) error {
 
 	candidate := req.TitleCandidate
 	for attempt := 0; attempt < maxTitleRetries; attempt++ {
-		title, err := resolveTitle(e.App, req.Pot, candidate, "")
+		title, err := resolveTitle(e.App, req.Pod, candidate, "")
 		if err != nil {
 			return e.InternalServerError("resolve title", err)
 		}
 
 		record := core.NewRecord(collection)
-		record.Set("pot", req.Pot)
+		record.Set("pod", req.Pod)
 		record.Set("title", string(title))
 		// A case-insensitive search key, kept in sync with title on
 		// every save since PocketBase has no generated columns (see

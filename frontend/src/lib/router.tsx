@@ -2,9 +2,9 @@
 import { Router, Route } from "@solidjs/router";
 
 import AppShell from "../components/layout/AppShell";
-import PotLayout from "../pages/pots/PotLayout";
+import PodLayout from "../pages/pods/PodLayout";
 
-import PotCards from "../pages/pots/PotCards";
+import PodCards from "../pages/pods/PodCards";
 import CardList from "../pages/cards/CardList";
 import CardForm from "../pages/cards/CardForm";
 import SearchPage from "../pages/search/SearchPage";
@@ -26,15 +26,15 @@ export default function AppRouter() {
       <Route path="/admin/api-docs" component={ApiDocs} />
       {/* Markdown -> Scrapbox notation converter (see features/md2sb). */}
       <Route path="/admin/md2sb" component={Md2sb} />
-      <Route path="/" component={PotCards} />
-      {/* The pot segment in the URL is now the pot's unique
+      <Route path="/" component={PodCards} />
+      {/* The pod segment in the URL is now the pod's unique
           "name" field, not its PocketBase id (see CardList.tsx
           and CardForm.tsx, which resolve the actual record via
-          this name). PotLayout owns fetching the pot and registering
-          TopBar's pot-name link (see PotLayout.tsx), so it stays
+          this name). PodLayout owns fetching the pod and registering
+          TopBar's pod-name link (see PodLayout.tsx), so it stays
           mounted continuously while navigating between CardList and
           CardForm below instead of flickering on every transition. */}
-      <Route path="/:slug" component={PotLayout}>
+      <Route path="/:slug" component={PodLayout}>
         <Route path="/" component={CardList} />
         {/* "/new" (draft creation) and "/:cardSlug" (edit) share ONE
             Route -- not two separate <Route> elements -- so navigating

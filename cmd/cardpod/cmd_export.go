@@ -13,9 +13,9 @@ import (
 // wrapper: delegate to internal/serve, which writes the directory.
 func exportCmd(app *pocketbase.PocketBase) *cobra.Command {
 	return &cobra.Command{
-		Use:   "export <pot> <dir>",
-		Short: "Export one pot to a directory",
-		Long: `Export the current state of the pot with the given name to a directory.
+		Use:   "export <pod> <dir>",
+		Short: "Export one pod to a directory",
+		Long: `Export the current state of the pod with the given name to a directory.
 
 The directory gets a manifest.json that lists every file, the text and the
 signed lines of every card in cards/, and the attachments they use in assets/.

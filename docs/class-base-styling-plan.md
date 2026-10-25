@@ -31,10 +31,10 @@ asano@spica:~/projects/cardpod/frontend (main *%)
    37 src/pages/admin/ApiDocs.tsx
    37 src/pages/Login.tsx
    28 src/components/layout/MainLayout.tsx
-   21 src/pages/pots/PotForm.tsx
+   21 src/pages/pods/PodForm.tsx
    20 src/components/Logo.tsx
    18 src/components/layout/UserMenu.tsx
-   17 src/components/layout/SidebarPotList.tsx
+   17 src/components/layout/SidebarPodList.tsx
 19:25 % cd frontend && bun run lint:css
 $ stylelint "src/**/*.css"
 
@@ -70,26 +70,26 @@ src/styles/components/quick-launch.css
 
 ## Phase 2: レイアウト骨格
 
-`MainLayout`、`TopBar`、`Sidebar`、`SidebarPotList`、`Footer`、`PotIcon`、`Logo`。
+`MainLayout`、`TopBar`、`Sidebar`、`SidebarPodList`、`Footer`、`PodIcon`、`Logo`。
 
 - ここは `fixed`/`z-index`/`backdrop-blur`/レスポンシブ（`md:hidden`, `hidden md:block`）が集中する。メディアクエリへの書き換えを要する。
 - `z-index` の値はこの時点で**一覧化して変数化**（`--z-topbar` など）。散在するz-indexは詳細度と並ぶ混乱の元。
 - ブレークポイントは1か所（`@custom-media` は未対応ブラウザがあるので、素直に `768px` を共通コメントで管理）。
   => `components/layout.css` の冒頭コメントで管理（768px = md、1024px = lg）。`search.css` の `.navbar-form` も同じ値。
 - z-index は `theme/default.css` の `--z-*` に一覧化済み（sidebar-backdrop 20 / sidebar 30 / topbar 40 / popup 50 / footer 300 / page-menu 300）。TopBar の高さは `--topbar-height`。`editorTheme.ts` のエディタ内部の z-index と、`card-grid.css` の局所的な値は対象外。
-- 開閉・ドラッグ中の状態クラスは `data-open` / `data-dragging` に置換済み（Sidebar, SidebarPotList）。
+- 開閉・ドラッグ中の状態クラスは `data-open` / `data-dragging` に置換済み（Sidebar, SidebarPodList）。
 
 ## Phase 3: ページ単位
 
-1. `PotList` / `PotForm` / `PotGridItem`
+1. `PodList` / `PodForm` / `PodGridItem`
 2. `CardList` / `CardItem`（`card-grid.css` は既に大半が完成。残りの `opacity-40`、`col-span-full h-px` を除去）
 3. `CardForm` / `RelatedCards`（`page-menu` の `flex flex-col gap-0.5` など）
 4. `Login`、`ApiDocs`、`Md2sb`（管理系は最後。壊れても影響が小さい）
 
 各ページで、`classList={{ "opacity-40": ... }}` のような状態クラスは `.dragging` や `[data-dragging]` に置換。
 
-=> 完了。状態クラスは `data-dragging`（CardItem, PotGridItem）、`data-quiet`（PotForm）、`data-hidden`（CardForm の `.page-menu`）に置換済み。
-- 共通部品は `components/form.css`（`.input`, `.input-mono`, `.form-error`）。ページ固有は `pots.css`, `login.css`, `admin.css`。
+=> 完了。状態クラスは `data-dragging`（CardItem, PodGridItem）、`data-quiet`（PodForm）、`data-hidden`（CardForm の `.page-menu`）に置換済み。
+- 共通部品は `components/form.css`（`.input`, `.input-mono`, `.form-error`）。ページ固有は `pods.css`, `login.css`, `admin.css`。
 - `card-grid.css` に `.card-grid-sentinel`, `.card-grid-item .cover-fallback`, `.card-grid-item .actions` を追加。`page.css` の `.col-page` / `.page-menu` はレイアウトを自身に取り込んだ。
 - `RelatedCards.tsx` にはユーティリティが無く、変更なし。
 - 残り: `DraftCardEditor.tsx` のエラー文と `noteEditor/index.tsx` の `page min-w-0 flex-1` / `editor text-text outline-none`（Phase 4 で扱う）。

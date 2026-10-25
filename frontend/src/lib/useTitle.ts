@@ -3,7 +3,7 @@ import { createEffect, onCleanup } from "solid-js";
 // Sets the browser tab's title reactively to whatever `title()`
 // returns, restoring whatever document.title held before this ran once
 // the calling page unmounts. That restore is what keeps a page with no
-// title of its own (e.g. the pots list) from being left showing a
+// title of its own (e.g. the pods list) from being left showing a
 // stale title after the user navigates away from a page that set one.
 //
 // `title()` returning undefined (e.g. still loading) leaves the

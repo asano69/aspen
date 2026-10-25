@@ -28,7 +28,7 @@ import {
   linkAliveVersion,
   requestLinkAlive,
 } from "@/lib/stores/linkAliveStore";
-import { usePot } from "@/pages/pots/PotContext";
+import { usePod } from "@/pages/pods/PodContext";
 import { currentUser } from "@/lib/api/auth";
 import { defaultKeymapGroups } from "./keymaps";
 import { titleCandidateExtension } from "./titleCandidatePlugin";
@@ -60,7 +60,7 @@ export interface NoteEditorProps {
   // Connection to the card's collab room. A draft has none, so it is a plain
   // local editor until its card is created.
   channel?: Channel;
-  potSlug: () => string;
+  podSlug: () => string;
   initialTitle?: string;
   // Text to insert as the very first edit. Used for the draft-to-existing-card
   // transition: the card's room starts empty, and the text typed while
@@ -90,7 +90,7 @@ export interface NoteEditorProps {
 // lifecycle changes cannot alter this editor's mode.
 export default function NoteEditor(props: NoteEditorProps) {
   const navigate = useNavigate();
-  const pot = usePot();
+  const pod = usePod();
   // The telomere bar whose info popover is open (see TelomerePopover.tsx).
   const [telomereSelection, setTelomereSelection] =
     createSignal<TelomereSelection>();
@@ -164,7 +164,7 @@ export default function NoteEditor(props: NoteEditorProps) {
         trailingBlankLine,
         // Suggests existing card titles while a wiki link is typed (see
         // plugins/interactions/titleCompletion.ts).
-        titleCompletion(() => pot()?.id),
+        titleCompletion(() => pod()?.id),
         // Cardpod's own Scrapbox-style syntax parser (see
         // parser/cardpod/index.ts). syntaxReveal reads this same syntax tree
         // to decide when to hide/show the raw markup around the cursor,
@@ -174,7 +174,7 @@ export default function NoteEditor(props: NoteEditorProps) {
         // resolved (see parser/cardpod/codeLanguages.ts).
         syntaxHighlighting(defaultHighlightStyle),
         syntaxReveal,
-        wikiLinkNavigation(props.potSlug, navigate),
+        wikiLinkNavigation(props.podSlug, navigate),
         externalLinkNavigation(),
         pasteUrlDecode(),
         // Uploads a pasted image and inserts it as "[url]" (see
@@ -216,14 +216,14 @@ export default function NoteEditor(props: NoteEditorProps) {
     // alive so links never flash red.
     createEffect(() => {
       linkAliveVersion();
-      const potId = pot()?.id;
+      const podId = pod()?.id;
       untrack(() =>
         view.dispatch({
           effects: setLinkAlive.of(
-            potId
+            podId
               ? (titleLc) => {
-                  requestLinkAlive(potId, titleLc);
-                  return linkAlive(potId, titleLc) ?? true;
+                  requestLinkAlive(podId, titleLc);
+                  return linkAlive(podId, titleLc) ?? true;
                 }
               : null,
           ),

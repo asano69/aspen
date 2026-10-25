@@ -47,12 +47,12 @@ describe("syncReplica", () => {
       checkpoint: { updatedAt: "tb", id: "b" },
     });
 
-    await syncReplica(replica, "pot1");
+    await syncReplica(replica, "pod1");
 
-    expect(pullAll).toHaveBeenCalledWith("things", "pot1", stored);
+    expect(pullAll).toHaveBeenCalledWith("things", "pod1", stored);
     expect(replica.put).toHaveBeenCalledWith([record("a")]);
     expect(replica.remove).toHaveBeenCalledWith("b");
-    expect(writeCheckpoint).toHaveBeenCalledWith("things", "pot1", {
+    expect(writeCheckpoint).toHaveBeenCalledWith("things", "pod1", {
       updatedAt: "tb",
       id: "b",
     });
@@ -61,7 +61,7 @@ describe("syncReplica", () => {
   it("leaves the checkpoint alone when nothing was pulled", async () => {
     vi.mocked(pullAll).mockResolvedValueOnce({ records: [], checkpoint: null });
 
-    await syncReplica(fakeReplica(), "pot1");
+    await syncReplica(fakeReplica(), "pod1");
 
     expect(writeCheckpoint).not.toHaveBeenCalled();
   });

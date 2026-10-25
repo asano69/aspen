@@ -12,7 +12,7 @@ import (
 )
 
 // newLinksTestApp boots a throwaway app with the collections
-// links1HopHandler touches: pots, cards, and card_links.
+// links1HopHandler touches: pods, cards, and card_links.
 func newLinksTestApp(t *testing.T) core.App {
 	t.Helper()
 
@@ -22,15 +22,15 @@ func newLinksTestApp(t *testing.T) core.App {
 	}
 	t.Cleanup(func() { _ = app.ResetBootstrapState() })
 
-	pots := core.NewBaseCollection("pots")
-	pots.Fields.Add(&core.TextField{Name: "name"})
-	if err := app.Save(pots); err != nil {
-		t.Fatalf("create pots collection: %v", err)
+	pods := core.NewBaseCollection("pods")
+	pods.Fields.Add(&core.TextField{Name: "name"})
+	if err := app.Save(pods); err != nil {
+		t.Fatalf("create pods collection: %v", err)
 	}
 
 	cards := core.NewBaseCollection("cards")
 	cards.Fields.Add(
-		&core.TextField{Name: "pot"},
+		&core.TextField{Name: "pod"},
 		&core.TextField{Name: "title"},
 		&core.TextField{Name: "titleLc"},
 		&core.JSONField{Name: "description"},
@@ -43,7 +43,7 @@ func newLinksTestApp(t *testing.T) core.App {
 	links := core.NewBaseCollection("card_links")
 	links.Fields.Add(
 		&core.TextField{Name: "source"},
-		&core.TextField{Name: "target_pot"},
+		&core.TextField{Name: "target_pod"},
 		&core.TextField{Name: "target_title"},
 		&core.TextField{Name: "target_titleLc"},
 		&core.NumberField{Name: "position"},
@@ -56,28 +56,28 @@ func newLinksTestApp(t *testing.T) core.App {
 	return app
 }
 
-func createPot(t *testing.T, app core.App, name string) *core.Record {
+func createPod(t *testing.T, app core.App, name string) *core.Record {
 	t.Helper()
-	collection, err := app.FindCollectionByNameOrId("pots")
+	collection, err := app.FindCollectionByNameOrId("pods")
 	if err != nil {
-		t.Fatalf("find pots collection: %v", err)
+		t.Fatalf("find pods collection: %v", err)
 	}
 	record := core.NewRecord(collection)
 	record.Set("name", name)
 	if err := app.Save(record); err != nil {
-		t.Fatalf("save pot: %v", err)
+		t.Fatalf("save pod: %v", err)
 	}
 	return record
 }
 
-func createLinksTestCard(t *testing.T, app core.App, pot, title, description string) *core.Record {
+func createLinksTestCard(t *testing.T, app core.App, pod, title, description string) *core.Record {
 	t.Helper()
 	collection, err := app.FindCollectionByNameOrId("cards")
 	if err != nil {
 		t.Fatalf("find cards collection: %v", err)
 	}
 	record := core.NewRecord(collection)
-	record.Set("pot", pot)
+	record.Set("pod", pod)
 	record.Set("title", title)
 	record.Set("titleLc", slug.ToLowerKey(title))
 	// Stored the same way production stores it (see updatePreview).
@@ -88,7 +88,7 @@ func createLinksTestCard(t *testing.T, app core.App, pot, title, description str
 	return record
 }
 
-func createLink(t *testing.T, app core.App, source, targetPot, targetTitle string) {
+func createLink(t *testing.T, app core.App, source, targetPod, targetTitle string) {
 	t.Helper()
 	collection, err := app.FindCollectionByNameOrId("card_links")
 	if err != nil {
@@ -103,7 +103,7 @@ func createLink(t *testing.T, app core.App, source, targetPot, targetTitle strin
 	record := core.NewRecord(collection)
 	record.Set("source", source)
 	record.Set("position", position)
-	record.Set("target_pot", targetPot)
+	record.Set("target_pod", targetPod)
 	record.Set("target_title", targetTitle)
 	record.Set("target_titleLc", slug.ToLowerKey(targetTitle))
 	if err := app.Save(record); err != nil {
@@ -113,10 +113,10 @@ func createLink(t *testing.T, app core.App, source, targetPot, targetTitle strin
 
 func TestFindCardBySlug(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
-	card := createLinksTestCard(t, app, pot.Id, "Hello World", "")
+	pod := createPod(t, app, "pod1")
+	card := createLinksTestCard(t, app, pod.Id, "Hello World", "")
 
-	got, err := findCardBySlug(app, pot.Id, "Hello_World")
+	got, err := findCardBySlug(app, pod.Id, "Hello_World")
 	if err != nil {
 		t.Fatalf("findCardBySlug: %v", err)
 	}
@@ -124,17 +124,17 @@ func TestFindCardBySlug(t *testing.T) {
 		t.Errorf("findCardBySlug = %v, want %v", got, card.Id)
 	}
 
-	if got, err := findCardBySlug(app, pot.Id, "missing"); err != nil || got != nil {
+	if got, err := findCardBySlug(app, pod.Id, "missing"); err != nil || got != nil {
 		t.Errorf("findCardBySlug(missing) = (%v, %v), want (nil, nil)", got, err)
 	}
 }
 
 func TestFindCardBySlug_IgnoresDeletedCard(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
-	softDelete(t, app, createLinksTestCard(t, app, pot.Id, "Hello", ""))
+	pod := createPod(t, app, "pod1")
+	softDelete(t, app, createLinksTestCard(t, app, pod.Id, "Hello", ""))
 
-	if got, err := findCardBySlug(app, pot.Id, "Hello"); err != nil || got != nil {
+	if got, err := findCardBySlug(app, pod.Id, "Hello"); err != nil || got != nil {
 		t.Errorf("findCardBySlug = (%v, %v), want (nil, nil)", got, err)
 	}
 }
@@ -158,18 +158,18 @@ func linkedTitles(cards []linkedCard) []string {
 
 func TestLinks1Hop_MergesOutgoingAndIncoming(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
-	center := createLinksTestCard(t, app, pot.Id, "Center", "center desc")
-	out := createLinksTestCard(t, app, pot.Id, "OutTarget", "out desc")
-	in := createLinksTestCard(t, app, pot.Id, "InSource", "in desc")
+	center := createLinksTestCard(t, app, pod.Id, "Center", "center desc")
+	out := createLinksTestCard(t, app, pod.Id, "OutTarget", "out desc")
+	in := createLinksTestCard(t, app, pod.Id, "InSource", "in desc")
 
 	// Center links out to OutTarget and to a page that doesn't exist yet.
-	createLink(t, app, center.Id, pot.Id, "OutTarget")
-	createLink(t, app, center.Id, pot.Id, "Ghost")
+	createLink(t, app, center.Id, pod.Id, "OutTarget")
+	createLink(t, app, center.Id, pod.Id, "Ghost")
 	// InSource links in to Center; OutTarget has a link of its own.
-	createLink(t, app, in.Id, pot.Id, "Center")
-	createLink(t, app, out.Id, pot.Id, "Other")
+	createLink(t, app, in.Id, pod.Id, "Center")
+	createLink(t, app, out.Id, pod.Id, "Other")
 
 	got, err := links1Hop(app, center)
 	if err != nil {
@@ -193,12 +193,12 @@ func TestLinks1Hop_MergesOutgoingAndIncoming(t *testing.T) {
 func TestLinks1Hop_CardThatDoesNotExistYet(t *testing.T) {
 	// A page that has not been created yet can still have incoming links.
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
-	source := createLinksTestCard(t, app, pot.Id, "Source", "")
-	createLink(t, app, source.Id, pot.Id, "Ghost")
+	source := createLinksTestCard(t, app, pod.Id, "Source", "")
+	createLink(t, app, source.Id, pod.Id, "Ghost")
 
-	ghost, err := absentCard(app, pot.Id, "Ghost")
+	ghost, err := absentCard(app, pod.Id, "Ghost")
 	if err != nil {
 		t.Fatalf("absentCard: %v", err)
 	}
@@ -222,13 +222,13 @@ func TestLinks1Hop_CardThatDoesNotExistYet(t *testing.T) {
 
 func TestLinks1Hop_ExcludesDeletedCards(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
-	center := createLinksTestCard(t, app, pot.Id, "Center", "")
-	outTarget := createLinksTestCard(t, app, pot.Id, "OutTarget", "")
-	inSource := createLinksTestCard(t, app, pot.Id, "InSource", "")
-	createLink(t, app, center.Id, pot.Id, "OutTarget")
-	createLink(t, app, inSource.Id, pot.Id, "Center")
+	center := createLinksTestCard(t, app, pod.Id, "Center", "")
+	outTarget := createLinksTestCard(t, app, pod.Id, "OutTarget", "")
+	inSource := createLinksTestCard(t, app, pod.Id, "InSource", "")
+	createLink(t, app, center.Id, pod.Id, "OutTarget")
+	createLink(t, app, inSource.Id, pod.Id, "Center")
 	softDelete(t, app, outTarget)
 	softDelete(t, app, inSource)
 
@@ -243,11 +243,11 @@ func TestLinks1Hop_ExcludesDeletedCards(t *testing.T) {
 
 func TestLinks1Hop_IgnoresDeletedLinks(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
-	center := createLinksTestCard(t, app, pot.Id, "Center", "")
-	createLinksTestCard(t, app, pot.Id, "OutTarget", "")
-	createLink(t, app, center.Id, pot.Id, "OutTarget")
+	center := createLinksTestCard(t, app, pod.Id, "Center", "")
+	createLinksTestCard(t, app, pod.Id, "OutTarget", "")
+	createLink(t, app, center.Id, pod.Id, "OutTarget")
 	link, err := app.FindFirstRecordByFilter("card_links", "source = {:id}", map[string]any{"id": center.Id})
 	if err != nil {
 		t.Fatalf("find link: %v", err)
@@ -263,15 +263,15 @@ func TestLinks1Hop_IgnoresDeletedLinks(t *testing.T) {
 	}
 }
 
-func TestLinks1Hop_ExcludesSelfAndCardsOfOtherPots(t *testing.T) {
+func TestLinks1Hop_ExcludesSelfAndCardsOfOtherPods(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
-	otherPot := createPot(t, app, "pot2")
+	pod := createPod(t, app, "pod1")
+	otherPod := createPod(t, app, "pod2")
 
-	center := createLinksTestCard(t, app, pot.Id, "Center", "")
-	createLinksTestCard(t, app, otherPot.Id, "Same", "")
-	createLink(t, app, center.Id, pot.Id, "Center")
-	createLink(t, app, center.Id, pot.Id, "Same") // "Same" exists only in pot2
+	center := createLinksTestCard(t, app, pod.Id, "Center", "")
+	createLinksTestCard(t, app, otherPod.Id, "Same", "")
+	createLink(t, app, center.Id, pod.Id, "Center")
+	createLink(t, app, center.Id, pod.Id, "Same") // "Same" exists only in pod2
 
 	got, err := links1Hop(app, center)
 	if err != nil {
@@ -284,21 +284,21 @@ func TestLinks1Hop_ExcludesSelfAndCardsOfOtherPots(t *testing.T) {
 
 func TestLinks2Hop_SharedTarget(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
-	otherPot := createPot(t, app, "pot2")
+	pod := createPod(t, app, "pod1")
+	otherPod := createPod(t, app, "pod2")
 
-	a := createLinksTestCard(t, app, pot.Id, "A", "")
-	b := createLinksTestCard(t, app, pot.Id, "B", "")
-	c := createLinksTestCard(t, app, pot.Id, "C", "")
-	d := createLinksTestCard(t, app, pot.Id, "D", "")
-	e := createLinksTestCard(t, app, otherPot.Id, "E", "")
+	a := createLinksTestCard(t, app, pod.Id, "A", "")
+	b := createLinksTestCard(t, app, pod.Id, "B", "")
+	c := createLinksTestCard(t, app, pod.Id, "C", "")
+	d := createLinksTestCard(t, app, pod.Id, "D", "")
+	e := createLinksTestCard(t, app, otherPod.Id, "E", "")
 
 	// X does not exist as a card: sharing the target is enough.
-	createLink(t, app, a.Id, pot.Id, "X")
-	createLink(t, app, b.Id, pot.Id, "X")
-	createLink(t, app, c.Id, pot.Id, "Y")      // different target
-	createLink(t, app, d.Id, pot.Id, "X")      // deleted below
-	createLink(t, app, e.Id, otherPot.Id, "X") // same title, other pot
+	createLink(t, app, a.Id, pod.Id, "X")
+	createLink(t, app, b.Id, pod.Id, "X")
+	createLink(t, app, c.Id, pod.Id, "Y")      // different target
+	createLink(t, app, d.Id, pod.Id, "X")      // deleted below
+	createLink(t, app, e.Id, otherPod.Id, "X") // same title, other pod
 	softDelete(t, app, d)
 
 	got, err := links2Hop(app, a)
@@ -315,17 +315,17 @@ func TestLinks2Hop_SharedTarget(t *testing.T) {
 
 func TestLinks2Hop_ExcludesCardsAlreadyOneHopAway(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
-	a := createLinksTestCard(t, app, pot.Id, "A", "")
-	b := createLinksTestCard(t, app, pot.Id, "B", "")
-	c := createLinksTestCard(t, app, pot.Id, "C", "")
+	a := createLinksTestCard(t, app, pod.Id, "A", "")
+	b := createLinksTestCard(t, app, pod.Id, "B", "")
+	c := createLinksTestCard(t, app, pod.Id, "C", "")
 
 	// B shares target X with A, but A also links to B directly (1 hop).
-	createLink(t, app, a.Id, pot.Id, "X")
-	createLink(t, app, a.Id, pot.Id, "B")
-	createLink(t, app, b.Id, pot.Id, "X")
-	createLink(t, app, c.Id, pot.Id, "X")
+	createLink(t, app, a.Id, pod.Id, "X")
+	createLink(t, app, a.Id, pod.Id, "B")
+	createLink(t, app, b.Id, pod.Id, "X")
+	createLink(t, app, c.Id, pod.Id, "X")
 
 	got, err := links2Hop(app, a)
 	if err != nil {
@@ -338,18 +338,18 @@ func TestLinks2Hop_ExcludesCardsAlreadyOneHopAway(t *testing.T) {
 
 func TestLinks2Hop_GroupsByEachSharedTarget(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
-	a := createLinksTestCard(t, app, pot.Id, "A", "")
-	b := createLinksTestCard(t, app, pot.Id, "B", "")
-	c := createLinksTestCard(t, app, pot.Id, "C", "")
+	a := createLinksTestCard(t, app, pod.Id, "A", "")
+	b := createLinksTestCard(t, app, pod.Id, "B", "")
+	c := createLinksTestCard(t, app, pod.Id, "C", "")
 
-	createLink(t, app, a.Id, pot.Id, "X")
-	createLink(t, app, a.Id, pot.Id, "Y")
-	createLink(t, app, a.Id, pot.Id, "Z") // nobody else links to Z
-	createLink(t, app, b.Id, pot.Id, "X")
-	createLink(t, app, b.Id, pot.Id, "Y") // B shares X and Y, but is listed under X only
-	createLink(t, app, c.Id, pot.Id, "Y")
+	createLink(t, app, a.Id, pod.Id, "X")
+	createLink(t, app, a.Id, pod.Id, "Y")
+	createLink(t, app, a.Id, pod.Id, "Z") // nobody else links to Z
+	createLink(t, app, b.Id, pod.Id, "X")
+	createLink(t, app, b.Id, pod.Id, "Y") // B shares X and Y, but is listed under X only
+	createLink(t, app, c.Id, pod.Id, "Y")
 
 	got, err := links2Hop(app, a)
 	if err != nil {
@@ -364,16 +364,16 @@ func TestLinks2Hop_GroupsByEachSharedTarget(t *testing.T) {
 
 func TestLinks2Hop_CardIsListedUnderTheFirstSharedTargetOfTheOpenCard(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
+	pod := createPod(t, app, "pod1")
 
-	a := createLinksTestCard(t, app, pot.Id, "A", "")
-	b := createLinksTestCard(t, app, pot.Id, "B", "")
+	a := createLinksTestCard(t, app, pod.Id, "A", "")
+	b := createLinksTestCard(t, app, pod.Id, "B", "")
 
 	// A links Y before X, while B links X before Y: only A's order counts.
-	createLink(t, app, a.Id, pot.Id, "Y")
-	createLink(t, app, a.Id, pot.Id, "X")
-	createLink(t, app, b.Id, pot.Id, "X")
-	createLink(t, app, b.Id, pot.Id, "Y")
+	createLink(t, app, a.Id, pod.Id, "Y")
+	createLink(t, app, a.Id, pod.Id, "X")
+	createLink(t, app, b.Id, pod.Id, "X")
+	createLink(t, app, b.Id, pod.Id, "Y")
 
 	got, err := links2Hop(app, a)
 	if err != nil {
@@ -386,8 +386,8 @@ func TestLinks2Hop_CardIsListedUnderTheFirstSharedTargetOfTheOpenCard(t *testing
 
 func TestLinks2Hop_NoLinksMeansNoRelatedCards(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
-	a := createLinksTestCard(t, app, pot.Id, "A", "")
+	pod := createPod(t, app, "pod1")
+	a := createLinksTestCard(t, app, pod.Id, "A", "")
 
 	got, err := links2Hop(app, a)
 	if err != nil {
@@ -400,10 +400,10 @@ func TestLinks2Hop_NoLinksMeansNoRelatedCards(t *testing.T) {
 
 func TestOwnTargetTitleLcs(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
-	a := createLinksTestCard(t, app, pot.Id, "A", "")
-	createLink(t, app, a.Id, pot.Id, "B")
-	createLink(t, app, a.Id, pot.Id, "C")
+	pod := createPod(t, app, "pod1")
+	a := createLinksTestCard(t, app, pod.Id, "A", "")
+	createLink(t, app, a.Id, pod.Id, "B")
+	createLink(t, app, a.Id, pod.Id, "C")
 
 	got, err := ownTargetTitleLcs(app, a.Id)
 	if err != nil {

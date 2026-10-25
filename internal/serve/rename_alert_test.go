@@ -5,22 +5,22 @@ import (
 	"testing"
 )
 
-func TestLinkingCards_OnlyLiveCardsOfTheSamePot(t *testing.T) {
+func TestLinkingCards_OnlyLiveCardsOfTheSamePod(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
-	other := createPot(t, app, "pot2")
+	pod := createPod(t, app, "pod1")
+	other := createPod(t, app, "pod2")
 
-	self := createLinksTestCard(t, app, pot.Id, "Self", "")
-	b := createLinksTestCard(t, app, pot.Id, "B", "")
-	gone := createLinksTestCard(t, app, pot.Id, "Gone", "")
+	self := createLinksTestCard(t, app, pod.Id, "Self", "")
+	b := createLinksTestCard(t, app, pod.Id, "B", "")
+	gone := createLinksTestCard(t, app, pod.Id, "Gone", "")
 	elsewhere := createLinksTestCard(t, app, other.Id, "Elsewhere", "")
-	createLink(t, app, self.Id, pot.Id, "Old") // the card's own link is reported too
-	createLink(t, app, b.Id, pot.Id, "Old")
-	createLink(t, app, gone.Id, pot.Id, "Old")
+	createLink(t, app, self.Id, pod.Id, "Old") // the card's own link is reported too
+	createLink(t, app, b.Id, pod.Id, "Old")
+	createLink(t, app, gone.Id, pod.Id, "Old")
 	createLink(t, app, elsewhere.Id, other.Id, "Old")
 	softDelete(t, app, gone)
 
-	got, err := linkingCards(app, pot.Id, "old")
+	got, err := linkingCards(app, pod.Id, "old")
 	if err != nil {
 		t.Fatalf("linkingCards: %v", err)
 	}
@@ -35,10 +35,10 @@ func TestLinkingCards_OnlyLiveCardsOfTheSamePot(t *testing.T) {
 
 func TestTitleWatcherAlertRename(t *testing.T) {
 	app := newLinksTestApp(t)
-	pot := createPot(t, app, "pot1")
-	card := createLinksTestCard(t, app, pot.Id, "New", "")
-	b := createLinksTestCard(t, app, pot.Id, "B", "")
-	createLink(t, app, b.Id, pot.Id, "Old")
+	pod := createPod(t, app, "pod1")
+	card := createLinksTestCard(t, app, pod.Id, "New", "")
+	b := createLinksTestCard(t, app, pod.Id, "B", "")
+	createLink(t, app, b.Id, pod.Id, "Old")
 
 	var got []string
 	w := newTitleWatcher()
@@ -47,20 +47,20 @@ func TestTitleWatcherAlertRename(t *testing.T) {
 		return nil
 	}
 
-	w.alertRename(app, pot.Id, card.Id, "Old", "New")     // linked: alert
-	w.alertRename(app, pot.Id, card.Id, "Nobody", "New")  // no linkers: nothing
-	w.alertRename(app, pot.Id, card.Id, "Old", "OLD")     // case only: nothing
+	w.alertRename(app, pod.Id, card.Id, "Old", "New")     // linked: alert
+	w.alertRename(app, pod.Id, card.Id, "Nobody", "New")  // no linkers: nothing
+	w.alertRename(app, pod.Id, card.Id, "Old", "OLD")     // case only: nothing
 
 	// Linked only from itself: nothing to warn about.
-	selfOnly := createLinksTestCard(t, app, pot.Id, "Solo", "")
-	createLink(t, app, selfOnly.Id, pot.Id, "Prev")
-	w.alertRename(app, pot.Id, selfOnly.Id, "Prev", "Solo")
+	selfOnly := createLinksTestCard(t, app, pod.Id, "Solo", "")
+	createLink(t, app, selfOnly.Id, pod.Id, "Prev")
+	w.alertRename(app, pod.Id, selfOnly.Id, "Prev", "Solo")
 
 	// Linked from itself and another card: alert, listing both.
-	mixed := createLinksTestCard(t, app, pot.Id, "Mixed", "")
-	createLink(t, app, mixed.Id, pot.Id, "Was")
-	createLink(t, app, b.Id, pot.Id, "Was")
-	w.alertRename(app, pot.Id, mixed.Id, "Was", "Mixed")
+	mixed := createLinksTestCard(t, app, pod.Id, "Mixed", "")
+	createLink(t, app, mixed.Id, pod.Id, "Was")
+	createLink(t, app, b.Id, pod.Id, "Was")
+	w.alertRename(app, pod.Id, mixed.Id, "Was", "Mixed")
 
 	if want := []string{card.Id + "/Old/B", mixed.Id + "/Was/B"}; !slices.Equal(got, want) {
 		t.Errorf("notifications = %q, want %q", got, want)

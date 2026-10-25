@@ -6,7 +6,7 @@ import { indexCards, unindexCard } from "./titleIndex";
 
 // Cards-specific reads and writes on the IndexedDB replica (see db.ts),
 // which is kept fully up to date via the checkpoint pull protocol (see
-// replica.ts and cardsStore.ts's ensurePotSynced/syncPotReplica). Once a pot
+// replica.ts and cardsStore.ts's ensurePodSynced/syncPodReplica). Once a pod
 // has synced, cardsStore.ts's loadNextCardsPage pages through this cache
 // locally (see queryCardsPage/countCards below) instead of the server.
 // The Solid store in cardsStore.ts remains the reactive source the UI
@@ -17,28 +17,28 @@ import { indexCards, unindexCard } from "./titleIndex";
 // is a one-shot query, and cardsStore.ts is responsible for pushing results
 // into the Solid store itself (see mergeCards there).
 
-// cards from potId's cache, starting after `skip`
+// cards from podId's cache, starting after `skip`
 // cards, newest first by `sort` (creation or edit time). The order comes
-// straight from the [pot+<sort>] index, so a page request costs
+// straight from the [pod+<sort>] index, so a page request costs
 // O(skip + limit).
 export function queryCardsPage(
-  potId: string,
+  podId: string,
   skip: number,
   limit: number,
   sort: CardSort = "created",
 ): Promise<CardRecord[]> {
   return db.cards
-    .where(`[pot+${sort}]`)
-    .between([potId, Dexie.minKey], [potId, Dexie.maxKey])
+    .where(`[pod+${sort}]`)
+    .between([podId, Dexie.minKey], [podId, Dexie.maxKey])
     .reverse()
     .offset(skip)
     .limit(limit)
     .toArray();
 }
 
-// Total number of cards currently cached for potId.
-export async function countCards(potId: string): Promise<number> {
-  return db.cards.where("pot").equals(potId).count();
+// Total number of cards currently cached for podId.
+export async function countCards(podId: string): Promise<number> {
+  return db.cards.where("pod").equals(podId).count();
 }
 
 // The write side of the cards replica. Used by the generic sync code (see

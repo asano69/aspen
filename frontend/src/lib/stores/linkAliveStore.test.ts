@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { computeAlive } from "../dexie/linkAliveQuery";
 import {
   linkAlive,
-  markLinkAlivePotReady,
+  markLinkAlivePodReady,
   refreshLinkAlive,
   releaseLinkAlive,
   requestLinkAlive,
@@ -19,24 +19,24 @@ beforeEach(() => {
 });
 
 describe("linkAliveStore", () => {
-  it("answers nothing until the pot is ready", async () => {
+  it("answers nothing until the pod is ready", async () => {
     requestLinkAlive("p", "a");
     expect(computeAlive).not.toHaveBeenCalled();
     expect(linkAlive("p", "a")).toBeUndefined();
 
-    markLinkAlivePotReady("p");
+    markLinkAlivePodReady("p");
     await vi.waitFor(() => expect(linkAlive("p", "a")).toBe(true));
   });
 
   it("stores a dead result", async () => {
     vi.mocked(computeAlive).mockResolvedValue(false);
-    markLinkAlivePotReady("p");
+    markLinkAlivePodReady("p");
     requestLinkAlive("p", "ghost");
     await vi.waitFor(() => expect(linkAlive("p", "ghost")).toBe(false));
   });
 
   it("evaluates a key once however often it is requested", async () => {
-    markLinkAlivePotReady("p");
+    markLinkAlivePodReady("p");
     requestLinkAlive("p", "a");
     requestLinkAlive("p", "a");
     await vi.waitFor(() => expect(linkAlive("p", "a")).toBe(true));
@@ -44,7 +44,7 @@ describe("linkAliveStore", () => {
   });
 
   it("re-evaluates requested keys on refresh", async () => {
-    markLinkAlivePotReady("p");
+    markLinkAlivePodReady("p");
     requestLinkAlive("p", "a");
     await vi.waitFor(() => expect(linkAlive("p", "a")).toBe(true));
 
@@ -60,7 +60,7 @@ describe("linkAliveStore", () => {
         resolve = r;
       }),
     );
-    markLinkAlivePotReady("p");
+    markLinkAlivePodReady("p");
     requestLinkAlive("p", "a");
     releaseLinkAlive("p");
     resolve(false);

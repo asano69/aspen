@@ -12,7 +12,7 @@ import { computeRelated } from "./relatedQuery";
 // fixture's rules.
 interface GraphCard {
   title: string;
-  pot?: string;
+  pod?: string;
   deleted?: boolean;
   links: string[];
 }
@@ -32,10 +32,10 @@ const fixture: GraphCase[] = JSON.parse(
 
 const DEFAULT_POT = "p1";
 
-function cardRow(id: string, pot: string, title: string): CachedCard {
+function cardRow(id: string, pod: string, title: string): CachedCard {
   return {
     id,
-    pot,
+    pod,
     title: title as CachedCard["title"],
     titleLc: titleToLowerKey(title),
     description: [],
@@ -49,14 +49,14 @@ function cardRow(id: string, pot: string, title: string): CachedCard {
 function linkRow(
   id: string,
   source: string,
-  pot: string,
+  pod: string,
   title: string,
   position: number,
 ): CardLinkRecord {
   return {
     id,
     source,
-    target_pot: pot,
+    target_pod: pod,
     target_title: title,
     target_titleLc: titleToLowerKey(title),
     position,
@@ -78,11 +78,11 @@ describe("computeRelated: link graph fixture", () => {
       c.cards.forEach((card, i) => {
         // A replica holds neither a deleted card nor its links.
         if (card.deleted) return;
-        const pot = card.pot ?? DEFAULT_POT;
-        cards.push(cardRow(`card${i}`, pot, card.title));
+        const pod = card.pod ?? DEFAULT_POT;
+        cards.push(cardRow(`card${i}`, pod, card.title));
         card.links.forEach((target, position) =>
           links.push(
-            linkRow(`link${i}-${position}`, `card${i}`, pot, target, position),
+            linkRow(`link${i}-${position}`, `card${i}`, pod, target, position),
           ),
         );
       });
@@ -90,18 +90,18 @@ describe("computeRelated: link graph fixture", () => {
       await db.card_links.bulkPut(links);
 
       const open = cards.find(
-        (card) => card.pot === DEFAULT_POT && card.title === c.open,
+        (card) => card.pod === DEFAULT_POT && card.title === c.open,
       );
       const openLinks =
         c.cards.find(
           (card) =>
             !card.deleted &&
-            (card.pot ?? DEFAULT_POT) === DEFAULT_POT &&
+            (card.pod ?? DEFAULT_POT) === DEFAULT_POT &&
             card.title === c.open,
         )?.links ?? [];
 
       const result = await computeRelated({
-        pot: DEFAULT_POT,
+        pod: DEFAULT_POT,
         selfId: open?.id,
         selfTitleLc: titleToLowerKey(c.open),
         ownTargets: openLinks.map((title) => ({
@@ -124,7 +124,7 @@ describe("computeRelated", () => {
     await db.cards.bulkPut([cardRow("a", "p", "A"), cardRow("b", "p", "B")]);
 
     const result = await computeRelated({
-      pot: "p",
+      pod: "p",
       selfId: "a",
       selfTitleLc: "a",
       ownTargets: [{ title: "B", titleLc: "b" }],
@@ -140,7 +140,7 @@ describe("computeRelated", () => {
     ]);
 
     const result = await computeRelated({
-      pot: "p",
+      pod: "p",
       selfId: "a",
       selfTitleLc: "a",
       ownTargets: [{ title: "B", titleLc: "b" }],
@@ -156,7 +156,7 @@ describe("computeRelated", () => {
     await db.card_links.bulkPut([linkRow("l", "gone", "p", "A", 0)]);
 
     const result = await computeRelated({
-      pot: "p",
+      pod: "p",
       selfId: "a",
       selfTitleLc: "a",
       ownTargets: [],

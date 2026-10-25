@@ -11,11 +11,11 @@ import {
 } from "@/lib/models/card";
 import { resolveImageSrc } from "@/lib/models/attachmentPath";
 import { CardDescription } from "@/features/cardDescription";
-import { usePot } from "../pots/PotContext";
+import { usePod } from "../pods/PodContext";
 
 export interface CardItemViewProps {
   card: CardGridCard;
-  // Where the card links to. The caller builds it, so a pot can be shown
+  // Where the card links to. The caller builds it, so a pod can be shown
   // with this same view.
   href: string;
   // Ref callback for the <li>, so a wrapper can make it sortable.
@@ -36,9 +36,9 @@ export interface CardItemViewProps {
 // text are precomputed server-side (see internal/serve/ydoc.go's
 // buildTitleAndPreview) from the card's live Yjs body, not parsed here.
 export function CardItemView(props: CardItemViewProps) {
-  // Shared by every grid under PotLayout (the card list and the related
-  // cards), so no extra prop is needed to know which pot the links belong to.
-  const pot = usePot();
+  // Shared by every grid under PodLayout (the card list and the related
+  // cards), so no extra prop is needed to know which pod the links belong to.
+  const pod = usePod();
 
   return (
     // The <li> carries the grid item's aspect-ratio; the whole card
@@ -68,7 +68,7 @@ export function CardItemView(props: CardItemViewProps) {
               <div class="description">
                 <CardDescription
                   text={(props.card.description ?? []).join("\n")}
-                  potId={pot()?.id}
+                  podId={pod()?.id}
                 />
               </div>
             }
@@ -117,7 +117,7 @@ export interface CardItemProps {
   // useSortable below so dnd-kit can report initialIndex/index on drop
   // (see CardList.tsx's handleDragEnd).
   index: number;
-  potSlug: string;
+  podSlug: string;
 }
 
 // A card in CardList's sortable grid: CardItemView plus drag-and-drop.
@@ -126,7 +126,7 @@ export default function CardItem(props: CardItemProps) {
   // Getter syntax (not a plain destructure) is required so the hook
   // re-reads id/index reactively instead of only once at setup -- see
   // dnd-kit's Solid docs.
-  // type/accept keep cards and the sidebar's pots (type "pot") from
+  // type/accept keep cards and the sidebar's pods (type "pod") from
   // reordering each other inside the shared provider (see MainLayout).
   const { ref, isDragging } = useSortable({
     get id() {
@@ -150,7 +150,7 @@ export default function CardItem(props: CardItemProps) {
   return (
     <CardItemView
       card={props.card}
-      href={`/${props.potSlug}/${titleToSegment(props.card.title)}`}
+      href={`/${props.podSlug}/${titleToSegment(props.card.title)}`}
       ref={setRef}
       dragging={isDragging()}
     />

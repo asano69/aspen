@@ -8,8 +8,8 @@
 // so a link never needs to know whether its target exists. Its identity is
 // target_titleLc -- the same case-insensitive key "cards" itself uses to
 // enforce title uniqueness (see internal/serve/slug.go's
-// resolveUniqueTitleInPot) -- and a target is matched to a card only at
-// query time, by (pot, titleLc).
+// resolveUniqueTitleInPod) -- and a target is matched to a card only at
+// query time, by (pod, titleLc).
 package wikilink
 
 import (
@@ -52,7 +52,7 @@ func Sync(app core.App, cardID, text string) error {
 	if err != nil {
 		return err
 	}
-	pot := source.GetString("pot")
+	pod := source.GetString("pod")
 
 	// A deleted card links to nothing: its rows are marked deleted like those
 	// of any removed link, so the source of a live link is always a live card.
@@ -88,12 +88,12 @@ func Sync(app core.App, cardID, text string) error {
 		if record == nil {
 			record = core.NewRecord(collection)
 			record.Set("source", cardID)
-			// A wiki link's target is resolved within the same pot as its
+			// A wiki link's target is resolved within the same pod as its
 			// source card (see slug.go's resolveTitle), so this is stored
 			// alongside target_titleLc to make the reverse lookup (which
 			// cards link to a given card) possible without having to
-			// re-derive the pot from the source card each time.
-			record.Set("target_pot", pot)
+			// re-derive the pod from the source card each time.
+			record.Set("target_pod", pod)
 			record.Set("target_titleLc", t.titleLc)
 			record.Set("target_title", t.title)
 		} else if record.GetInt("position") == position {

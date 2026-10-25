@@ -19,24 +19,24 @@ const DECORATION_RE = /^[*/]+ /;
 const HASHTAG_RE = /(?:^|\s)#([^\s[\]]+)$/;
 
 // Suggests the titles of existing cards while a wiki link ("[ap") or a hashtag
-// ("#ap") is being typed. potId is read on every request, so it may still be
+// ("#ap") is being typed. podId is read on every request, so it may still be
 // unknown when the editor is created.
-export function titleCompletion(potId: () => string | undefined) {
-  // Shared by both sources: the pot is known, and the cursor is not in plain
+export function titleCompletion(podId: () => string | undefined) {
+  // Shared by both sources: the pod is known, and the cursor is not in plain
   // text (the title line, code and inline code).
   const active = (state: Parameters<CompletionSource>[0]["state"]) =>
-    potId() !== undefined && !skipContexts.some((skip) => skip.test(state));
+    podId() !== undefined && !skipContexts.some((skip) => skip.test(state));
 
   const linkSource: CompletionSource = async (context) => {
-    const pot = potId();
+    const pod = podId();
     const match = context.matchBefore(OPEN_BRACKET_RE);
-    if (!pot || !match || !active(context.state)) return null;
+    if (!pod || !match || !active(context.state)) return null;
 
     const typed = match.text.slice(1);
     if (DECORATION_RE.test(typed)) return null;
     if (typed === "" && !context.explicit) return null;
 
-    const titles = await suggestTitles(pot, typed);
+    const titles = await suggestTitles(pod, typed);
     return {
       from: match.from + 1,
       // The query already filtered. CodeMirror's own filter would drop
@@ -59,13 +59,13 @@ export function titleCompletion(potId: () => string | undefined) {
   };
 
   const tagSource: CompletionSource = async (context) => {
-    const pot = potId();
+    const pod = podId();
     const match = context.matchBefore(HASHTAG_RE);
-    if (!pot || !match || !active(context.state)) return null;
+    if (!pod || !match || !active(context.state)) return null;
 
     // The group is the typed text after "#"; it is always at the match's end.
     const typed = match.text.slice(match.text.lastIndexOf("#") + 1);
-    const titles = await suggestTitles(pot, typed);
+    const titles = await suggestTitles(pod, typed);
     return {
       from: match.to - typed.length,
       filter: false,

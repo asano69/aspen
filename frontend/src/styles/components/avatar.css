@@ -1,5 +1,5 @@
 /* Public classes: .avatar, .avatar-img, .avatar-fallback.
- * A round 32px image with a fallback, used by the user menu and the pot
+ * A round 32px image with a fallback, used by the user menu and the pod
  * icon (Kobalte's Image: .avatar is the root, .avatar-img the <img>, and
  * .avatar-fallback what shows while the image is missing or failed). */
 @layer components {

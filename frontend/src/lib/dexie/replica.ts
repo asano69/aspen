@@ -43,15 +43,15 @@ export async function applyRecords<T extends ReplicaRecord>(
   }
 }
 
-// Pulls every change to a collection in a pot since its stored checkpoint
+// Pulls every change to a collection in a pod since its stored checkpoint
 // (see lib/api/replication.ts), applies it (see applyRecords), and advances
 // the checkpoint. Rejects when the pull fails; callers decide how to report it.
 export async function syncReplica<T extends ReplicaRecord>(
   replica: Replica<T>,
-  potId: string,
+  podId: string,
 ): Promise<void> {
-  const after = await readCheckpoint(replica.name, potId);
-  const { records, checkpoint } = await pullAll<T>(replica.name, potId, after);
+  const after = await readCheckpoint(replica.name, podId);
+  const { records, checkpoint } = await pullAll<T>(replica.name, podId, after);
   await applyRecords(replica, records);
-  if (checkpoint) await writeCheckpoint(replica.name, potId, checkpoint);
+  if (checkpoint) await writeCheckpoint(replica.name, podId, checkpoint);
 }

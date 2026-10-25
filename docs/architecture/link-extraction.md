@@ -27,7 +27,7 @@
       └─ wikilink.Sync   … parser.Parse → LinkTitles → orderedTargets → card_links
                  │ PocketBase hook
                  ▼
- realtime (centrifuge "card_links" チャネル) / pull (/api/pages/{potId}/card_links/pull)
+ realtime (centrifuge "card_links" チャネル) / pull (/api/pages/{podId}/card_links/pull)
                  ▼
  Dexie card_links  ← サーバーのミラー
                  ▼
@@ -76,12 +76,12 @@
 
 リンク先が「生きている」条件は次のどちらか。
 
-- `(pot, titleLc)` のカードが存在する。
+- `(pod, titleLc)` のカードが存在する。
 - そのターゲットにリンクしている行が `card_links` に**2件以上**ある。
 
 「2件以上」にする理由は、結果が誰が尋ねるかに依存しないようにするため。リンクはどこかのカードに書かれており、そのカード自身が1件目のリンカーである。したがって「他にも誰かがリンクしている」は「2件以上」と等しい。複数のカードで共有されるタグは青（生きている）で表示される。これは仕様。
 
-結果は `linkAliveStore` に booleans として持ち、未回答（`undefined`）は「生きている」として扱う。リンクが最初に赤く点滅するのを防ぐ。pot の複製が初回同期を終えるまで評価しない（`markLinkAlivePotReady`）。
+結果は `linkAliveStore` に booleans として持ち、未回答（`undefined`）は「生きている」として扱う。リンクが最初に赤く点滅するのを防ぐ。pod の複製が初回同期を終えるまで評価しない（`markLinkAlivePodReady`）。
 
 利用者は3か所で、同じ結果を読むため食い違わない。
 
@@ -94,14 +94,14 @@
 ### 仕組み
 
 - `ExistingCardEditor` が `ytext.observe` を購読し、300ms デバウンスして `extractLinks(ytext.toString())` を呼ぶ。
-- 結果を `relatedStore.setOwnLinks(pot, links)` で `liveOwnLinks` に置き換える。
+- 結果を `relatedStore.setOwnLinks(pod, links)` で `liveOwnLinks` に置き換える。
 - `RelatedCards` は `createOwnLinks` が返す `ownLinks`（`liveOwnLinks ?? Dexie の card_links`）を読む。各リンクに `requestLinkAlive` を出し、死んでいるものを New Links 行に出す。同じ `ownLinks` が 1 hop / 2 hop の導出入力（`ownTargets`）にもなる。
 
 ### 設計上の判断
 
 - **開いている間は ytext が正本。** 他のクライアントの編集も ytext に入るので、サーバーのエコーとの突き合わせや、overlay の破棄条件は不要。
 - **新しい Store を作らない。** 寿命は `relatedStore` の既存の仕組みに乗る。カードを閉じると `closeRelated()` が `liveOwnLinks` を `undefined` に戻す。
-- **`OwnLink` 型**は `target_pot / target_title / target_titleLc` だけ。順序は配列の並びで表す（`position` は持たない）。
+- **`OwnLink` 型**は `target_pod / target_title / target_titleLc` だけ。順序は配列の並びで表す（`position` は持たない）。
 
 ### 注意が必要な箇所
 

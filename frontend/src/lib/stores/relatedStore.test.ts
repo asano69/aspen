@@ -25,7 +25,7 @@ function link(id: string, source: string, titleLc: string): CardLinkRecord {
   return {
     id,
     source,
-    target_pot: "p",
+    target_pod: "p",
     target_title: titleLc,
     target_titleLc: titleLc,
     position: 0,

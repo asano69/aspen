@@ -16,8 +16,8 @@ import "github.com/asano69/cardpod/internal/api"
 // types; the alias keeps this package's code unchanged.
 type TitleCandidate = api.TitleCandidate
 
-// CardTitle is a card's display title, unique within a pot (see the
-// "cards" collection's (pot, title) unique index). Resolved from a
+// CardTitle is a card's display title, unique within a pod (see the
+// "cards" collection's (pod, title) unique index). Resolved from a
 // TitleCandidate via resolveTitle. A card's URL segment is no longer a
 // separate stored field -- it's derived from CardTitle on demand (see
 // internal/slug.FromTitle and its frontend mirror,

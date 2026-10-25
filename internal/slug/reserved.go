@@ -15,12 +15,12 @@ var cardTitleReserved = map[string]bool{
 	"new": true,
 }
 
-// potNameReserved is the set of pot names that must be rejected,
+// podNameReserved is the set of pod names that must be rejected,
 // since they collide with a static frontend route or a top-level API
 // path segment (see frontend/src/lib/router.tsx's route table and
 // internal/serve/handler.go's "/api/..." route groups).
-var potNameReserved = map[string]bool{
-	"pots":     true,
+var podNameReserved = map[string]bool{
+	"pods":     true,
 	"api":      true,
 	"admin":    true,
 	"settings": true,
@@ -45,11 +45,11 @@ func IsReserved(title string) bool {
 	return isReservedWord(cardTitleReserved, title)
 }
 
-// IsReservedPotName reports whether name is a reserved pot name,
+// IsReservedPodName reports whether name is a reserved pod name,
 // compared case-insensitively (so "PoTs", "ApI", etc. are rejected
-// too). Used by the "pots" collection's OnRecordValidate hook (see
-// internal/serve/validate.go) to reject a pot name that would
+// too). Used by the "pods" collection's OnRecordValidate hook (see
+// internal/serve/validate.go) to reject a pod name that would
 // otherwise collide with a static route or API path segment.
-func IsReservedPotName(name string) bool {
-	return isReservedWord(potNameReserved, name)
+func IsReservedPodName(name string) bool {
+	return isReservedWord(podNameReserved, name)
 }

@@ -1,9 +1,9 @@
 // generated_image.go holds the logic shared by every generated image: a
-// default image that is made for a record from a seed text (a pot's title, a
+// default image that is made for a record from a seed text (a pod's title, a
 // user's name) so the UI never has to fall back to a placeholder. It is
 // provisional: an image the user uploads replaces it and is never overwritten
 // afterwards. Each kind of image is one generatedImage value (see
-// pot_cover.go and user_avatar.go).
+// pod_cover.go and user_avatar.go).
 package serve
 
 import (
@@ -31,7 +31,7 @@ type generatedImage struct {
 }
 
 // generatedImages lists every generated image whose hooks are registered.
-var generatedImages = []generatedImage{potCover, userAvatar}
+var generatedImages = []generatedImage{podCover, userAvatar}
 
 // registerGeneratedImageHooks registers the hooks of every generated image.
 func registerGeneratedImageHooks(app core.App) {

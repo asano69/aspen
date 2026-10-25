@@ -15,15 +15,15 @@ import (
 // wrapper: open the file, then delegate to internal/serve for the import.
 func importCmd(app *pocketbase.PocketBase) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "import <file> <pot>",
-		Short: "Import cards from a JSON export into a pot",
-		Long: `Import cards from a JSON export into the pot with the given name.
+		Use:   "import <file> <pod>",
+		Short: "Import cards from a JSON export into a pod",
+		Long: `Import cards from a JSON export into the pod with the given name.
 
 The file must look like:
 
   {"pages": [{"title": "page title", "lines": ["page title", "line 2"]}]}
 
-A page whose title matches an existing card in the pot overwrites that
+A page whose title matches an existing card in the pod overwrites that
 card's body; any other page becomes a new card. Stop the server before
 running this command.`,
 		Args: cobra.ExactArgs(2),

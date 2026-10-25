@@ -7,9 +7,9 @@ import { parseDescription } from "./parseDescription";
 
 export interface CardDescriptionProps {
   text: string;
-  // Pot the card belongs to; wiki links are resolved within it. Without it
+  // Pod the card belongs to; wiki links are resolved within it. Without it
   // no link is marked as empty.
-  potId?: string;
+  podId?: string;
 }
 
 // A wiki link or hashtag in a description. `target` is the title it links to
@@ -17,17 +17,17 @@ export interface CardDescriptionProps {
 // .grid-empty) only once the shared store has answered that its target is
 // dead; "not answered yet" is never marked.
 function LinkSpan(props: {
-  potId?: string;
+  podId?: string;
   class: string;
   target: string;
   text: string;
 }) {
   const lc = () => titleToLowerKey(props.target);
   createEffect(() => {
-    if (props.potId) requestLinkAlive(props.potId, lc());
+    if (props.podId) requestLinkAlive(props.podId, lc());
   });
   const dead = () =>
-    props.potId !== undefined && linkAlive(props.potId, lc()) === false;
+    props.podId !== undefined && linkAlive(props.podId, lc()) === false;
 
   return (
     <span class={props.class} classList={{ "grid-empty": dead() }}>
@@ -50,7 +50,7 @@ export default function CardDescription(props: CardDescriptionProps) {
           <Match when={segment.kind === "text"}>{segment.text}</Match>
           <Match when={segment.kind === "wikilink"}>
             <LinkSpan
-              potId={props.potId}
+              podId={props.podId}
               class="grid-wikilink"
               target={segment.text}
               text={segment.text}
@@ -58,7 +58,7 @@ export default function CardDescription(props: CardDescriptionProps) {
           </Match>
           <Match when={segment.kind === "hashtag"}>
             <LinkSpan
-              potId={props.potId}
+              podId={props.podId}
               class="grid-hashtag"
               target={hashTagTitle(segment.text)}
               text={segment.text}

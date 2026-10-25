@@ -6,15 +6,15 @@ package search
 // Doc is the indexable form of a card.
 type Doc struct {
 	ID    string // card id
-	PotID string // owning pot id, used to scope queries
+	PodID string // owning pod id, used to scope queries
 	Title string
 	Body  string
 }
 
-// Query is a search request scoped to one pot.
+// Query is a search request scoped to one pod.
 type Query struct {
 	Text   string
-	PotID  string
+	PodID  string
 	Limit  int
 	Offset int
 }

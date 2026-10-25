@@ -3,7 +3,7 @@ import { A } from "@solidjs/router";
 
 import { useVersion } from "@/lib/version";
 
-import SidebarPotList from "./SidebarPotList";
+import SidebarPodList from "./SidebarPodList";
 
 interface NavItem {
   href: string;
@@ -41,8 +41,8 @@ export default function Sidebar(props: SidebarProps) {
         data-open={props.open ? "" : undefined}
         aria-hidden={!props.open}
       >
-        {/* Scrollable middle section: nav items plus the pot list, so a
-            long pot list scrolls on its own instead of pushing the footer
+        {/* Scrollable middle section: nav items plus the pod list, so a
+            long pod list scrolls on its own instead of pushing the footer
             below off the sidebar. TopBar is fixed and floats over this
             column too, so its own top item needs an offset to stay clear
             of the header. */}
@@ -58,7 +58,7 @@ export default function Sidebar(props: SidebarProps) {
             </For>
           </nav>
 
-          <SidebarPotList open={props.open} />
+          <SidebarPodList open={props.open} />
         </div>
 
         {/* Pinned to the bottom of the sidebar regardless of how tall the

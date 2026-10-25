@@ -15,7 +15,7 @@ describe("pullAll", () => {
       records: [record("a", "t1"), record("b", "t2")],
     });
 
-    const { records, checkpoint } = await pullAll("cards", "pot1", null);
+    const { records, checkpoint } = await pullAll("cards", "pod1", null);
 
     expect(send).toHaveBeenCalledTimes(1);
     expect(records.map((r) => r.id)).toEqual(["a", "b"]);
@@ -31,7 +31,7 @@ describe("pullAll", () => {
       .mockResolvedValueOnce({ records: fullPage })
       .mockResolvedValueOnce({ records: [record("last", "tlast")] });
 
-    const { records, checkpoint } = await pullAll("cards", "pot1", null);
+    const { records, checkpoint } = await pullAll("cards", "pod1", null);
 
     expect(send).toHaveBeenCalledTimes(2);
     expect(records).toHaveLength(PULL_LIMIT + 1);
@@ -47,7 +47,7 @@ describe("pullAll", () => {
     vi.spyOn(pb, "send").mockResolvedValueOnce({ records: [] });
     const after: Checkpoint = { updatedAt: "t0", id: "c0" };
 
-    const { records, checkpoint } = await pullAll("cards", "pot1", after);
+    const { records, checkpoint } = await pullAll("cards", "pod1", after);
 
     expect(records).toEqual([]);
     expect(checkpoint).toEqual(after);

@@ -21,29 +21,29 @@ export function useTopBarActions(actions: () => JSX.Element | undefined): void {
   onCleanup(() => setTopBarActions(undefined));
 }
 
-// A page can also show a link to its parent pot next to TopBar's Pot
-// icon (e.g. CardList/CardForm showing the current pot's name). Kept
+// A page can also show a link to its parent pod next to TopBar's Pod
+// icon (e.g. CardList/CardForm showing the current pod's name). Kept
 // as its own signal, not folded into topBarActions, since it has a
 // different shape (a name + slug, not raw JSX) and a different
 // position in TopBar's markup.
-export interface TopBarPotLink {
+export interface TopBarPodLink {
   name: string;
   slug: string;
-  // The pot's id, used by the title search to query the pot's cards.
+  // The pod's id, used by the title search to query the pod's cards.
   id: string;
-  // URL of the pot's cover image, shown as the sidebar toggle's icon.
+  // URL of the pod's cover image, shown as the sidebar toggle's icon.
   cover?: string;
 }
 
-const [topBarPotLink, setTopBarPotLink] = createSignal<TopBarPotLink>();
-export { topBarPotLink };
+const [topBarPodLink, setTopBarPodLink] = createSignal<TopBarPodLink>();
+export { topBarPodLink };
 
-// Registers `link` as the current pot link for as long as the calling
+// Registers `link` as the current pod link for as long as the calling
 // component stays mounted, clearing it again on cleanup -- same
 // pattern as useTopBarActions above.
-export function useTopBarPotLink(link: () => TopBarPotLink | undefined): void {
+export function useTopBarPodLink(link: () => TopBarPodLink | undefined): void {
   createEffect(() => {
-    setTopBarPotLink(link());
+    setTopBarPodLink(link());
   });
-  onCleanup(() => setTopBarPotLink(undefined));
+  onCleanup(() => setTopBarPodLink(undefined));
 }

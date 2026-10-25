@@ -10,24 +10,24 @@ import type { CardRecord } from "../models/card";
 
 import {
   cardsById,
-  ensurePotSynced,
+  ensurePodSynced,
   loadNextCardsPage,
-  potWindow,
-  releasePot,
-  resyncPot,
+  podWindow,
+  releasePod,
+  resyncPod,
   setCardSort,
   watchCards,
 } from "./cardsStore";
 
 // The realtime module is replaced wholesale: it wraps the centrifuge SDK,
-// which needs a live server. Tests capture the handlers watchPot passes in
+// which needs a live server. Tests capture the handlers watchPod passes in
 // and call them directly (see watch below).
 vi.mock("../api/realtime", () => ({
   subscribeToCollection: vi.fn(() => () => {}),
 }));
 
 // Stubbed so loadNextCardsPage's initial checkpoint sync (see
-// ensurePotSynced in cardsStore.ts) resolves instantly instead of
+// ensurePodSynced in cardsStore.ts) resolves instantly instead of
 // making a real HTTP request. Individual tests override this with
 // mockReturnValueOnce/mockResolvedValueOnce when they need to control
 // the sync's timing or content.
@@ -56,12 +56,12 @@ vi.mock("../dexie/linkAliveQuery", () => ({
   computeAlive: vi.fn(async () => true),
 }));
 
-// Each test uses its own pot id: the store is module-level state.
+// Each test uses its own pod id: the store is module-level state.
 
-function card(id: string, pot: string): CardRecord {
+function card(id: string, pod: string): CardRecord {
   return {
     id,
-    pot,
+    pod,
     title: id as CardRecord["title"],
     titleLc: id,
     description: [],
@@ -72,25 +72,25 @@ function card(id: string, pot: string): CardRecord {
   } as CardRecord;
 }
 
-// Cards "<pot>-<from>" up to (not including) "<pot>-<to>".
-function cards(pot: string, from: number, to: number): CardRecord[] {
+// Cards "<pod>-<from>" up to (not including) "<pod>-<to>".
+function cards(pod: string, from: number, to: number): CardRecord[] {
   return Array.from({ length: to - from }, (_, i) =>
-    card(`${pot}-${from + i}`, pot),
+    card(`${pod}-${from + i}`, pod),
   );
 }
 
-// Queues the next page loadNextCardsPage (or resyncPot's own window
-// re-read, see resyncPot in cardsStore.ts) will read from the local
+// Queues the next page loadNextCardsPage (or resyncPod's own window
+// re-read, see resyncPod in cardsStore.ts) will read from the local
 // SignalDB cache (see queryCardsPage/countCards there).
 function nextLocalPage(items: CardRecord[], total: number) {
   vi.mocked(queryCardsPage).mockResolvedValueOnce(items);
   vi.mocked(countCards).mockResolvedValueOnce(total);
 }
 
-// Queues the diff resyncPot will pull and apply to the SignalDB
+// Queues the diff resyncPod will pull and apply to the SignalDB
 // replica (see pullAndApplyDiff in cardsStore.ts) before re-reading the
 // window from it. The records' content rarely matters to these tests
-// -- they only exercise how resyncPot re-reads the window afterward
+// -- they only exercise how resyncPod re-reads the window afterward
 // (see nextLocalPage) -- so an empty diff is enough unless a test
 // needs otherwise.
 function nextDiff(records: CardRecord[]) {
@@ -116,8 +116,8 @@ function watch() {
   };
 }
 
-// A gap resyncs every loaded window, so pots left loaded by earlier tests
-// would consume the pages a test queues for its own pot.
+// A gap resyncs every loaded window, so pods left loaded by earlier tests
+// would consume the pages a test queues for its own pod.
 //
 // getList is also reset here: mockClear() alone only clears call
 // records, not any still-queued mockResolvedValueOnce/
@@ -127,7 +127,7 @@ function watch() {
 // mockReset() clears that queue too, so every test starts from a
 // clean slate regardless of how many calls the previous test made.
 beforeEach(() => {
-  for (const potId of "abcdefghijklmnopqr") releasePot(potId);
+  for (const podId of "abcdefghijklmnopqr") releasePod(podId);
   vi.mocked(queryCardsPage).mockReset();
   vi.mocked(countCards).mockReset();
   vi.mocked(pullAll).mockClear();
@@ -141,7 +141,7 @@ describe("loadNextCardsPage", () => {
     await loadNextCardsPage("a");
 
     emit("delete", card("a-5", "a"));
-    expect(potWindow("a")?.ids).toHaveLength(99);
+    expect(podWindow("a")?.ids).toHaveLength(99);
 
     // The cache's list shifted up: a-100 now sits at local index 99,
     // exactly where the next query's skip lands.
@@ -149,7 +149,7 @@ describe("loadNextCardsPage", () => {
     await loadNextCardsPage("a");
 
     expect(queryCardsPage).toHaveBeenLastCalledWith("a", 99, 100, "created");
-    expect(potWindow("a")?.ids).toHaveLength(100);
+    expect(podWindow("a")?.ids).toHaveLength(100);
     expect(cardsById["a-100"]).toBeDefined();
   });
 
@@ -158,7 +158,7 @@ describe("loadNextCardsPage", () => {
     await loadNextCardsPage("b");
     nextLocalPage(cards("b", 0, 100), 300);
     await loadNextCardsPage("b");
-    expect(potWindow("b")?.total).toBe(100);
+    expect(podWindow("b")?.total).toBe(100);
 
     vi.mocked(queryCardsPage).mockReset();
     await loadNextCardsPage("b");
@@ -166,19 +166,19 @@ describe("loadNextCardsPage", () => {
   });
 });
 
-describe("ensurePotSynced", () => {
-  it("syncs a pot before any page is loaded, and loading a page does not pull again", async () => {
+describe("ensurePodSynced", () => {
+  it("syncs a pod before any page is loaded, and loading a page does not pull again", async () => {
     // Regression test: opening a card by URL never mounts CardList, so the
-    // replica used to stay unsynced. PotLayout now syncs on open, and the
+    // replica used to stay unsynced. PodLayout now syncs on open, and the
     // later page load must share that same sync.
-    await ensurePotSynced("r");
+    await ensurePodSynced("r");
     expect(pullAll).toHaveBeenCalledTimes(1);
 
     nextLocalPage(cards("r", 0, 2), 2);
     await loadNextCardsPage("r");
 
     expect(pullAll).toHaveBeenCalledTimes(1);
-    expect(potWindow("r")?.ids).toHaveLength(2);
+    expect(podWindow("r")?.ids).toHaveLength(2);
   });
 });
 
@@ -192,7 +192,7 @@ describe("realtime events", () => {
   });
 
   it("writes an update for a card the store does not hold to the replica only", () => {
-    // Regression test: the card may sit on a page of the open pot that is
+    // Regression test: the card may sit on a page of the open pod that is
     // not loaded yet, and that page is read from the replica, so the
     // replica must not keep a stale copy.
     const { emit } = watch();
@@ -209,11 +209,11 @@ describe("realtime events", () => {
 
     emit("create", card("d-new", "d"));
     emit("create", card("d-new", "d"));
-    expect(potWindow("d")?.total).toBe(3);
+    expect(podWindow("d")?.total).toBe(3);
 
     emit("delete", card("d-new", "d"));
     emit("delete", card("d-new", "d"));
-    expect(potWindow("d")?.total).toBe(2);
+    expect(podWindow("d")?.total).toBe(2);
     expect(cardsById["d-new"]).toBeUndefined();
   });
 
@@ -236,8 +236,8 @@ describe("realtime events", () => {
       deleted: "2026-09-24 00:00:00.000Z",
     });
     expect(cardsById["m-0"]).toBeUndefined();
-    expect(potWindow("m")?.ids).toEqual(["m-1"]);
-    expect(potWindow("m")?.total).toBe(1);
+    expect(podWindow("m")?.ids).toEqual(["m-1"]);
+    expect(podWindow("m")?.total).toBe(1);
   });
 
   it("ignores a created card that is already deleted", async () => {
@@ -250,7 +250,7 @@ describe("realtime events", () => {
       deleted: "2026-09-24 00:00:00.000Z",
     });
     expect(cardsById["o-new"]).toBeUndefined();
-    expect(potWindow("o")?.total).toBe(1);
+    expect(podWindow("o")?.total).toBe(1);
   });
 });
 
@@ -266,13 +266,13 @@ describe("setCardSort", () => {
     setCardSort("updated");
 
     await vi.waitFor(() =>
-      expect(potWindow("n")?.ids).toEqual(["n-9", "n-0"]),
+      expect(podWindow("n")?.ids).toEqual(["n-9", "n-0"]),
     );
     expect(queryCardsPage).toHaveBeenLastCalledWith("n", 0, 100, "updated");
-    expect(potWindow("n")?.total).toBe(3);
+    expect(podWindow("n")?.total).toBe(3);
     expect(cardsById["n-1"]).toBeUndefined();
 
-    releasePot("n");
+    releasePod("n");
     setCardSort("created");
   });
 
@@ -284,22 +284,22 @@ describe("setCardSort", () => {
 
     emit("update", card("o-9", "o"));
 
-    expect(potWindow("o")?.ids).toEqual(["o-0", "o-1", "o-9"]);
-    expect(potWindow("o")?.total).toBe(3);
+    expect(podWindow("o")?.ids).toEqual(["o-0", "o-1", "o-9"]);
+    expect(podWindow("o")?.total).toBe(3);
 
-    releasePot("o");
+    releasePod("o");
     setCardSort("created");
   });
 });
 
-describe("releasePot", () => {
-  it("drops the window and every card of the pot", async () => {
+describe("releasePod", () => {
+  it("drops the window and every card of the pod", async () => {
     nextLocalPage(cards("f", 0, 3), 3);
     await loadNextCardsPage("f");
     expect(cardsById["f-0"]).toBeDefined();
 
-    releasePot("f");
-    expect(potWindow("f")).toBeUndefined();
+    releasePod("f");
+    expect(podWindow("f")).toBeUndefined();
     expect(cardsById["f-0"]).toBeUndefined();
   });
 
@@ -311,29 +311,29 @@ describe("releasePot", () => {
       }),
     );
     const loading = loadNextCardsPage("g");
-    releasePot("g");
+    releasePod("g");
     resolve({ records: cards("g", 0, 2), checkpoint: null });
     await loading;
 
-    expect(potWindow("g")).toBeUndefined();
+    expect(podWindow("g")).toBeUndefined();
     expect(cardsById["g-0"]).toBeUndefined();
   });
 });
 
-describe("resyncPot", () => {
+describe("resyncPod", () => {
   it("replaces the window with fresh data and drops vanished cards", async () => {
     nextLocalPage(cards("h", 0, 3), 3);
     await loadNextCardsPage("h");
 
     // Simulates h-0 having been deleted and h-3 created while events
     // were missed: the pulled diff itself is irrelevant here, only
-    // what the cache looks like once resyncPot re-reads the window.
+    // what the cache looks like once resyncPod re-reads the window.
     nextDiff([]);
     nextLocalPage(cards("h", 1, 4), 3);
-    await resyncPot("h");
+    await resyncPod("h");
 
-    expect(potWindow("h")?.ids).toEqual(["h-1", "h-2", "h-3"]);
-    expect(potWindow("h")?.total).toBe(3);
+    expect(podWindow("h")?.ids).toEqual(["h-1", "h-2", "h-3"]);
+    expect(podWindow("h")?.total).toBe(3);
     expect(cardsById["h-0"]).toBeUndefined();
     expect(cardsById["h-3"]).toBeDefined();
   });
@@ -347,15 +347,15 @@ describe("resyncPot", () => {
     vi.mocked(queryCardsPage).mockReset();
     nextDiff([]);
     nextLocalPage(cards("i", 0, 200), 251);
-    await resyncPot("i");
+    await resyncPod("i");
 
     expect(queryCardsPage).toHaveBeenCalledTimes(1);
     expect(queryCardsPage).toHaveBeenCalledWith("i", 0, 200, "created");
-    expect(potWindow("i")?.total).toBe(251);
+    expect(podWindow("i")?.total).toBe(251);
   });
 
   it("does nothing while nothing is loaded", async () => {
-    await resyncPot("j");
+    await resyncPod("j");
     expect(pullAll).not.toHaveBeenCalled();
   });
 
@@ -365,14 +365,14 @@ describe("resyncPot", () => {
 
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(pullAll).mockRejectedValueOnce(new Error("offline"));
-    await resyncPot("k");
+    await resyncPod("k");
     logged.mockRestore();
 
-    expect(potWindow("k")?.ids).toEqual(["k-0", "k-1"]);
+    expect(podWindow("k")?.ids).toEqual(["k-0", "k-1"]);
     expect(cardsById["k-0"]).toBeDefined();
   });
 
-  it("resyncs every loaded pot when the channel reports a gap", async () => {
+  it("resyncs every loaded pod when the channel reports a gap", async () => {
     const { resync } = watch();
     nextLocalPage(cards("p", 0, 1), 1);
     await loadNextCardsPage("p");
@@ -386,8 +386,8 @@ describe("resyncPot", () => {
     resync();
 
     await vi.waitFor(() => {
-      expect(potWindow("p")?.ids).toEqual(["p-1"]);
-      expect(potWindow("q")?.ids).toEqual(["q-1"]);
+      expect(podWindow("p")?.ids).toEqual(["p-1"]);
+      expect(podWindow("q")?.ids).toEqual(["q-1"]);
     });
   });
 
@@ -400,6 +400,6 @@ describe("resyncPot", () => {
     nextLocalPage(cards("l", 1, 3), 2);
     resync();
 
-    await vi.waitFor(() => expect(potWindow("l")?.ids).toEqual(["l-1", "l-2"]));
+    await vi.waitFor(() => expect(podWindow("l")?.ids).toEqual(["l-1", "l-2"]));
   });
 });

@@ -53,7 +53,7 @@ func indexCard(app core.App, cardID, text string) error {
 	}
 	title, body := splitTitleBody(text)
 	return searchEngine.Index(search.Doc{
-		ID: cardID, PotID: card.GetString("pot"), Title: title, Body: body,
+		ID: cardID, PodID: card.GetString("pod"), Title: title, Body: body,
 	})
 }
 
@@ -73,7 +73,7 @@ func registerSearchHooks(app core.App) {
 	})
 }
 
-// searchHandler serves GET /api/pages/{pot}/search/query?q=keyword.
+// searchHandler serves GET /api/pages/{pod}/search/query?q=keyword.
 func searchHandler(e *core.RequestEvent) error {
 	if searchEngine == nil {
 		return apis.NewApiError(http.StatusServiceUnavailable, "Search is not enabled on this server.", nil)
@@ -82,11 +82,11 @@ func searchHandler(e *core.RequestEvent) error {
 	if q == "" {
 		return e.JSON(http.StatusOK, api.SearchResponse{Items: []api.SearchItem{}})
 	}
-	pot, err := e.App.FindFirstRecordByFilter("pots", "name = {:name}", map[string]any{"name": e.Request.PathValue("pot")})
+	pod, err := e.App.FindFirstRecordByFilter("pods", "name = {:name}", map[string]any{"name": e.Request.PathValue("pod")})
 	if err != nil {
-		return apis.NewNotFoundError("Pot not found.", err)
+		return apis.NewNotFoundError("Pod not found.", err)
 	}
-	res, err := searchEngine.Search(search.Query{Text: q, PotID: pot.Id, Limit: 50})
+	res, err := searchEngine.Search(search.Query{Text: q, PodID: pod.Id, Limit: 50})
 	if err != nil {
 		return apis.NewApiError(http.StatusInternalServerError, "Search failed. Please try again.", err)
 	}

@@ -46,13 +46,13 @@ export interface CardRecord {
   id: string;
   title: CardTitle;
   // Case-insensitive key derived from the title (see internal/slug.ToLowerKey).
-  // A wiki link is matched to a card by (pot, titleLc).
+  // A wiki link is matched to a card by (pod, titleLc).
   titleLc: string;
   // The preview text, one entry per line (see descriptionLines in
   // internal/serve/ydoc.go). Null for a card that has none yet.
   description: string[] | null;
   image: string;
-  pot: string;
+  pod: string;
   // Datalog query text (not evaluated yet). Optional because cards cached
   // in Dexie before this field existed do not have it.
   query?: string;
@@ -119,7 +119,7 @@ export function deriveCardGridTitle(
 export type CardSort = "created" | "updated";
 
 // Orders cards newest first by `sort`. The id breaks ties in the same
-// (descending) direction as the replica's [pot+<sort>] index.
+// (descending) direction as the replica's [pod+<sort>] index.
 export function compareCards(
   sort: CardSort,
 ): (a: CardRecord, b: CardRecord) => number {

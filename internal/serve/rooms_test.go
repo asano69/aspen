@@ -8,8 +8,8 @@ const roomTestText = "Hello World\nbody"
 // content row.
 func TestRooms_ReleaseStoresTheText(t *testing.T) {
 	app := newImportTestApp(t)
-	pot := createPot(t, app, "pot1")
-	card := createLinksTestCard(t, app, pot.Id, "Hello World", "")
+	pod := createPod(t, app, "pod1")
+	card := createLinksTestCard(t, app, pod.Id, "Hello World", "")
 	m := newRooms(app)
 
 	r, err := m.acquire(card.Id)
@@ -28,8 +28,8 @@ func TestRooms_ReleaseStoresTheText(t *testing.T) {
 // the IDs of the lines it did not touch.
 func TestRooms_LineIDsSurviveReopen(t *testing.T) {
 	app := newImportTestApp(t)
-	pot := createPot(t, app, "pot1")
-	card := createLinksTestCard(t, app, pot.Id, "T", "")
+	pod := createPod(t, app, "pod1")
+	card := createLinksTestCard(t, app, pod.Id, "T", "")
 	m := newRooms(app)
 
 	first, err := m.acquire(card.Id)
@@ -59,8 +59,8 @@ func TestRooms_LineIDsSurviveReopen(t *testing.T) {
 // Opening a card again must start from what the content row holds.
 func TestRooms_AcquireLoadsTheNoteFile(t *testing.T) {
 	app := newImportTestApp(t)
-	pot := createPot(t, app, "pot1")
-	card := createLinksTestCard(t, app, pot.Id, "Hello World", "")
+	pod := createPod(t, app, "pod1")
+	card := createLinksTestCard(t, app, pod.Id, "Hello World", "")
 	m := newRooms(app)
 
 	first, err := m.acquire(card.Id)

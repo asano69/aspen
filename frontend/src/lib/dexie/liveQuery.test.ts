@@ -4,10 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { db, type CachedCard } from "./db";
 import { createLiveQuery } from "./liveQuery";
 
-function card(id: string, pot: string): CachedCard {
+function card(id: string, pod: string): CachedCard {
   return {
     id,
-    pot,
+    pod,
     title: id as CachedCard["title"],
     titleLc: id,
     description: [],
@@ -23,11 +23,11 @@ interface Row {
   title: string;
 }
 
-// Reads the rows of a pot. Counts its runs through `ran`.
+// Reads the rows of a pod. Counts its runs through `ran`.
 function rowsQuery(ran = vi.fn()) {
-  return async (pot: string): Promise<Row[]> => {
-    ran(pot);
-    const cards = await db.cards.where("pot").equals(pot).sortBy("id");
+  return async (pod: string): Promise<Row[]> => {
+    ran(pod);
+    const cards = await db.cards.where("pod").equals(pod).sortBy("id");
     return cards.map((c) => ({ id: c.id, title: c.title }));
   };
 }
@@ -66,13 +66,13 @@ describe("createLiveQuery", () => {
 
   it("subscribes again when the arguments change", async () => {
     await db.cards.bulkPut([card("a", "p1"), card("b", "p2")]);
-    const [pot, setPot] = createSignal("p1");
+    const [pod, setPod] = createSignal("p1");
     const { result: rows, dispose } = mount(() =>
-      createLiveQuery(pot, rowsQuery(), [] as Row[]),
+      createLiveQuery(pod, rowsQuery(), [] as Row[]),
     );
     await vi.waitFor(() => expect(ids(rows())).toEqual(["a"]));
 
-    setPot("p2");
+    setPod("p2");
     await vi.waitFor(() => expect(ids(rows())).toEqual(["b"]));
     dispose();
   });
@@ -80,18 +80,18 @@ describe("createLiveQuery", () => {
   it("goes back to the initial value without arguments, and does not query", async () => {
     await db.cards.put(card("a", "p"));
     const ran = vi.fn();
-    const [pot, setPot] = createSignal<string | undefined>(undefined);
+    const [pod, setPod] = createSignal<string | undefined>(undefined);
     const { result: rows, dispose } = mount(() =>
-      createLiveQuery(pot, rowsQuery(ran), [] as Row[]),
+      createLiveQuery(pod, rowsQuery(ran), [] as Row[]),
     );
     await Promise.resolve();
     expect(ran).not.toHaveBeenCalled();
     expect(rows()).toEqual([]);
 
-    setPot("p");
+    setPod("p");
     await vi.waitFor(() => expect(ids(rows())).toEqual(["a"]));
 
-    setPot(undefined);
+    setPod(undefined);
     await vi.waitFor(() => expect(rows()).toEqual([]));
     dispose();
   });
@@ -131,9 +131,9 @@ describe("createLiveQuery", () => {
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     await db.cards.put(card("a", "p"));
     let fail = false;
-    const query = async (pot: string) => {
+    const query = async (pod: string) => {
       if (fail) throw new Error("boom");
-      return rowsQuery()(pot);
+      return rowsQuery()(pod);
     };
     const { result: rows, dispose } = mount(() =>
       createLiveQuery(() => "p", query, [] as Row[]),

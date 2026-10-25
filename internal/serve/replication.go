@@ -58,16 +58,16 @@ func parsePullQuery(q url.Values) (*checkpoint, int, error) {
 	return &checkpoint{UpdatedAt: updatedAt, ID: id}, limit, nil
 }
 
-// pullRecords returns the records of a pot (of the whole collection, when it
+// pullRecords returns the records of a pod (of the whole collection, when it
 // is global) that changed after the checkpoint, oldest first, at most limit of
 // them. Soft-deleted records are included on purpose: the local replica needs
 // them as deletion events.
-func pullRecords(app core.App, c replica.Collection, potID string, after *checkpoint, limit int) ([]*core.Record, error) {
+func pullRecords(app core.App, c replica.Collection, podID string, after *checkpoint, limit int) ([]*core.Record, error) {
 	var clauses []string
 	params := dbx.Params{}
-	if c.PotField != "" {
-		clauses = append(clauses, c.PotField+" = {:pot}")
-		params["pot"] = potID
+	if c.PodField != "" {
+		clauses = append(clauses, c.PodField+" = {:pod}")
+		params["pod"] = podID
 	}
 	if after != nil {
 		clauses = append(clauses, "(updated > {:updatedAt} || (updated = {:updatedAt} && id > {:id}))")
@@ -77,7 +77,7 @@ func pullRecords(app core.App, c replica.Collection, potID string, after *checkp
 	return app.FindRecordsByFilter(c.Name, strings.Join(clauses, " && "), "updated,id", limit, 0, params)
 }
 
-// pullHandler serves GET /api/pages/{potId}/<collection>/pull, or
+// pullHandler serves GET /api/pages/{podId}/<collection>/pull, or
 // GET /api/pages/<collection>/pull for a global collection.
 func pullHandler(c replica.Collection) func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
@@ -86,7 +86,7 @@ func pullHandler(c replica.Collection) func(*core.RequestEvent) error {
 			return e.BadRequestError(err.Error(), nil)
 		}
 
-		records, err := pullRecords(e.App, c, e.Request.PathValue("potId"), after, limit)
+		records, err := pullRecords(e.App, c, e.Request.PathValue("podId"), after, limit)
 		if err != nil {
 			return e.InternalServerError("pull "+c.Name, err)
 		}

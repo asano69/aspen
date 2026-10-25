@@ -25,7 +25,7 @@ type Bleve struct {
 type bleveDoc struct {
 	Title string `json:"title"`
 	Body  string `json:"body"`
-	Pot   string `json:"pot"`
+	Pod   string `json:"pod"`
 }
 
 // OpenBleve opens the index at dir, creating it if it does not exist.
@@ -56,21 +56,21 @@ func newMapping() mapping.IndexMapping {
 	text.Analyzer = analyzerName
 	text.Store = false
 
-	pot := bleve.NewTextFieldMapping()
-	pot.Analyzer = keyword.Name
-	pot.Store = false
+	pod := bleve.NewTextFieldMapping()
+	pod.Analyzer = keyword.Name
+	pod.Store = false
 
 	doc := bleve.NewDocumentMapping()
 	doc.Dynamic = false
 	doc.AddFieldMappingsAt("title", text)
 	doc.AddFieldMappingsAt("body", text)
-	doc.AddFieldMappingsAt("pot", pot)
+	doc.AddFieldMappingsAt("pod", pod)
 	m.DefaultMapping = doc
 	return m
 }
 
 func (b *Bleve) Index(d Doc) error {
-	return b.idx.Index(d.ID, bleveDoc{Title: d.Title, Body: d.Body, Pot: d.PotID})
+	return b.idx.Index(d.ID, bleveDoc{Title: d.Title, Body: d.Body, Pod: d.PodID})
 }
 
 func (b *Bleve) Delete(id string) error {
@@ -88,10 +88,10 @@ func (b *Bleve) Search(q Query) (Result, error) {
 	body.SetOperator(query.MatchQueryOperatorAnd)
 
 	text := bleve.NewDisjunctionQuery(title, body)
-	pot := bleve.NewTermQuery(q.PotID)
-	pot.SetField("pot")
+	pod := bleve.NewTermQuery(q.PodID)
+	pod.SetField("pod")
 
-	req := bleve.NewSearchRequestOptions(bleve.NewConjunctionQuery(text, pot), q.Limit, q.Offset, false)
+	req := bleve.NewSearchRequestOptions(bleve.NewConjunctionQuery(text, pod), q.Limit, q.Offset, false)
 	res, err := b.idx.Search(req)
 	if err != nil {
 		return Result{}, fmt.Errorf("search: %w", err)

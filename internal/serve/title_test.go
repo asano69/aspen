@@ -5,14 +5,14 @@
 // content) and the CardTitle that resolveTitle computes from it.
 //
 // Rules under test:
-//   - When the candidate is unique within its pot, the resolved title
+//   - When the candidate is unique within its pod, the resolved title
 //     is the candidate byte-for-byte: no trimming, no whitespace
 //     normalization (that already happened client-side -- see
 //     frontend/src/components/noteEditor/titleCandidatePlugin.ts's
 //     extractCandidate).
 //   - A candidate that collides with an existing title in the same
-//     pot gets a numeric "_N" suffix appended (see
-//     resolveUniqueTitleInPot).
+//     pod gets a numeric "_N" suffix appended (see
+//     resolveUniqueTitleInPod).
 //   - A candidate that already happens to look like a suffixed title
 //     (e.g. "Y_2") is not treated specially -- it only gets a further
 //     suffix if it actually collides with something.
@@ -38,7 +38,7 @@ func TestResolveTitle_PreservesCandidateWhitespaceVariants(t *testing.T) {
 	}
 
 	for _, candidate := range candidates {
-		got, err := resolveTitle(app, "pot1", TitleCandidate(candidate), "")
+		got, err := resolveTitle(app, "pod1", TitleCandidate(candidate), "")
 		if err != nil {
 			t.Fatalf("resolveTitle(%q): %v", candidate, err)
 		}
@@ -50,9 +50,9 @@ func TestResolveTitle_PreservesCandidateWhitespaceVariants(t *testing.T) {
 
 func TestResolveTitle_CollisionGetsNumericSuffix(t *testing.T) {
 	app := newSlugTestApp(t)
-	createCard(t, app, "pot1", "X")
+	createCard(t, app, "pod1", "X")
 
-	got, err := resolveTitle(app, "pot1", "X", "")
+	got, err := resolveTitle(app, "pod1", "X", "")
 	if err != nil {
 		t.Fatalf("resolveTitle: %v", err)
 	}
@@ -66,10 +66,10 @@ func TestResolveTitle_SuffixLookalikeIsNotDoubleSuffixed(t *testing.T) {
 	// any existing "Y" card -- it must resolve to itself, not
 	// "Y_2_2" or some other mangled form.
 	app := newSlugTestApp(t)
-	createCard(t, app, "pot1", "X")
-	createCard(t, app, "pot1", "X_2")
+	createCard(t, app, "pod1", "X")
+	createCard(t, app, "pod1", "X_2")
 
-	got, err := resolveTitle(app, "pot1", "Y_2", "")
+	got, err := resolveTitle(app, "pod1", "Y_2", "")
 	if err != nil {
 		t.Fatalf("resolveTitle: %v", err)
 	}
@@ -81,7 +81,7 @@ func TestResolveTitle_SuffixLookalikeIsNotDoubleSuffixed(t *testing.T) {
 func TestResolveTitle_EmptyCandidateFallsBackToUntitled(t *testing.T) {
 	app := newSlugTestApp(t)
 
-	got, err := resolveTitle(app, "pot1", "", "")
+	got, err := resolveTitle(app, "pod1", "", "")
 	if err != nil {
 		t.Fatalf("resolveTitle: %v", err)
 	}
@@ -94,9 +94,9 @@ func TestResolveTitle_ExcludeIDLetsARecordKeepItsOwnTitle(t *testing.T) {
 	// A card resolving its own unchanged title must not collide with
 	// itself -- excludeID is what makes that possible.
 	app := newSlugTestApp(t)
-	existing := createCard(t, app, "pot1", "X")
+	existing := createCard(t, app, "pod1", "X")
 
-	got, err := resolveTitle(app, "pot1", "X", existing.Id)
+	got, err := resolveTitle(app, "pod1", "X", existing.Id)
 	if err != nil {
 		t.Fatalf("resolveTitle: %v", err)
 	}
@@ -107,9 +107,9 @@ func TestResolveTitle_ExcludeIDLetsARecordKeepItsOwnTitle(t *testing.T) {
 
 func TestResolveTitle_DeletedCardDoesNotOccupyItsTitle(t *testing.T) {
 	app := newSlugTestApp(t)
-	softDelete(t, app, createCard(t, app, "pot1", "X"))
+	softDelete(t, app, createCard(t, app, "pod1", "X"))
 
-	got, err := resolveTitle(app, "pot1", "X", "")
+	got, err := resolveTitle(app, "pod1", "X", "")
 	if err != nil {
 		t.Fatalf("resolveTitle: %v", err)
 	}
@@ -124,7 +124,7 @@ func TestResolveTitle_ReservedWordGetsUnderscoreSuffix(t *testing.T) {
 	// hook and get bumped to "..._2" instead of "..._".
 	app := newSlugTestApp(t)
 
-	got, err := resolveTitle(app, "pot1", "New", "")
+	got, err := resolveTitle(app, "pod1", "New", "")
 	if err != nil {
 		t.Fatalf("resolveTitle: %v", err)
 	}
@@ -137,9 +137,9 @@ func TestResolveTitle_ReservedWordCollisionBumpsFurther(t *testing.T) {
 	// A second reserved-looking candidate that collides with the first
 	// one's disambiguated titleLc ("new_") must bump past it.
 	app := newSlugTestApp(t)
-	createCard(t, app, "pot1", "New_")
+	createCard(t, app, "pod1", "New_")
 
-	got, err := resolveTitle(app, "pot1", "NEW", "")
+	got, err := resolveTitle(app, "pod1", "NEW", "")
 	if err != nil {
 		t.Fatalf("resolveTitle: %v", err)
 	}
@@ -167,7 +167,7 @@ func TestResolveTitle_StripsBracketLinkSyntax(t *testing.T) {
 		{"[D]", "D"},
 	}
 	for _, c := range cases {
-		got, err := resolveTitle(app, "pot1", TitleCandidate(c.candidate), "")
+		got, err := resolveTitle(app, "pod1", TitleCandidate(c.candidate), "")
 		if err != nil {
 			t.Fatalf("resolveTitle(%q): %v", c.candidate, err)
 		}
@@ -182,13 +182,13 @@ func TestResolveTitle_StripsBracketLinkSyntax(t *testing.T) {
 // updateCardTitleHandler), returning the saved record. Needed because
 // resolveTitle alone never touches the DB, but these scenario tests
 // care about what actually ends up persisted across repeated saves.
-func saveResolvedCard(t *testing.T, app core.App, pot string, candidate TitleCandidate, existing *core.Record) *core.Record {
+func saveResolvedCard(t *testing.T, app core.App, pod string, candidate TitleCandidate, existing *core.Record) *core.Record {
 	t.Helper()
 	excludeID := ""
 	if existing != nil {
 		excludeID = existing.Id
 	}
-	title, err := resolveTitle(app, pot, candidate, excludeID)
+	title, err := resolveTitle(app, pod, candidate, excludeID)
 	if err != nil {
 		t.Fatalf("resolveTitle(%q): %v", candidate, err)
 	}
@@ -200,7 +200,7 @@ func saveResolvedCard(t *testing.T, app core.App, pot string, candidate TitleCan
 			t.Fatalf("find cards collection: %v", err)
 		}
 		record = core.NewRecord(collection)
-		record.Set("pot", pot)
+		record.Set("pod", pod)
 	}
 	record.Set("title", string(title))
 	record.Set("titleLc", slug.ToLowerKey(string(title)))
@@ -221,13 +221,13 @@ func saveResolvedCard(t *testing.T, app core.App, pot string, candidate TitleCan
 func TestScenario_SpaceVsUnderscoreNeverCollideOnTitleLc(t *testing.T) {
 	app := newSlugTestApp(t)
 
-	first := saveResolvedCard(t, app, "pot1", "a b", nil)
+	first := saveResolvedCard(t, app, "pod1", "a b", nil)
 	if first.GetString("title") != "a b" || first.GetString("titleLc") != "a_b" {
 		t.Fatalf("first card = title %q titleLc %q, want title %q titleLc %q",
 			first.GetString("title"), first.GetString("titleLc"), "a b", "a_b")
 	}
 
-	second := saveResolvedCard(t, app, "pot1", "a_b", nil)
+	second := saveResolvedCard(t, app, "pod1", "a_b", nil)
 	if second.GetString("title") != "a_b_2" || second.GetString("titleLc") != "a_b_2" {
 		t.Fatalf("second card = title %q titleLc %q, want title %q titleLc %q",
 			second.GetString("title"), second.GetString("titleLc"), "a_b_2", "a_b_2")
@@ -241,18 +241,18 @@ func TestScenario_SpaceVsUnderscoreNeverCollideOnTitleLc(t *testing.T) {
 func TestScenario_RepeatedCandidateChainBumpsThroughTitleLcCollisions(t *testing.T) {
 	app := newSlugTestApp(t)
 
-	first := saveResolvedCard(t, app, "pot1", "a b", nil)
+	first := saveResolvedCard(t, app, "pod1", "a b", nil)
 	if first.GetString("titleLc") != "a_b" {
 		t.Fatalf("first titleLc = %q, want %q", first.GetString("titleLc"), "a_b")
 	}
 
-	second := saveResolvedCard(t, app, "pot1", "a b", nil)
+	second := saveResolvedCard(t, app, "pod1", "a b", nil)
 	if second.GetString("title") != "a b_2" || second.GetString("titleLc") != "a_b_2" {
 		t.Fatalf("second card = title %q titleLc %q, want title %q titleLc %q",
 			second.GetString("title"), second.GetString("titleLc"), "a b_2", "a_b_2")
 	}
 
-	third := saveResolvedCard(t, app, "pot1", "a_b", nil)
+	third := saveResolvedCard(t, app, "pod1", "a_b", nil)
 	if third.GetString("title") != "a_b_3" || third.GetString("titleLc") != "a_b_3" {
 		t.Fatalf("third card = title %q titleLc %q, want title %q titleLc %q",
 			third.GetString("title"), third.GetString("titleLc"), "a_b_3", "a_b_3")

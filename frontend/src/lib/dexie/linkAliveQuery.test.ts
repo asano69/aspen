@@ -4,10 +4,10 @@ import type { CardLinkRecord } from "../models/cardLink";
 import { db, type CachedCard } from "./db";
 import { computeAlive } from "./linkAliveQuery";
 
-function card(id: string, pot: string, titleLc: string): CachedCard {
+function card(id: string, pod: string, titleLc: string): CachedCard {
   return {
     id,
-    pot,
+    pod,
     titleLc,
     title: titleLc as CachedCard["title"],
     description: [],
@@ -18,11 +18,11 @@ function card(id: string, pot: string, titleLc: string): CachedCard {
   };
 }
 
-function link(id: string, pot: string, titleLc: string): CardLinkRecord {
+function link(id: string, pod: string, titleLc: string): CardLinkRecord {
   return {
     id,
     source: `src-${id}`,
-    target_pot: pot,
+    target_pod: pod,
     target_title: titleLc,
     target_titleLc: titleLc,
     position: 0,
@@ -34,25 +34,25 @@ function link(id: string, pot: string, titleLc: string): CardLinkRecord {
 
 describe("computeAlive", () => {
   it("is alive when the target card exists", async () => {
-    await db.cards.put(card("c1", "pot-a", "foo"));
-    expect(await computeAlive("pot-a", "foo")).toBe(true);
+    await db.cards.put(card("c1", "pod-a", "foo"));
+    expect(await computeAlive("pod-a", "foo")).toBe(true);
   });
 
   it("is dead when only one card links to a missing target", async () => {
-    await db.card_links.put(link("l1", "pot-b", "ghost"));
-    expect(await computeAlive("pot-b", "ghost")).toBe(false);
+    await db.card_links.put(link("l1", "pod-b", "ghost"));
+    expect(await computeAlive("pod-b", "ghost")).toBe(false);
   });
 
   it("is alive when two cards link to a missing target", async () => {
     await db.card_links.bulkPut([
-      link("l2", "pot-c", "ghost"),
-      link("l3", "pot-c", "ghost"),
+      link("l2", "pod-c", "ghost"),
+      link("l3", "pod-c", "ghost"),
     ]);
-    expect(await computeAlive("pot-c", "ghost")).toBe(true);
+    expect(await computeAlive("pod-c", "ghost")).toBe(true);
   });
 
-  it("keeps pots apart", async () => {
-    await db.cards.put(card("c2", "pot-d", "foo"));
-    expect(await computeAlive("pot-e", "foo")).toBe(false);
+  it("keeps pods apart", async () => {
+    await db.cards.put(card("c2", "pod-d", "foo"));
+    expect(await computeAlive("pod-e", "foo")).toBe(false);
   });
 });

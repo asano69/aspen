@@ -5,7 +5,7 @@ load_test_cards.py
 python scripts/load_test_cards.py --count 100000 --base-url http://localhost:3000
 ---
 
-Load-testing helper: ensures a "sample" pot exists, then creates a
+Load-testing helper: ensures a "sample" pod exists, then creates a
 bunch of test cards inside it via the same HTTP API the frontend uses
 (POST /api/admin/cards), so each card gets a real, unique slug/title
 and a sensible position -- exactly like a card created through the UI.
@@ -64,12 +64,12 @@ def authenticate(base_url, email, password):
     return result["token"]
 
 
-def find_or_create_pot(base_url, token, name):
-    """Returns the id of the pot with `name`, creating it if missing."""
+def find_or_create_pod(base_url, token, name):
+    """Returns the id of the pod with `name`, creating it if missing."""
     result = api_request(
         base_url,
         "GET",
-        "/api/collections/pots/records",
+        "/api/collections/pods/records",
         token=token,
         params={"filter": f'name="{name}"'},
     )
@@ -79,7 +79,7 @@ def find_or_create_pot(base_url, token, name):
     created = api_request(
         base_url,
         "POST",
-        "/api/collections/pots/records",
+        "/api/collections/pods/records",
         token=token,
         body={
             "name": name,
@@ -91,8 +91,8 @@ def find_or_create_pot(base_url, token, name):
     return created["id"]
 
 
-def create_cards(base_url, token, pot_id, count):
-    """Creates `count` test cards in `pot_id` via the admin cards API,
+def create_cards(base_url, token, pod_id, count):
+    """Creates `count` test cards in `pod_id` via the admin cards API,
     so each one gets a real, unique slug/title and position -- the
     same logic a card created through the UI goes through."""
     for i in range(1, count + 1):
@@ -101,7 +101,7 @@ def create_cards(base_url, token, pot_id, count):
             "POST",
             "/api/admin/cards",
             token=token,
-            body={"pot": pot_id, "titleCandidate": f"Test Card {i}"},
+            body={"pod": pod_id, "titleCandidate": f"Test Card {i}"},
         )
         if i % 100 == 0 or i == count:
             print(f"created {i}/{count} cards")
@@ -110,7 +110,7 @@ def create_cards(base_url, token, pot_id, count):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
-    parser.add_argument("--pot-name", default=DEFAULT_POT_NAME)
+    parser.add_argument("--pod-name", default=DEFAULT_POT_NAME)
     parser.add_argument("--count", type=int, default=DEFAULT_CARD_COUNT)
     parser.add_argument(
         "--email", default=os.environ.get("CARDPOD_ADMIN_EMAIL", "admin@mail.internal")
@@ -121,10 +121,10 @@ def main():
     args = parser.parse_args()
 
     token = authenticate(args.base_url, args.email, args.password)
-    pot_id = find_or_create_pot(args.base_url, token, args.pot_name)
-    print(f"using pot '{args.pot_name}' ({pot_id})")
+    pod_id = find_or_create_pod(args.base_url, token, args.pod_name)
+    print(f"using pod '{args.pod_name}' ({pod_id})")
 
-    create_cards(args.base_url, token, pot_id, args.count)
+    create_cards(args.base_url, token, pod_id, args.count)
 
 
 if __name__ == "__main__":

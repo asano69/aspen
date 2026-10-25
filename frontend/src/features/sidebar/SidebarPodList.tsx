@@ -4,47 +4,47 @@ import { useDroppable } from "@dnd-kit/solid";
 import { useSortable, isSortable } from "@dnd-kit/solid/sortable";
 import { TextField } from "@kobalte/core/text-field";
 
-import PotIcon from "@/components/PotIcon";
-import { potCoverURL } from "@/lib/api/pots";
+import PodIcon from "@/components/PodIcon";
+import { podCoverURL } from "@/lib/api/pods";
 import { useDragEnd } from "@/lib/dragEnd";
 import { normalizeForSearch } from "@/lib/search/titleSearch";
 import { Plus } from "@/lib/icons";
-import { addPot, orderedPots, reorderPot } from "@/lib/stores/potsStore";
-import type { PotRecord } from "@/lib/models/pot";
+import { addPod, orderedPods, reorderPod } from "@/lib/stores/podsStore";
+import type { PodRecord } from "@/lib/models/pod";
 
-interface SidebarPotRowProps {
-  pot: PotRecord;
+interface SidebarPodRowProps {
+  pod: PodRecord;
   index: number;
 }
 
-// A plain text row: the pot icon followed by its title. No border,
+// A plain text row: the pod icon followed by its title. No border,
 // background or shadow of its own, only a hover/active tint. The open
-// pot is marked by the router with .active (see sidebar.css).
-function SidebarPotRow(props: SidebarPotRowProps) {
+// pod is marked by the router with .active (see sidebar.css).
+function SidebarPodRow(props: SidebarPodRowProps) {
   // Getter syntax (not a plain destructure) so the hook re-reads
   // id/index reactively instead of only once at setup -- see
-  // dnd-kit's Solid docs (same as CardItem/PotGridItem).
-  // type/accept keep cards (type "card") from reordering the pots.
+  // dnd-kit's Solid docs (same as CardItem/PodGridItem).
+  // type/accept keep cards (type "card") from reordering the pods.
   const { ref, isDragging } = useSortable({
     get id() {
-      return props.pot.id;
+      return props.pod.id;
     },
     get index() {
       return props.index;
     },
-    type: "pot",
-    accept: "pot",
+    type: "pod",
+    accept: "pod",
   });
 
-  // The row is also where a card can be dropped to move it to this pot (see
-  // CardList's handleDragEnd, which reads data.potId). It is a separate
-  // droppable on the link, so the row's sortable keeps accepting pots only.
+  // The row is also where a card can be dropped to move it to this pod (see
+  // CardList's handleDragEnd, which reads data.podId). It is a separate
+  // droppable on the link, so the row's sortable keeps accepting pods only.
   const { ref: dropRef, isDropTarget } = useDroppable({
     get id() {
-      return `pot-drop:${props.pot.id}`;
+      return `pod-drop:${props.pod.id}`;
     },
     get data() {
-      return { potId: props.pot.id };
+      return { podId: props.pod.id };
     },
     accept: "card",
   });
@@ -52,37 +52,37 @@ function SidebarPotRow(props: SidebarPotRowProps) {
   return (
     <li
       ref={ref}
-      class="sidebar-pot"
+      class="sidebar-pod"
       data-dragging={isDragging() ? "" : undefined}
     >
       <A
         ref={dropRef}
-        href={`/${props.pot.name}`}
+        href={`/${props.pod.name}`}
         class="sidebar-link"
         data-drop-target={isDropTarget() ? "" : undefined}
       >
-        <PotIcon src={potCoverURL(props.pot)} />
-        <span class="title">{props.pot.title}</span>
+        <PodIcon src={podCoverURL(props.pod)} />
+        <span class="title">{props.pod.title}</span>
       </A>
     </li>
   );
 }
 
-export interface SidebarPotListProps {
+export interface SidebarPodListProps {
   // Whether the sidebar is open. The search box takes the focus each time
   // it opens, so typing can start at once.
   open: boolean;
 }
 
-// Sidebar-only list of pots: a search box that filters the list, and
-// drag-to-reorder. When the search matches no pot, the typed text can be used
-// to create one. Renaming/deleting a pot still happens on the pots page. The
-// pot that is currently open is listed too, highlighted. Kept as its own
+// Sidebar-only list of pods: a search box that filters the list, and
+// drag-to-reorder. When the search matches no pod, the typed text can be used
+// to create one. Renaming/deleting a pod still happens on the pods page. The
+// pod that is currently open is listed too, highlighted. Kept as its own
 // component (not folded into Sidebar.tsx) since it owns its own
-// drag-to-reorder wiring, mirroring PotList.tsx's pattern. Both lists read
-// the same pots store (see lib/stores/potsStore.ts), so a reorder or rename
+// drag-to-reorder wiring, mirroring PodList.tsx's pattern. Both lists read
+// the same pods store (see lib/stores/podsStore.ts), so a reorder or rename
 // in one shows up in the other immediately.
-export default function SidebarPotList(props: SidebarPotListProps) {
+export default function SidebarPodList(props: SidebarPodListProps) {
   const [query, setQuery] = createSignal("");
   const [creating, setCreating] = createSignal(false);
   const [error, setError] = createSignal("");
@@ -96,17 +96,17 @@ export default function SidebarPotList(props: SidebarPotListProps) {
     input?.select();
   });
 
-  // The pots shown: every pot whose title matches the query.
-  const visiblePots = createMemo(() => {
+  // The pods shown: every pod whose title matches the query.
+  const visiblePods = createMemo(() => {
     const needle = normalizeForSearch(query());
-    return orderedPots().filter((pot) =>
-      normalizeForSearch(pot.title).includes(needle),
+    return orderedPods().filter((pod) =>
+      normalizeForSearch(pod.title).includes(needle),
     );
   });
 
-  // A pot can be created from the typed text only when nothing matches it.
+  // A pod can be created from the typed text only when nothing matches it.
   const newTitle = () => query().trim();
-  const canCreate = () => newTitle() !== "" && visiblePots().length === 0;
+  const canCreate = () => newTitle() !== "" && visiblePods().length === 0;
 
   const handleCreate = async (e?: SubmitEvent) => {
     e?.preventDefault();
@@ -114,32 +114,32 @@ export default function SidebarPotList(props: SidebarPotListProps) {
     setError("");
     setCreating(true);
     try {
-      await addPot(newTitle());
+      await addPod(newTitle());
       setQuery("");
     } catch {
-      setError("Failed to add the pot.");
+      setError("Failed to add the pod.");
     } finally {
       setCreating(false);
     }
   };
 
-  // reorderPot works on indexes into the full pot list, while the drag
+  // reorderPod works on indexes into the full pod list, while the drag
   // reports indexes into the visible one, so both ends are translated
-  // through the pots they stand for.
+  // through the pods they stand for.
   const handleDragEnd = (event) => {
     if (event.canceled) return;
     const { source } = event.operation;
-    if (source?.type !== "pot" || !isSortable(source)) return;
+    if (source?.type !== "pod" || !isSortable(source)) return;
 
-    const visible = visiblePots();
+    const visible = visiblePods();
     const moved = visible[source.initialIndex];
     const target = visible[source.index];
     if (!moved || !target) return;
 
-    const all = orderedPots();
-    reorderPot(
-      all.findIndex((pot) => pot.id === moved.id),
-      all.findIndex((pot) => pot.id === target.id),
+    const all = orderedPods();
+    reorderPod(
+      all.findIndex((pod) => pod.id === moved.id),
+      all.findIndex((pod) => pod.id === target.id),
     );
   };
 
@@ -159,7 +159,7 @@ export default function SidebarPotList(props: SidebarPotListProps) {
           <TextField.Input
             ref={input}
             type="search"
-            placeholder="Search or create pots"
+            placeholder="Search or create pods"
             autocomplete="off"
             spellcheck={false}
             class="input"
@@ -167,7 +167,7 @@ export default function SidebarPotList(props: SidebarPotListProps) {
         </TextField>
       </form>
       <Show when={canCreate()}>
-        <div class="sidebar-pot-list">
+        <div class="sidebar-pod-list">
           <button
             type="button"
             class="sidebar-link sidebar-create"
@@ -184,9 +184,9 @@ export default function SidebarPotList(props: SidebarPotListProps) {
           </Show>
         </div>
       </Show>
-      <ul class="sidebar-pot-list">
-        <For each={visiblePots()}>
-          {(pot, index) => <SidebarPotRow pot={pot} index={index()} />}
+      <ul class="sidebar-pod-list">
+        <For each={visiblePods()}>
+          {(pod, index) => <SidebarPodRow pod={pod} index={index()} />}
         </For>
       </ul>
     </>

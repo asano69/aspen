@@ -15,59 +15,59 @@ import {
   cardSort,
   cardsById,
   loadNextCardsPage,
-  moveCardsToPot,
-  potWindow,
+  moveCardsToPod,
+  podWindow,
 } from "@/lib/stores/cardsStore";
 import { compareCards } from "@/lib/models/card";
 import { useDragEnd } from "@/lib/dragEnd";
 import { useTitle } from "@/lib/useTitle";
 import { useFooterSlot } from "@/lib/footerSlot";
-import { usePot } from "../pots/PotContext";
-// Detail page for a single pot, reached via the folder-open button on
-// PotItem: the pot's title, an add-card button, and every card
+import { usePod } from "../pods/PodContext";
+// Detail page for a single pod, reached via the folder-open button on
+// PodItem: the pod's title, an add-card button, and every card
 // belonging to it laid out as a Scrapbox/Cosense-style card grid (see
 // CardItem).
 
 export default function CardList() {
   const params = useParams();
-  // Fetched once by the parent PotLayout route and shared via
-  // PotContext, instead of fetching it again here -- a second
-  // identical fetchPotBySlug request used to get auto-cancelled by
+  // Fetched once by the parent PodLayout route and shared via
+  // PodContext, instead of fetching it again here -- a second
+  // identical fetchPodBySlug request used to get auto-cancelled by
   // PocketBase's SDK when navigating right after CardList mounted.
-  const pot = usePot();
-  // Browser tab title: the pot's own name (see useTitle.ts). CardForm
-  // one level down uses "<card> - <pot>" for the same `pot` shape.
-  useTitle(() => pot()?.title);
-  // TopBar's pot-name link (and the "add card" button next to it) is
-  // now registered once by the parent PotLayout route, not here -- see
-  // lib/router.tsx and pages/pots/PotLayout.tsx.
+  const pod = usePod();
+  // Browser tab title: the pod's own name (see useTitle.ts). CardForm
+  // one level down uses "<card> - <pod>" for the same `pod` shape.
+  useTitle(() => pod()?.title);
+  // TopBar's pod-name link (and the "add card" button next to it) is
+  // now registered once by the parent PodLayout route, not here -- see
+  // lib/router.tsx and pages/pods/PodLayout.tsx.
 
-  // Only a window of this pot's cards is held in the store (see
+  // Only a window of this pod's cards is held in the store (see
   // lib/stores/cardsStore.ts): the first page loads here on first
   // visit, later pages load as the sentinel below scrolls into view.
   createEffect(() => {
-    const potId = pot()?.id;
-    if (potId && !untrack(() => potWindow(potId))) {
-      void loadNextCardsPage(potId);
+    const podId = pod()?.id;
+    if (podId && !untrack(() => podWindow(podId))) {
+      void loadNextCardsPage(podId);
     }
   });
 
   // Newest card first by the chosen timestamp (see compareCards, which
-  // orders like the replica's [pot+<sort>] index). Only the loaded window is
+  // orders like the replica's [pod+<sort>] index). Only the loaded window is
   // sorted, and the store keeps it live through realtime
   // create/update/delete events.
   const cards = createMemo(() =>
-    (potWindow(pot()?.id)?.ids ?? [])
+    (podWindow(pod()?.id)?.ids ?? [])
       .map((id) => cardsById[id])
       .filter((card) => card !== undefined)
       .sort(compareCards(cardSort())),
   );
 
-  // Footer's status-bar slot: this pot's total card count as reported
+  // Footer's status-bar slot: this pod's total card count as reported
   // by the server, not just what has been loaded so far.
   useFooterSlot(() => (
     <div class="page-list-status">
-      <span class="item">{potWindow(pot()?.id)?.total ?? 0} pages</span>
+      <span class="item">{podWindow(pod()?.id)?.total ?? 0} pages</span>
     </div>
   ));
 
@@ -78,8 +78,8 @@ export default function CardList() {
   // scroll; the effect below therefore re-observes the sentinel
   // whenever the number of loaded cards changes, to get a fresh report.
   const observer = new IntersectionObserver((entries) => {
-    const potId = pot()?.id;
-    if (entries[0].isIntersecting && potId) void loadNextCardsPage(potId);
+    const podId = pod()?.id;
+    if (entries[0].isIntersecting && podId) void loadNextCardsPage(podId);
   });
   onCleanup(() => observer.disconnect());
 
@@ -92,7 +92,7 @@ export default function CardList() {
   };
 
   createEffect(() => {
-    void potWindow(pot()?.id)?.ids.length;
+    void podWindow(pod()?.id)?.ids.length;
     if (sentinel) {
       observer.unobserve(sentinel);
       observer.observe(sentinel);
@@ -100,16 +100,16 @@ export default function CardList() {
   });
 
   // The cards leave this list at once; a failure leaves the list as it was.
-  const moveToPot = async (ids: string[], destPot: string) => {
+  const moveToPod = async (ids: string[], destPod: string) => {
     try {
-      await moveCardsToPot(ids, destPot);
+      await moveCardsToPod(ids, destPod);
     } catch (err) {
       console.error("[cards] failed to move cards:", err);
       window.alert("Failed to move the cards.");
     }
   };
 
-  // A card dropped on a pot of the sidebar (see SidebarPotList's droppable)
+  // A card dropped on a pod of the sidebar (see SidebarPodList's droppable)
   // is moved there. Moving several cards later only needs more ids here.
   // Reordering inside the grid is not implemented yet.
   const handleDragEnd = (event) => {
@@ -117,20 +117,20 @@ export default function CardList() {
     const { source, target } = event.operation;
     if (source?.type !== "card") return;
 
-    const destPot = target?.data?.potId;
-    if (destPot && destPot !== pot()?.id) {
-      void moveToPot([String(source.id)], destPot);
+    const destPod = target?.data?.podId;
+    if (destPod && destPod !== pod()?.id) {
+      void moveToPod([String(source.id)], destPod);
     }
   };
 
   useDragEnd(handleDragEnd);
 
   return (
-    <Show when={potWindow(pot()?.id)?.loaded} fallback={<Loading />}>
+    <Show when={podWindow(pod()?.id)?.loaded} fallback={<Loading />}>
       <CardGrid>
         <For each={cards()}>
           {(card, index) => (
-            <CardItem card={card} index={index()} potSlug={params.slug} />
+            <CardItem card={card} index={index()} podSlug={params.slug} />
           )}
         </For>
         {/* Invisible row-spanning marker: loading the next page when

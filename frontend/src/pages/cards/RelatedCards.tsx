@@ -20,7 +20,7 @@ import { computeRelated, type RelatedInput } from "@/lib/dexie/relatedQuery";
 import { Link, Unlink } from "@/lib/icons";
 import { titleToLowerKey, titleToSegment } from "@/lib/models/slugify";
 import { asCardTitle, type CardGridCard } from "@/lib/models/card";
-import { usePot } from "../pots/PotContext";
+import { usePod } from "../pods/PodContext";
 import { CardItemView } from "./CardItem";
 
 export interface RelatedCardsProps {
@@ -29,7 +29,7 @@ export interface RelatedCardsProps {
   // Id of the card, when it exists. A draft has none, so it has no
   // datalog query either, but its title can still have incoming links.
   cardId?: string;
-  potSlug: string;
+  podSlug: string;
 }
 
 interface RelationRowProps {
@@ -41,7 +41,7 @@ interface RelationRowProps {
   // When given, the label links to that page (a 2-hop headword).
   href?: string;
   cards: CardGridCard[];
-  potSlug: string;
+  podSlug: string;
   // The row holds links whose target does not exist yet: its label shows
   // the unlink icon and its cards are drawn faded.
   empty?: boolean;
@@ -81,7 +81,7 @@ function RelationRow(props: RelationRowProps) {
           {(card) => (
             <CardItemView
               card={card}
-              href={`/${props.potSlug}/${titleToSegment(card.title)}`}
+              href={`/${props.podSlug}/${titleToSegment(card.title)}`}
               empty={props.empty}
             />
           )}
@@ -98,7 +98,7 @@ function RelationRow(props: RelationRowProps) {
 // follow it live (see lib/dexie/relatedQuery.ts), so they also work offline.
 // The query row is loaded from the server (see relatedStore.ts).
 export default function RelatedCards(props: RelatedCardsProps) {
-  const pot = usePot();
+  const pod = usePod();
   const savedQuery = () =>
     props.cardId ? (cardsById[props.cardId]?.query ?? "") : "";
 
@@ -118,10 +118,10 @@ export default function RelatedCards(props: RelatedCardsProps) {
 
   const related = createLiveQuery(
     (): RelatedInput | undefined => {
-      const potId = pot()?.id;
-      if (!potId || !props.title) return undefined;
+      const podId = pod()?.id;
+      if (!podId || !props.title) return undefined;
       return {
-        pot: potId,
+        pod: podId,
         selfId: props.cardId,
         selfTitleLc: titleToLowerKey(props.title),
         ownTargets: ownLinks().map((link) => ({
@@ -171,7 +171,7 @@ export default function RelatedCards(props: RelatedCardsProps) {
   // so the two can never disagree and nothing is computed twice.
   createEffect(() => {
     for (const link of ownLinks()) {
-      requestLinkAlive(link.target_pot, link.target_titleLc);
+      requestLinkAlive(link.target_pod, link.target_titleLc);
     }
   });
   //
@@ -182,7 +182,7 @@ export default function RelatedCards(props: RelatedCardsProps) {
   const newLinks = createMemo<CardGridCard[]>(() => {
     const next = new Map<string, CardGridCard>();
     for (const link of ownLinks()) {
-      if (linkAlive(link.target_pot, link.target_titleLc) !== false) continue;
+      if (linkAlive(link.target_pod, link.target_titleLc) !== false) continue;
       const kept = newLinkCards.get(link.target_titleLc);
       next.set(
         link.target_titleLc,
@@ -207,7 +207,7 @@ export default function RelatedCards(props: RelatedCardsProps) {
           labelClass="links"
           label="Links"
           cards={related().oneHop}
-          potSlug={props.potSlug}
+          podSlug={props.podSlug}
         />
       </Show>
       <For each={twoHopTargets()}>
@@ -222,9 +222,9 @@ export default function RelatedCards(props: RelatedCardsProps) {
               rowClass="links-2-hop"
               labelClass="headword"
               label={title()}
-              href={`/${props.potSlug}/${titleToSegment(title())}`}
+              href={`/${props.podSlug}/${titleToSegment(title())}`}
               cards={cards()}
-              potSlug={props.potSlug}
+              podSlug={props.podSlug}
             />
           );
         }}
@@ -238,7 +238,7 @@ export default function RelatedCards(props: RelatedCardsProps) {
           labelClass="empty-links"
           label="New Links"
           cards={newLinks()}
-          potSlug={props.potSlug}
+          podSlug={props.podSlug}
           empty
         />
       </Show>
@@ -248,7 +248,7 @@ export default function RelatedCards(props: RelatedCardsProps) {
           labelClass="query"
           label="Query"
           cards={queryCardsOf(props.cardId)}
-          potSlug={props.potSlug}
+          podSlug={props.podSlug}
         />
       </Show>
     </>

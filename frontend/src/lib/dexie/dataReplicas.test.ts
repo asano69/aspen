@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { syncReplica } from "./replica";
-import { openPotReplicas } from "./dataReplicas";
+import { openPodReplicas } from "./dataReplicas";
 
 // The realtime module wraps the centrifuge SDK, which needs a live server.
 vi.mock("../api/realtime", () => ({
@@ -16,15 +16,15 @@ beforeEach(() => {
   vi.mocked(syncReplica).mockClear();
 });
 
-describe("openPotReplicas", () => {
-  it("syncs only pot-scoped replicas with the pot id", async () => {
-    // Regression test: the global pots replica was pulled with the pot id as
+describe("openPodReplicas", () => {
+  it("syncs only pod-scoped replicas with the pod id", async () => {
+    // Regression test: the global pods replica was pulled with the pod id as
     // its scope, which requests a route that does not exist.
-    await openPotReplicas("pot-1");
+    await openPodReplicas("pod-1");
 
     const synced = vi
       .mocked(syncReplica)
       .mock.calls.map(([replica, scope]) => [replica.name, scope]);
-    expect(synced).toEqual([["card_links", "pot-1"]]);
+    expect(synced).toEqual([["card_links", "pod-1"]]);
   });
 });

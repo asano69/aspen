@@ -10,21 +10,21 @@ import { db } from "./db";
 // server has synced it.
 //
 // This is the only place that knows where the facts come from. Links across
-// pots will change this function and nothing else: the key is already
-// (pot, titleLc) of the target.
+// pods will change this function and nothing else: the key is already
+// (pod, titleLc) of the target.
 export async function computeAlive(
-  pot: string,
+  pod: string,
   titleLc: string,
 ): Promise<boolean> {
   const cards = await db.cards
-    .where("[pot+titleLc]")
-    .equals([pot, titleLc])
+    .where("[pod+titleLc]")
+    .equals([pod, titleLc])
     .count();
   if (cards > 0) return true;
 
   const linkers = await db.card_links
-    .where("[target_pot+target_titleLc]")
-    .equals([pot, titleLc])
+    .where("[target_pod+target_titleLc]")
+    .equals([pod, titleLc])
     .count();
   return linkers >= 2;
 }

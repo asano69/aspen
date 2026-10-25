@@ -7,19 +7,19 @@ import "github.com/pocketbase/pocketbase/tools/types"
 
 // CreateCardRequest is the body of POST /api/admin/cards.
 type CreateCardRequest struct {
-	Pot            string         `json:"pot"`
+	Pod            string         `json:"pod"`
 	TitleCandidate TitleCandidate `json:"titleCandidate" tstype:"TitleCandidate"`
 }
 
 // MoveCardsRequest is the body of POST /api/admin/cards/move. Each card is
-// moved to the pot Pot, in the order of IDs.
+// moved to the pod Pod, in the order of IDs.
 type MoveCardsRequest struct {
 	IDs []string `json:"ids"`
-	Pot string   `json:"pot"`
+	Pod string   `json:"pod"`
 }
 
 // MoveCardsResponse reports how many cards were moved. Cards that are missing,
-// deleted or already in the pot are skipped and not counted.
+// deleted or already in the pod are skipped and not counted.
 type MoveCardsResponse struct {
 	Moved int `json:"moved"`
 }
@@ -73,7 +73,7 @@ type SearchItem struct {
 	Preview []string `json:"preview"`
 }
 
-// SearchResponse is the body of GET /api/pages/{pot}/search/query.
+// SearchResponse is the body of GET /api/pages/{pod}/search/query.
 type SearchResponse struct {
 	Total int          `json:"total"`
 	Items []SearchItem `json:"items"`

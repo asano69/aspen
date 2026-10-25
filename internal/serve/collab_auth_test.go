@@ -51,8 +51,8 @@ func collabAuthStatus(t *testing.T, app core.App, room, token string) (status in
 func TestCollabAuth(t *testing.T) {
 	app := newSlugTestApp(t)
 	token := newSuperuserToken(t, app)
-	live := createCard(t, app, "pot1", "A")
-	deleted := createCard(t, app, "pot1", "B")
+	live := createCard(t, app, "pod1", "A")
+	deleted := createCard(t, app, "pod1", "B")
 	softDelete(t, app, deleted)
 
 	cases := []struct {

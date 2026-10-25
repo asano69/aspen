@@ -4,7 +4,7 @@ import { computeAlive } from "../dexie/linkAliveQuery";
 
 // Wiki link results shared by every view that shows links: the note editor,
 // the card grid's descriptions and the "New Links" row. Only results live
-// here, as booleans keyed by the link's target (pot, titleLc). How a result
+// here, as booleans keyed by the link's target (pod, titleLc). How a result
 // is computed is computeAlive's business alone.
 //
 // undefined means "not answered yet". Callers must treat it as alive, so a
@@ -22,22 +22,22 @@ const REFRESH_DELAY_MS = 200;
 
 // Every key somebody asked for. Only these are evaluated, so the cost is
 // bounded by what the UI has shown.
-const watched = new Map<string, { pot: string; lc: string }>();
+const watched = new Map<string, { pod: string; lc: string }>();
 
-// Pots whose replicas have finished their first sync. Evaluating earlier
+// Pods whose replicas have finished their first sync. Evaluating earlier
 // would read a half-filled replica and report live links as dead.
-const readyPots = new Set<string>();
+const readyPods = new Set<string>();
 
-const keyOf = (pot: string, lc: string) => `${pot}:${lc}`;
+const keyOf = (pod: string, lc: string) => `${pod}:${lc}`;
 
 // Reactive read: tracks this one key only.
-export function linkAlive(pot: string, lc: string): boolean | undefined {
-  return alive[keyOf(pot, lc)];
+export function linkAlive(pod: string, lc: string): boolean | undefined {
+  return alive[keyOf(pod, lc)];
 }
 
-async function evaluate(key: string, pot: string, lc: string): Promise<void> {
+async function evaluate(key: string, pod: string, lc: string): Promise<void> {
   try {
-    const value = await computeAlive(pot, lc);
+    const value = await computeAlive(pod, lc);
     if (!watched.has(key)) return; // released while the query was running
     if (alive[key] === value) return;
     setAlive(key, value);
@@ -48,19 +48,19 @@ async function evaluate(key: string, pot: string, lc: string): Promise<void> {
 }
 
 // Asks for the result of a link target. Asking again is a no-op.
-export function requestLinkAlive(pot: string, lc: string): void {
-  const key = keyOf(pot, lc);
+export function requestLinkAlive(pod: string, lc: string): void {
+  const key = keyOf(pod, lc);
   if (watched.has(key)) return;
-  watched.set(key, { pot, lc });
-  if (readyPots.has(pot)) void evaluate(key, pot, lc);
+  watched.set(key, { pod, lc });
+  if (readyPods.has(pod)) void evaluate(key, pod, lc);
 }
 
-// Called once a pot's replicas are synced (see PotLayout): answers every
+// Called once a pod's replicas are synced (see PodLayout): answers every
 // request that arrived before that.
-export function markLinkAlivePotReady(pot: string): void {
-  readyPots.add(pot);
+export function markLinkAlivePodReady(pod: string): void {
+  readyPods.add(pod);
   for (const [key, w] of watched) {
-    if (w.pot === pot) void evaluate(key, w.pot, w.lc);
+    if (w.pod === pod) void evaluate(key, w.pod, w.lc);
   }
 }
 
@@ -72,21 +72,21 @@ export function refreshLinkAlive(): void {
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(() => {
     for (const [key, w] of watched) {
-      if (readyPots.has(w.pot)) void evaluate(key, w.pot, w.lc);
+      if (readyPods.has(w.pod)) void evaluate(key, w.pod, w.lc);
     }
   }, REFRESH_DELAY_MS);
 }
 
-// Forgets a pot's requests and results when the user leaves it.
-export function releaseLinkAlive(pot: string): void {
-  readyPots.delete(pot);
+// Forgets a pod's requests and results when the user leaves it.
+export function releaseLinkAlive(pod: string): void {
+  readyPods.delete(pod);
   for (const [key, w] of watched) {
-    if (w.pot === pot) watched.delete(key);
+    if (w.pod === pod) watched.delete(key);
   }
   setAlive(
     produce((store) => {
       for (const key of Object.keys(store)) {
-        if (key.startsWith(`${pot}:`)) delete store[key];
+        if (key.startsWith(`${pod}:`)) delete store[key];
       }
     }),
   );

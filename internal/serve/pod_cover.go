@@ -1,4 +1,4 @@
-// pot_cover.go gives every pot a generated cover image, so the pot grid does
+// pod_cover.go gives every pod a generated cover image, so the pod grid does
 // not have to fall back to the app logo (see generated_image.go).
 package serve
 
@@ -14,18 +14,18 @@ const coverSize = 240
 // coverPalette is the bauhaus palette used for generated covers.
 var coverPalette = []string{"#00686c", "#32c2b9", "#edecb3", "#fad928", "#ff9915"}
 
-var potCover = generatedImage{
-	collection: "pots",
+var podCover = generatedImage{
+	collection: "pods",
 	field:      "cover",
 	fileName:   "cover.svg",
-	seed:       func(pot *core.Record) string { return pot.GetString("title") },
+	seed:       func(pod *core.Record) string { return pod.GetString("title") },
 	svg: func(title string) []byte {
 		return []byte(avatars.Generate(avatars.Bauhaus, title, coverPalette, coverSize, true))
 	},
 }
 
 // NewCoverFile wraps the generated cover of title as a file to store. It is
-// exported for scripts/regenerate_pot_covers.
+// exported for scripts/regenerate_pod_covers.
 func NewCoverFile(title string) (*filesystem.File, error) {
-	return potCover.newFile(title)
+	return podCover.newFile(title)
 }

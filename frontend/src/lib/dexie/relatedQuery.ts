@@ -18,7 +18,7 @@ export interface RelatedTarget {
 }
 
 export interface RelatedInput {
-  pot: string;
+  pod: string;
   // Undefined for a draft, or a page that does not exist yet.
   selfId: string | undefined;
   selfTitleLc: string;
@@ -44,22 +44,22 @@ function toRelatedCard(card: CachedCard): RelatedCard {
 const byTitle = (a: CachedCard, b: CachedCard) =>
   compareTitles(a.title, b.title);
 
-// The cards of the pot whose titleLc is one of titleLcs.
+// The cards of the pod whose titleLc is one of titleLcs.
 function cardsByTitleLc(
-  pot: string,
+  pod: string,
   titleLcs: string[],
 ): Promise<CachedCard[]> {
   return db.cards
-    .where("[pot+titleLc]")
-    .anyOf(titleLcs.map((titleLc) => [pot, titleLc]))
+    .where("[pod+titleLc]")
+    .anyOf(titleLcs.map((titleLc) => [pod, titleLc]))
     .toArray();
 }
 
-// The ids of the cards that link to the target (pot, titleLc).
-async function linkerIds(pot: string, titleLc: string): Promise<string[]> {
+// The ids of the cards that link to the target (pod, titleLc).
+async function linkerIds(pod: string, titleLc: string): Promise<string[]> {
   const links = await db.card_links
-    .where("[target_pot+target_titleLc]")
-    .equals([pot, titleLc])
+    .where("[target_pod+target_titleLc]")
+    .equals([pod, titleLc])
     .toArray();
   return links.map((link) => link.source);
 }
@@ -74,13 +74,13 @@ async function cardsByIds(ids: string[]): Promise<CachedCard[]> {
 // The cards the open card links to (that exist) and the cards that link to
 // it, without the open card itself, sorted by title.
 async function oneHopCards(input: RelatedInput): Promise<CachedCard[]> {
-  const { pot, selfId, selfTitleLc, ownTargets } = input;
+  const { pod, selfId, selfTitleLc, ownTargets } = input;
   const [outgoing, incomingIds] = await Promise.all([
     cardsByTitleLc(
-      pot,
+      pod,
       ownTargets.map((target) => target.titleLc),
     ),
-    linkerIds(pot, selfTitleLc),
+    linkerIds(pod, selfTitleLc),
   ]);
   const incoming = await cardsByIds(incomingIds);
 
@@ -98,9 +98,9 @@ async function twoHopCards(
   input: RelatedInput,
   oneHopIds: Set<string>,
 ): Promise<RelatedHopCard[]> {
-  const { pot, selfId, ownTargets } = input;
+  const { pod, selfId, ownTargets } = input;
   const idsByTarget = await Promise.all(
-    ownTargets.map((target) => linkerIds(pot, target.titleLc)),
+    ownTargets.map((target) => linkerIds(pod, target.titleLc)),
   );
 
   const wanted = (id: string) => id !== selfId && !oneHopIds.has(id);

@@ -37,7 +37,7 @@ func newPullTestApp(t *testing.T) core.App {
 	t.Helper()
 	app := newLinksTestApp(t)
 
-	for _, name := range []string{"cards", "card_links", "pots"} {
+	for _, name := range []string{"cards", "card_links", "pods"} {
 		collection, err := app.FindCollectionByNameOrId(name)
 		if err != nil {
 			t.Fatalf("find %s collection: %v", name, err)
@@ -50,7 +50,7 @@ func newPullTestApp(t *testing.T) core.App {
 	return app
 }
 
-func createPullCard(t *testing.T, app core.App, pot string, n int, updated string) *core.Record {
+func createPullCard(t *testing.T, app core.App, pod string, n int, updated string) *core.Record {
 	t.Helper()
 	collection, err := app.FindCollectionByNameOrId("cards")
 	if err != nil {
@@ -58,7 +58,7 @@ func createPullCard(t *testing.T, app core.App, pot string, n int, updated strin
 	}
 	record := core.NewRecord(collection)
 	record.Set("id", pullCardID(n))
-	record.Set("pot", pot)
+	record.Set("pod", pod)
 	record.Set("title", pullCardID(n))
 	record.Set("titleLc", pullCardID(n))
 	record.Set("updated", updated)
@@ -68,23 +68,23 @@ func createPullCard(t *testing.T, app core.App, pot string, n int, updated strin
 	return record
 }
 
-// pullFixture creates, in pot "pot1": card 3 (updated later), card 1 and
-// card 2 (same "updated", card 2 soft-deleted); and card 9 in another pot.
+// pullFixture creates, in pod "pod1": card 3 (updated later), card 1 and
+// card 2 (same "updated", card 2 soft-deleted); and card 9 in another pod.
 // Card 3 is created first so the expected order can't come from insertion
 // order.
 func pullFixture(t *testing.T) core.App {
 	t.Helper()
 	app := newPullTestApp(t)
-	createPullCard(t, app, "pot1", 3, pullT2)
-	createPullCard(t, app, "pot1", 1, pullT1)
-	softDelete(t, app, createPullCard(t, app, "pot1", 2, pullT1))
-	createPullCard(t, app, "pot2", 9, pullT1)
+	createPullCard(t, app, "pod1", 3, pullT2)
+	createPullCard(t, app, "pod1", 1, pullT1)
+	softDelete(t, app, createPullCard(t, app, "pod1", 2, pullT1))
+	createPullCard(t, app, "pod2", 9, pullT1)
 	return app
 }
 
 func pulledIDs(t *testing.T, app core.App, after *checkpoint, limit int) []string {
 	t.Helper()
-	records, err := pullRecords(app, mustCollection(t, "cards"), "pot1", after, limit)
+	records, err := pullRecords(app, mustCollection(t, "cards"), "pod1", after, limit)
 	if err != nil {
 		t.Fatalf("pullRecords: %v", err)
 	}
@@ -137,13 +137,13 @@ func TestPullRecords_RespectsLimit(t *testing.T) {
 	}
 }
 
-func TestPullRecords_FiltersByTheCollectionsPotField(t *testing.T) {
-	// card_links belongs to a pot through "target_pot", not "pot".
+func TestPullRecords_FiltersByTheCollectionsPodField(t *testing.T) {
+	// card_links belongs to a pod through "target_pod", not "pod".
 	app := newPullTestApp(t)
-	createLink(t, app, "src1", "pot1", "A")
-	createLink(t, app, "src2", "pot2", "B")
+	createLink(t, app, "src1", "pod1", "A")
+	createLink(t, app, "src2", "pod2", "B")
 
-	records, err := pullRecords(app, mustCollection(t, "card_links"), "pot1", nil, 100)
+	records, err := pullRecords(app, mustCollection(t, "card_links"), "pod1", nil, 100)
 	if err != nil {
 		t.Fatalf("pullRecords: %v", err)
 	}
@@ -153,12 +153,12 @@ func TestPullRecords_FiltersByTheCollectionsPotField(t *testing.T) {
 }
 
 func TestPullRecords_GlobalCollectionReturnsEveryRecord(t *testing.T) {
-	// pots has no pot field: the pot id of the request is ignored.
+	// pods has no pod field: the pod id of the request is ignored.
 	app := newPullTestApp(t)
-	createPot(t, app, "a")
-	createPot(t, app, "b")
+	createPod(t, app, "a")
+	createPod(t, app, "b")
 
-	records, err := pullRecords(app, mustCollection(t, "pots"), "", nil, 100)
+	records, err := pullRecords(app, mustCollection(t, "pods"), "", nil, 100)
 	if err != nil {
 		t.Fatalf("pullRecords: %v", err)
 	}

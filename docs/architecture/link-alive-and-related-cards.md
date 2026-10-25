@@ -6,7 +6,7 @@ wikiリンク（`[title]`）の「有効／無効」の判定、関連カード�
 
 | 用語 | 意味 |
 | --- | --- |
-| リンク先 | `[title]` が指すカード。キーは `(pot, titleLc)` |
+| リンク先 | `[title]` が指すカード。キーは `(pod, titleLc)` |
 | `titleLc` | タイトルから導出する検索キー。小文字化し、半角スペースを `_` にしたもの（`internal/slug.ToLowerKey`、フロントは `titleToLowerKey`） |
 | 有効（alive） | リンクを開いても「空の下書き」にならない状態。後述の判定規則で決まる |
 | 無効（dead） | 有効でないリンク。エディタでは赤字、カード一覧の説明欄では赤字、関連カードでは「New Links」に出る |
@@ -21,11 +21,11 @@ wikiリンク（`[title]`）の「有効／無効」の判定、関連カード�
 [構文解析]  Lezer (parser/cardpod)
             WikiLink ノードを作るだけ。リンク先が存在するかは知らない
                 │
-[判定]      dexie/linkAliveQuery.ts の computeAlive(pot, titleLc)
+[判定]      dexie/linkAliveQuery.ts の computeAlive(pod, titleLc)
             レプリカを読んで boolean にする。判定規則の定義はここだけ
                 │
 [共有store] stores/linkAliveStore.ts
-            結果（boolean）だけを持つ。キーは "pot:titleLc"
+            結果（boolean）だけを持つ。キーは "pod:titleLc"
                 │
    ┌────────────┼──────────────────────┐
 [エディタ]   [カード一覧の説明欄]   [関連カードの New Links]
@@ -37,14 +37,14 @@ emptyLinks   CardDescription        RelatedCards
 ## 3. 有効性の判定規則（`computeAlive`）
 
 ```
-alive = (pot 内に titleLc が一致するカードが存在する)
+alive = (pod 内に titleLc が一致するカードが存在する)
         || (そのリンク先を指す card_links が 2 件以上ある)
 ```
 
 実装は `frontend/src/lib/dexie/linkAliveQuery.ts`。使うindexは次の2つ。
 
-- `cards` の `[pot+titleLc]`
-- `card_links` の `[target_pot+target_titleLc]`
+- `cards` の `[pod+titleLc]`
+- `card_links` の `[target_pod+target_titleLc]`
 
 ### なぜ「1件」ではなく「2件以上」か
 
@@ -136,38 +136,38 @@ app.OnRecordAfterUpdateSuccess("cards") // deleted が入っていれば
 
 | 名前 | 型 | 役割 |
 | --- | --- | --- |
-| `alive` | `Record<"pot:titleLc", boolean>`（Solid store） | 結果。`undefined` は「まだ答えが出ていない」 |
+| `alive` | `Record<"pod:titleLc", boolean>`（Solid store） | 結果。`undefined` は「まだ答えが出ていない」 |
 | `version` | Solid signal（`linkAliveVersion`） | 結果が変わるたびに増える。CodeMirror 用 |
-| `watched` | `Map<key, {pot, lc}>` | 誰かが要求したキー。再評価の対象はこれだけ |
-| `readyPots` | `Set<pot>` | レプリカの初回同期が済んだポット |
+| `watched` | `Map<key, {pod, lc}>` | 誰かが要求したキー。再評価の対象はこれだけ |
+| `readyPods` | `Set<pod>` | レプリカの初回同期が済んだポット |
 
 ### 公開関数
 
 | 関数 | 用途 |
 | --- | --- |
-| `linkAlive(pot, lc)` | リアクティブな読み取り。そのキーだけ追跡される。`undefined` を返しうる |
-| `requestLinkAlive(pot, lc)` | 結果を要求する。同じキーを何度呼んでも1回しか計算しない |
-| `markLinkAlivePotReady(pot)` | ポットの準備完了を通知し、溜まっていた要求を一括で評価する |
+| `linkAlive(pod, lc)` | リアクティブな読み取り。そのキーだけ追跡される。`undefined` を返しうる |
+| `requestLinkAlive(pod, lc)` | 結果を要求する。同じキーを何度呼んでも1回しか計算しない |
+| `markLinkAlivePodReady(pod)` | ポットの準備完了を通知し、溜まっていた要求を一括で評価する |
 | `refreshLinkAlive()` | 要求済みの全キーを再評価する（200msのデバウンス付き） |
-| `releaseLinkAlive(pot)` | ポットを離れたとき、そのポットの要求と結果を捨てる |
+| `releaseLinkAlive(pod)` | ポットを離れたとき、そのポットの要求と結果を捨てる |
 
 ### 守るべき約束
 
 1. **`undefined` は「有効」として扱う。** 答えが出る前にリンクが赤く点滅しないようにするため。エディタの述語は `linkAlive(...) ?? true`、説明欄とNew Linksは `=== false` のときだけ無効扱いにしている。
-2. **準備完了前は計算しない。** 同期途中のレプリカを読むと、生きているリンクが無効と判定される。要求は `watched` に溜め、`markLinkAlivePotReady` で初めて評価する。
+2. **準備完了前は計算しない。** 同期途中のレプリカを読むと、生きているリンクが無効と判定される。要求は `watched` に溜め、`markLinkAlivePodReady` で初めて評価する。
 3. **計算は必要なキーだけ。** 表示したリンクのぶんしか要求されないので、1つのポットが10万枚でも、store の大きさは表示範囲で頭打ちになる。
 4. **結果が変わらなければ書かない。** 同じ値の再代入では `version` も増やさず、不要な再描画を避ける。
 
 ### 準備完了のタイミング
 
-`PotLayout` が、カードとリンクの両方のレプリカが同期し終わったあとに通知する。
+`PodLayout` が、カードとリンクの両方のレプリカが同期し終わったあとに通知する。
 
 ```ts
-Promise.all([openPotReplicas(id), ensurePotSynced(id)]).then(() => markLinkAlivePotReady(id));
+Promise.all([openPodReplicas(id), ensurePodSynced(id)]).then(() => markLinkAlivePodReady(id));
 ```
 
-- `ensurePotSynced` は `cards` のレプリカ（`cardsStore.ts`）。
-- `openPotReplicas` は `card_links` のレプリカ（`dataReplicas.ts`）。
+- `ensurePodSynced` は `cards` のレプリカ（`cardsStore.ts`）。
+- `openPodReplicas` は `card_links` のレプリカ（`dataReplicas.ts`）。
 - ポットを離れると `releaseLinkAlive(id)` で捨てる。
 
 ## 6. 再評価のきっかけ（`refreshLinkAlive`）
@@ -177,7 +177,7 @@ Promise.all([openPotReplicas(id), ensurePotSynced(id)]).then(() => markLinkAlive
 | 呼び出し元 | きっかけ |
 | --- | --- |
 | `cardsStore.handleCardEvent` | カードの作成・タイトル変更・削除（realtime） |
-| `cardsStore.resyncPot` | realtime の取りこぼし後の再同期 |
+| `cardsStore.resyncPod` | realtime の取りこぼし後の再同期 |
 | `dataReplicas.watchDataReplicas` | `card_links` のイベントを `applyRecords` で適用した後 |
 | `dataReplicas` の `resync` | `card_links` の再同期後 |
 
@@ -194,9 +194,9 @@ Promise.all([openPotReplicas(id), ensurePotSynced(id)]).then(() => markLinkAlive
 ```ts
 createEffect(() => {
   linkAliveVersion();            // 結果が変わるたびに再実行する
-  const potId = pot()?.id;
+  const podId = pod()?.id;
   untrack(() => view.dispatch({ effects: setLinkAlive.of(
-    potId ? (lc) => { requestLinkAlive(potId, lc); return linkAlive(potId, lc) ?? true; } : null
+    podId ? (lc) => { requestLinkAlive(podId, lc); return linkAlive(podId, lc) ?? true; } : null
   )}));
 });
 ```
@@ -209,13 +209,13 @@ createEffect(() => {
 ### 7.2 カード一覧の説明欄
 
 ```
-CardItemView                  usePot() で pot を取得
-  └─ CardDescription (potId)  wikilink セグメントごとに WikiLinkSpan
+CardItemView                  usePod() で pod を取得
+  └─ CardDescription (podId)  wikilink セグメントごとに WikiLinkSpan
        └─ WikiLinkSpan        requestLinkAlive → classList で "grid-empty"
 ```
 
 - `parseDescription` はこれまで通り純粋関数で、wikilink セグメントを返すだけ。`titleLc` への変換は `CardDescription` 側で `titleToLowerKey` を呼ぶ。
-- `potId` が渡されないとき、赤字にはならない。
+- `podId` が渡されないとき、赤字にはならない。
 - `.grid-empty` のスタイルは `styles/components.css`。
 - 説明欄は120文字で切れるので、末尾の閉じていないリンクは wikilink と解釈されず、色付けもされない。
 
@@ -275,14 +275,14 @@ CardItemView                  usePot() で pot を取得
 | `internal/wikilink/wikilink.go` | `card_links` の同期。削除済みカードは「リンクなし」として扱う |
 | `internal/serve/link_cleanup.go` | カードが削除された瞬間にリンクを消すフック |
 | `internal/serve/links.go` | 1 hop / 2 hop のサーバー側クエリ |
-| `frontend/src/lib/dexie/db.ts` | スキーマ。`cards` の `[pot+titleLc]` を含む |
+| `frontend/src/lib/dexie/db.ts` | スキーマ。`cards` の `[pod+titleLc]` を含む |
 | `frontend/src/lib/dexie/linkAliveQuery.ts` | `computeAlive`（判定規則の唯一の定義） |
 | `frontend/src/lib/dexie/cardLinksCollection.ts` | `readOwnLinks`（カード自身のリンクの読み取り） |
 | `frontend/src/lib/stores/linkAliveStore.ts` | 有効性の結果を持つ共有store |
 | `frontend/src/lib/stores/relatedStore.ts` | 関連カードのstore |
 | `frontend/src/lib/stores/cardsStore.ts` | カードのstore。変更時に `refreshLinkAlive` を呼ぶ |
 | `frontend/src/lib/dexie/dataReplicas.ts` | `card_links` のレプリカ。変更時に `refreshLinkAlive` を呼ぶ |
-| `frontend/src/pages/pots/PotLayout.tsx` | ポットの準備完了と解放を `linkAliveStore` に通知 |
+| `frontend/src/pages/pods/PodLayout.tsx` | ポットの準備完了と解放を `linkAliveStore` に通知 |
 | `frontend/src/features/noteEditor/index.tsx` | store の結果をエディタの述語に変換 |
 | `frontend/src/features/noteEditor/plugins/decorations/emptyLinks.ts` | 述語を受け取って赤字の装飾を付ける |
 | `frontend/src/features/cardDescription/CardDescription.tsx` | 説明欄のwikiリンクの赤字 |
@@ -290,7 +290,7 @@ CardItemView                  usePot() で pot を取得
 
 ## 11. 将来の拡張: ポットをまたぐリンク
 
-キーが最初からリンク先の `(pot, titleLc)` なので、store の形は変えずに済む。変わるのは次の2点だけ。
+キーが最初からリンク先の `(pod, titleLc)` なので、store の形は変えずに済む。変わるのは次の2点だけ。
 
 1. `computeAlive` の中身。リンク先ポットの `cards` を参照できる必要がある。
 2. 準備完了の扱い。リンク先ポットのレプリカが未同期の間は答えを出さない（`undefined` のまま＝有効扱い）。同期できないポットは、`computeAlive` だけをサーバー問い合わせに差し替える手もある。

@@ -22,7 +22,7 @@ func newTestApp(t *testing.T) core.App {
 	t.Cleanup(func() { _ = app.ResetBootstrapState() })
 
 	cards := core.NewBaseCollection("cards")
-	cards.Fields.Add(&core.TextField{Name: "pot"}, &core.TextField{Name: "title"})
+	cards.Fields.Add(&core.TextField{Name: "pod"}, &core.TextField{Name: "title"})
 	if err := app.Save(cards); err != nil {
 		t.Fatalf("create cards collection: %v", err)
 	}
@@ -45,14 +45,14 @@ func newTestHub(app core.App, publishErr error) (*Hub, *[]published) {
 	return hub, &got
 }
 
-func saveCard(t *testing.T, app core.App, pot, title string) *core.Record {
+func saveCard(t *testing.T, app core.App, pod, title string) *core.Record {
 	t.Helper()
 	collection, err := app.FindCollectionByNameOrId("cards")
 	if err != nil {
 		t.Fatalf("find cards collection: %v", err)
 	}
 	record := core.NewRecord(collection)
-	record.Set("pot", pot)
+	record.Set("pod", pod)
 	record.Set("title", title)
 	if err := app.Save(record); err != nil {
 		t.Fatalf("save card: %v", err)
@@ -78,7 +78,7 @@ func TestCardHooks_PublishCreateUpdateDeleteToCardsChannel(t *testing.T) {
 	app := newTestApp(t)
 	_, got := newTestHub(app, nil)
 
-	card := saveCard(t, app, "pot1", "A")
+	card := saveCard(t, app, "pod1", "A")
 	card.Set("title", "B")
 	if err := app.Save(card); err != nil {
 		t.Fatalf("update card: %v", err)
@@ -106,7 +106,7 @@ func TestCardHooks_PublishFailureDoesNotFailTheSave(t *testing.T) {
 	app := newTestApp(t)
 	newTestHub(app, errors.New("boom"))
 
-	saveCard(t, app, "pot1", "A") // fails the test if the save returns an error
+	saveCard(t, app, "pod1", "A") // fails the test if the save returns an error
 }
 
 func TestHooks_PublishEachCollectionToItsOwnChannel(t *testing.T) {
@@ -114,12 +114,12 @@ func TestHooks_PublishEachCollectionToItsOwnChannel(t *testing.T) {
 	_, got := newTestHub(app, nil)
 
 	links := core.NewBaseCollection("card_links")
-	links.Fields.Add(&core.TextField{Name: "target_pot"})
+	links.Fields.Add(&core.TextField{Name: "target_pod"})
 	if err := app.Save(links); err != nil {
 		t.Fatalf("create collection: %v", err)
 	}
 	record := core.NewRecord(links)
-	record.Set("target_pot", "pot1")
+	record.Set("target_pod", "pod1")
 	if err := app.Save(record); err != nil {
 		t.Fatalf("save record: %v", err)
 	}
@@ -134,12 +134,12 @@ func TestCardHooks_IgnoreOtherCollections(t *testing.T) {
 	_, got := newTestHub(app, nil)
 
 	other := core.NewBaseCollection("others")
-	other.Fields.Add(&core.TextField{Name: "pot"})
+	other.Fields.Add(&core.TextField{Name: "pod"})
 	if err := app.Save(other); err != nil {
 		t.Fatalf("create collection: %v", err)
 	}
 	record := core.NewRecord(other)
-	record.Set("pot", "pot1")
+	record.Set("pod", "pod1")
 	if err := app.Save(record); err != nil {
 		t.Fatalf("save record: %v", err)
 	}

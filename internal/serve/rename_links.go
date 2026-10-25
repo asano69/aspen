@@ -47,7 +47,7 @@ func renameLinksHandler(e *core.RequestEvent) error {
 	return e.JSON(http.StatusOK, api.RenameLinksResponse{Updated: updated})
 }
 
-// renameLinks rewrites, in every card of card's pot that links to oldTitle
+// renameLinks rewrites, in every card of card's pod that links to oldTitle
 // (card itself included), those links to card's current title. It returns how
 // many cards were changed.
 func renameLinks(app core.App, card *core.Record, oldTitle string) (int, error) {
@@ -57,7 +57,7 @@ func renameLinks(app core.App, card *core.Record, oldTitle string) (int, error) 
 		return 0, nil // links match by titleLc, so they are still valid
 	}
 
-	ids, err := linkingCardIDs(app, card.GetString("pot"), oldLc)
+	ids, err := linkingCardIDs(app, card.GetString("pod"), oldLc)
 	if err != nil {
 		return 0, fmt.Errorf("find linking cards: %w", err)
 	}
@@ -95,17 +95,17 @@ func renameLinksIn(app core.App, id, oldLc, newTitle string) (bool, error) {
 }
 
 // linkingCardIDs returns the ids of the live cards whose text links to the
-// target (pot, titleLc). The renamed card is included: its own text may link
+// target (pod, titleLc). The renamed card is included: its own text may link
 // to its old title too.
-func linkingCardIDs(app core.App, pot, titleLc string) ([]string, error) {
+func linkingCardIDs(app core.App, pod, titleLc string) ([]string, error) {
 	ids := []string{}
 	err := app.DB().NewQuery(`
 		SELECT DISTINCT c.id FROM card_links l
 		JOIN cards c ON c.id = l.source
-		WHERE l.target_pot = {:pot} AND l.target_titleLc = {:titleLc}
+		WHERE l.target_pod = {:pod} AND l.target_titleLc = {:titleLc}
 			AND l.deleted = '' AND c.deleted = ''
 		ORDER BY c.id`).
-		Bind(dbx.Params{"pot": pot, "titleLc": titleLc}).
+		Bind(dbx.Params{"pod": pod, "titleLc": titleLc}).
 		Column(&ids)
 	return ids, err
 }

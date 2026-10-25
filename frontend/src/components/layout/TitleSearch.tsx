@@ -13,7 +13,7 @@ export interface TitleSearchProps {
   onQueryChange?: (value: string) => void;
 }
 
-// TopBar's title search. What is searched (a pot's cards, or the pots
+// TopBar's title search. What is searched (a pod's cards, or the pods
 // themselves) and what picking a title does are decided by the caller (see
 // TopBar). Class names follow Cosense's navbar (.navbar-form > .search-form >
 // .form-group > .dropdown > .form-control, plus .btn-search for the icon).

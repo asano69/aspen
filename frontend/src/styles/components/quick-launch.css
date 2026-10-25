@@ -1,4 +1,4 @@
-/* Public classes: .quick-launch, .quick-launch-pots, .quick-launch-pot,
+/* Public classes: .quick-launch, .quick-launch-pods, .quick-launch-pod,
  * .quick-launch-menus, .quick-launch-trigger. */
 @layer components {
   /* Bar of dropdown menus right above .card-grid (see
@@ -17,8 +17,8 @@
     }
   }
 
-  /* Pots that link to the open pot, on the left. */
-  .quick-launch-pots {
+  /* Pods that link to the open pod, on the left. */
+  .quick-launch-pods {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
@@ -27,18 +27,18 @@
 
   /* The tint shows on hover, like the other round buttons. The title is
    * the native tooltip. */
-  .quick-launch-pot {
+  .quick-launch-pod {
     display: inline-flex;
     padding: 2px;
     border-radius: 9999px;
     transition: background-color 0.15s;
   }
 
-  .quick-launch-pot:hover {
+  .quick-launch-pod:hover {
     background-color: var(--color-hover-bg);
   }
 
-  /* Pushed to the right edge, whether or not pots are listed on the left. */
+  /* Pushed to the right edge, whether or not pods are listed on the left. */
   .quick-launch-menus {
     display: flex;
     align-items: center;

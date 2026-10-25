@@ -17,7 +17,7 @@ import (
 // Dexie-based derivation has to match them.
 //
 // Fixture rules, which the frontend loader must follow too:
-//   - Cards live in pot "p1" unless "pot" says otherwise. The open card is
+//   - Cards live in pod "p1" unless "pod" says otherwise. The open card is
 //     always looked up in p1.
 //   - "links" lists the link targets of a card in order of first appearance,
 //     without duplicates by titleLc (wikilink.Sync keeps one row per titleLc).
@@ -29,11 +29,11 @@ import (
 //     rows of the 2 hop view, in order, with the title of the shared target.
 const linkGraphFixturePath = "../../testdata/link-graph.json"
 
-const defaultGraphPot = "p1"
+const defaultGraphPod = "p1"
 
 type graphCard struct {
 	Title   string   `json:"title"`
-	Pot     string   `json:"pot"`
+	Pod     string   `json:"pod"`
 	Deleted bool     `json:"deleted"`
 	Links   []string `json:"links"`
 }
@@ -53,27 +53,27 @@ type graphCase struct {
 }
 
 // buildLinkGraph stores the cards and links of a case and returns a lookup
-// from a pot name ("" means the default pot) to its id.
+// from a pod name ("" means the default pod) to its id.
 func buildLinkGraph(t *testing.T, app core.App, cards []graphCard) func(string) string {
 	t.Helper()
 
-	pots := map[string]string{}
-	potID := func(name string) string {
+	pods := map[string]string{}
+	podID := func(name string) string {
 		if name == "" {
-			name = defaultGraphPot
+			name = defaultGraphPod
 		}
-		if id, ok := pots[name]; ok {
+		if id, ok := pods[name]; ok {
 			return id
 		}
-		id := createPot(t, app, name).Id
-		pots[name] = id
+		id := createPod(t, app, name).Id
+		pods[name] = id
 		return id
 	}
-	potID("") // the open card is looked up in the default pot
+	podID("") // the open card is looked up in the default pod
 
 	records := make([]*core.Record, len(cards))
 	for i, c := range cards {
-		records[i] = createLinksTestCard(t, app, potID(c.Pot), c.Title, "")
+		records[i] = createLinksTestCard(t, app, podID(c.Pod), c.Title, "")
 	}
 	for i, c := range cards {
 		seen := make(map[string]bool, len(c.Links))
@@ -83,7 +83,7 @@ func buildLinkGraph(t *testing.T, app core.App, cards []graphCard) func(string) 
 				t.Fatalf("card %q links to titleLc %q twice", c.Title, lc)
 			}
 			seen[lc] = true
-			createLink(t, app, records[i].Id, potID(c.Pot), target)
+			createLink(t, app, records[i].Id, podID(c.Pod), target)
 		}
 	}
 	for i, c := range cards {
@@ -91,18 +91,18 @@ func buildLinkGraph(t *testing.T, app core.App, cards []graphCard) func(string) 
 			softDelete(t, app, records[i])
 		}
 	}
-	return potID
+	return podID
 }
 
 // openCard finds the open card the way relatedCardsHandler does, falling back
 // to a stand-in for a page that does not exist yet.
-func openCard(t *testing.T, app core.App, pot, title string) *core.Record {
+func openCard(t *testing.T, app core.App, pod, title string) *core.Record {
 	t.Helper()
 
 	target := slug.FromTitle(title)
-	card, err := findCardBySlug(app, pot, target)
+	card, err := findCardBySlug(app, pod, target)
 	if err == nil && card == nil {
-		card, err = absentCard(app, pot, target)
+		card, err = absentCard(app, pod, target)
 	}
 	if err != nil {
 		t.Fatalf("open card %q: %v", title, err)
@@ -134,8 +134,8 @@ func TestLinkGraphFixture(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
 			app := newLinksTestApp(t)
-			potID := buildLinkGraph(t, app, c.Cards)
-			card := openCard(t, app, potID(""), c.Open)
+			podID := buildLinkGraph(t, app, c.Cards)
+			card := openCard(t, app, podID(""), c.Open)
 
 			oneHop, err := links1Hop(app, card)
 			if err != nil {
