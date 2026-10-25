@@ -9,9 +9,8 @@
 ## 機能
 
 - 1人から20人までのリアルタイム共同編集
-- オフラインモード対応
 - 1ポットにつき10万件のノートまで
-- 全文検索・ベクトル検索
+- 全文検索
 - カードの簡易的な整理機能
 - マルチサーバ連合機能
 
@@ -64,7 +63,7 @@ import (
 - Go 1.26.0 (1.27はライブラリ非対応)
 - PocketBase v0.39+
 - centrifugal/centrifuge v0.39+
-- google/mangle
+- go-git
 - blevesearch/bleve
 
 ### frontend
