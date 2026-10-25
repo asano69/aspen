@@ -8,8 +8,6 @@ import type {
   RenameLinksRequest,
   RenameLinksResponse,
   SearchResponse,
-  SeenRequest,
-  SeenResponse,
   UploadAttachmentResponse,
 } from "./generated";
 import { titleToSlug } from "../models/slugify";
@@ -64,31 +62,6 @@ export async function renameLinks(
   );
 }
 
-// What the current user has seen of a card (see internal/serve/card_views.go):
-// Yjs client id -> next clock. Empty when the card was never opened.
-export async function fetchSeen(cardId: string): Promise<SeenResponse["seen"]> {
-  const res = await pb.send<SeenResponse>(`/api/admin/cards/${cardId}/seen`, {
-    method: "GET",
-    requestKey: null,
-  });
-  return res.seen;
-}
-
-// Merges `seen` into what the server stores. `keepalive` lets the request
-// outlive the page, for the final send on pagehide.
-export async function postSeen(
-  cardId: string,
-  seen: SeenRequest["seen"],
-  keepalive = false,
-): Promise<void> {
-  const body: SeenRequest = { seen };
-  await pb.send(`/api/admin/cards/${cardId}/seen`, {
-    method: "POST",
-    body,
-    keepalive,
-    requestKey: null,
-  });
-}
 
 // Uploads an image to the server (see internal/serve/attachments.go), which
 // shrinks it and stores it. Resolves to the attachment path

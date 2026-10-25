@@ -56,8 +56,8 @@ func collabAuth(app core.App, next http.Handler) http.Handler {
 		var onClose func()
 		if !session.IsSuperuser {
 			room := r.PathValue("room")
-			recordCardView(app, session.UserID, room)
-			onClose = func() { recordCardLeft(app, session.UserID, room) }
+			recordRoomJoin(app, session.UserID, room)
+			onClose = func() { recordRoomLeave(app, session.UserID, room) }
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), userKey{}, session.Email))

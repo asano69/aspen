@@ -74,21 +74,6 @@ export interface RenameLinksResponse {
   updated: number /* int */;
 }
 /**
- * SeenRequest is the body of POST /api/admin/cards/{id}/seen. Seen maps a Yjs
- * client id to the next clock of that client the user has seen (a state
- * vector as JSON).
- */
-export interface SeenRequest {
-  seen: { [key: string]: number /* uint64 */};
-}
-/**
- * SeenResponse is the body of GET /api/admin/cards/{id}/seen. It is empty
- * when the user has not seen the card yet.
- */
-export interface SeenResponse {
-  seen: { [key: string]: number /* uint64 */};
-}
-/**
  * UploadAttachmentResponse is the body of POST /api/admin/attachments. URL is
  * the attachment path ("@/<recordId>/<filename>") to write in image notation.
  */

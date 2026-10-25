@@ -1761,27 +1761,12 @@ func init() {
 						"type": "number"
 					},
 					{
-						"autogeneratePattern": "",
-						"help": "base64",
-						"hidden": false,
-						"id": "text2756839960",
-						"max": 0,
-						"min": 0,
-						"name": "seen",
-						"pattern": "",
-						"presentable": false,
-						"primaryKey": false,
-						"required": false,
-						"system": false,
-						"type": "text"
-					},
-					{
 						"help": "",
 						"hidden": false,
-						"id": "date4152891652",
+						"id": "date1442646275",
 						"max": "",
 						"min": "",
-						"name": "viewed",
+						"name": "joined",
 						"presentable": false,
 						"required": false,
 						"system": false,
@@ -1822,10 +1807,10 @@ func init() {
 				],
 				"id": "pbc_3614727633",
 				"indexes": [
-					"CREATE UNIQUE INDEX ` + "`" + `idx_iew17ayecl` + "`" + ` ON ` + "`" + `card_views` + "`" + ` (\n  ` + "`" + `user` + "`" + `,\n  ` + "`" + `card` + "`" + `\n)"
+					"CREATE UNIQUE INDEX ` + "`" + `idx_iew17ayecl` + "`" + ` ON ` + "`" + `room_events` + "`" + ` (\n  ` + "`" + `user` + "`" + `,\n  ` + "`" + `card` + "`" + `\n)"
 				],
 				"listRule": null,
-				"name": "card_views",
+				"name": "room_events",
 				"system": false,
 				"type": "base",
 				"updateRule": null,
