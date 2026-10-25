@@ -25,10 +25,15 @@ const newline = '\n'
 // newID returns the ID for a new line. Tests replace it to get predictable IDs.
 var newID = func() string { return uuid.Must(uuid.NewV7()).String() }
 
-// Line is the metadata of one line.
+// Line is the metadata of one line. Apply leaves the lines it produces
+// unsigned; the signer (see internal/linesign) fills in the rest.
 type Line struct {
-	ID      string `json:"id"`      // UUID version 7
-	Updated int64  `json:"updated"` // Unix time of the last edit that touched the line
+	ID        string `json:"id"`        // UUID version 7
+	Hash      string `json:"hash"`      // SHA-256 of the line text, hex
+	Updated   int64  `json:"updated"`   // Unix time of the last edit that touched the line
+	User      string `json:"user"`      // email address of the user who made that edit; empty if unknown
+	Key       string `json:"key"`       // public key of the server that signed the line
+	Signature string `json:"signature"` // of ID, Hash, Updated, User and Key, by the server
 }
 
 // Count returns the number of lines of doc. There is always at least one.

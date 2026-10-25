@@ -6,6 +6,7 @@ package serve
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"net"
 	"net/http"
@@ -16,6 +17,18 @@ import (
 
 	"github.com/asano69/cardpod/internal/auth"
 )
+
+type userKey struct{}
+
+// authorOf names who is behind a connection: the email address of the user
+// whose token it was opened with. It is what the room's tracker receives as
+// the author of an edit.
+func authorOf(r *http.Request) any {
+	if email, ok := r.Context().Value(userKey{}).(string); ok {
+		return email
+	}
+	return nil
+}
 
 // collabAuth lets a request through to next only when its token is valid and the
 // user may open the requested room.
@@ -47,6 +60,7 @@ func collabAuth(app core.App, next http.Handler) http.Handler {
 			onClose = func() { recordCardLeft(app, session.UserID, room) }
 		}
 
+		r = r.WithContext(context.WithValue(r.Context(), userKey{}, session.Email))
 		next.ServeHTTP(expiringWriter{
 			ResponseWriter: w,
 			expiresAt:      session.ExpiresAt,

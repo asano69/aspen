@@ -21,6 +21,7 @@ import (
 	"github.com/asano69/cmgo/collab"
 
 	"github.com/asano69/cardpod/internal/lineid"
+	"github.com/asano69/cardpod/internal/linesign"
 	"github.com/asano69/cardpod/internal/parser"
 )
 
@@ -34,6 +35,8 @@ var liveRooms *rooms
 
 type rooms struct {
 	app core.App
+	// signer signs the lines of every room. Nil means no signing.
+	signer *linesign.Signer
 
 	mu   sync.Mutex
 	open map[string]*room
@@ -47,9 +50,10 @@ func newRooms(app core.App) *rooms {
 // accepted change and schedules a save.
 type room struct {
 	*collab.Server
-	app  core.App
-	id   string
-	refs int // number of connected editors; guarded by rooms.mu
+	app    core.App
+	signer *linesign.Signer // nil means no signing
+	id     string
+	refs   int // number of connected editors; guarded by rooms.mu
 
 	scheduled atomic.Bool
 
@@ -67,17 +71,28 @@ type room struct {
 }
 
 // Track is called with the Document locked: it moves the line IDs along with
-// the edits and schedules the save.
-func (r *room) Track(changes []authority.Change, _ []uint16, _ any, now int64) {
+// the edits, signs the changed lines as an edit by the author (the email
+// address of the user, see authorOf) and schedules the save.
+func (r *room) Track(changes []authority.Change, doc []uint16, author any, now int64) {
+	user, _ := author.(string)
 	r.linesMu.Lock()
 	for _, c := range changes {
 		r.lines = lineid.Apply(r.lines, c.Before, c.Changes.Edits(), now)
 	}
+	r.lines = r.sign(doc, r.lines, user, now)
 	r.linesMu.Unlock()
 
 	if r.scheduled.CompareAndSwap(false, true) {
 		time.AfterFunc(settleDelay, r.settle)
 	}
+}
+
+// sign signs the changed lines, if the room has a signer.
+func (r *room) sign(doc []uint16, lines []lineid.Line, user string, now int64) []lineid.Line {
+	if r.signer == nil {
+		return lines
+	}
+	return r.signer.Sign(doc, lines, user, now)
 }
 
 // snapshot returns the text and its line IDs as of the same moment.
@@ -103,6 +118,9 @@ func (r *room) restoreLines(saved []lineid.Line) {
 		if len(saved) == lineid.Count(doc) {
 			r.lines = saved
 		}
+		// Lines that were never signed, or whose text changed while the card
+		// was closed, are signed now. No user is behind that change.
+		r.lines = r.sign(doc, r.lines, "", time.Now().Unix())
 	})
 }
 
@@ -169,6 +187,7 @@ func (m *rooms) acquire(cardID string) (*room, error) {
 
 	r := &room{
 		app:        m.app,
+		signer:     m.signer,
 		id:         cardID,
 		refs:       1,
 		lines:      lineid.New(1, time.Now().Unix()),
@@ -176,7 +195,7 @@ func (m *rooms) acquire(cardID string) (*room, error) {
 		savedLines: saved,
 		lastRaw:    parser.Parse(text).Title(),
 	}
-	r.Server = collab.New(collab.WithTracker(r))
+	r.Server = collab.New(collab.WithTracker(r), collab.WithAuthor(authorOf))
 	r.Replace(text)
 	r.restoreLines(saved)
 	m.open[cardID] = r

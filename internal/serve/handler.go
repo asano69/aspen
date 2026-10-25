@@ -1,8 +1,11 @@
 package serve
 
 import (
+	"log/slog"
 	"net/http"
+	"path/filepath"
 
+	"github.com/asano69/cardpod/internal/linesign"
 	"github.com/asano69/cardpod/internal/realtime"
 	"github.com/asano69/cardpod/internal/replica"
 	"github.com/asano69/cardpod/internal/static"
@@ -19,7 +22,16 @@ import (
 func registerRoutes(e *core.ServeEvent) error {
 	// The open cards (see rooms.go). Whatever is still unsaved is written when
 	// the server stops.
+	// The key that signs the lines of every card (see internal/linesign). It is
+	// created on the first start and kept in the data directory.
+	signer, err := linesign.Load(filepath.Join(e.App.DataDir(), "server_key.pem"))
+	if err != nil {
+		return err
+	}
+	slog.Info("line signing key", "public", signer.PublicKey())
+
 	liveRooms = newRooms(e.App)
+	liveRooms.signer = signer
 	e.App.OnTerminate().BindFunc(func(te *core.TerminateEvent) error {
 		liveRooms.flush()
 		return te.Next()
@@ -44,6 +56,7 @@ func registerRoutes(e *core.ServeEvent) error {
 	// Realtime card events (see internal/realtime). Authentication happens
 	// inside the hub (any valid auth token), not via this router's middleware.
 	hub, err := realtime.Register(e)
+	// err was declared above by linesign.Load; hub is new, so := stays valid.
 	if err != nil {
 		return err
 	}

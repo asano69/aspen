@@ -22,6 +22,7 @@ var (
 // stops being valid.
 type Session struct {
 	UserID    string
+	Email     string
 	ExpiresAt time.Time
 	// IsSuperuser is true for a superuser, false for a regular user.
 	IsSuperuser bool
@@ -45,6 +46,7 @@ func Verify(app core.App, token string) (Session, error) {
 	}
 	return Session{
 		UserID:      record.Id,
+		Email:       record.Email(),
 		ExpiresAt:   time.Unix(int64(exp), 0),
 		IsSuperuser: record.Collection().Name == core.CollectionNameSuperusers,
 	}, nil
