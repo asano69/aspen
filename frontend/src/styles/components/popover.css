@@ -1,0 +1,28 @@
+/* Public classes: .popover-content, .popover-row, .popover-label.
+ * The shared look of a Kobalte Popover. It is rendered in a portal, so it
+ * cannot be styled through its anchor's parent. */
+@layer components {
+  .popover-content {
+    z-index: var(--z-popup);
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background-color: var(--card-bg);
+    box-shadow: var(--shadow-popover);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--page-text-color);
+    outline: none;
+  }
+
+  .popover-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .popover-label {
+    min-width: 4.5rem;
+    color: var(--tool-text-color);
+  }
+}

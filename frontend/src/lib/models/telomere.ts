@@ -8,6 +8,8 @@ import type { TelomereLine } from "../api/generated";
 export type TelomereStatus = "read" | "unread" | "updated";
 
 export interface TelomereEntry {
+  // ID of the line; empty when unknown (e.g. a line edited in this session).
+  id: string;
   // Epoch milliseconds of the line's last recorded edit.
   updatedAt: number;
   // Who made that edit; empty when unknown (e.g. an edit of another user in
@@ -19,6 +21,7 @@ export interface TelomereEntry {
 // Converts the server's rows (see internal/serve/telomere.go) into entries.
 export function telomereEntries(lines: TelomereLine[]): TelomereEntry[] {
   return lines.map((line) => ({
+    id: line.id,
     updatedAt: line.updated * 1000,
     user: line.user,
     status: line.unread ? "unread" : "read",

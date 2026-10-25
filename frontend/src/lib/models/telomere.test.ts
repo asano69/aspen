@@ -5,12 +5,12 @@ describe("telomereEntries", () => {
   it("converts seconds to milliseconds and the unread flag to a status", () => {
     expect(
       telomereEntries([
-        { updated: 5, user: "alice", unread: true },
-        { updated: 6, user: "", unread: false },
+        { id: "l1", updated: 5, user: "alice", unread: true },
+        { id: "l2", updated: 6, user: "", unread: false },
       ]),
     ).toEqual([
-      { updatedAt: 5000, user: "alice", status: "unread" },
-      { updatedAt: 6000, user: "", status: "read" },
+      { id: "l1", updatedAt: 5000, user: "alice", status: "unread" },
+      { id: "l2", updatedAt: 6000, user: "", status: "read" },
     ]);
   });
 });

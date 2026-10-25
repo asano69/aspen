@@ -2,7 +2,13 @@
    The editor is created once per mount: props are read during setup, and
    mountEditor is a ref callback, which the rule mistakes for a plain
    function used in JSX. */
-import { createEffect, onCleanup, untrack, type JSX } from "solid-js";
+import {
+  createEffect,
+  createSignal,
+  onCleanup,
+  untrack,
+  type JSX,
+} from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, drawSelection } from "@codemirror/view";
@@ -46,6 +52,7 @@ import { pasteCodeBlockIndent } from "./plugins/interactions/pasteCodeBlockInden
 import { selectionMenu } from "./plugins/interactions/selectionMenu";
 import { titleCompletion } from "./plugins/interactions/titleCompletion";
 import type { TitleCandidate } from "@/lib/models/card";
+import TelomerePopover, { type TelomereSelection } from "./TelomerePopover";
 import { registerDebugView } from "./debug";
 import { imeDebug } from "./imeDebug";
 
@@ -84,6 +91,9 @@ export interface NoteEditorProps {
 export default function NoteEditor(props: NoteEditorProps) {
   const navigate = useNavigate();
   const pot = usePot();
+  // The telomere bar whose info popover is open (see TelomerePopover.tsx).
+  const [telomereSelection, setTelomereSelection] =
+    createSignal<TelomereSelection>();
   const handleSlugCandidate = (candidate: TitleCandidate) => {
     props.onConfirmedTitle(candidate);
   };
@@ -141,7 +151,10 @@ export default function NoteEditor(props: NoteEditorProps) {
         wordBreak,
         // Bar left of each line: who edited it and whether it is unread (see
         // plugins/decorations/telomere.ts).
-        telomere(() => currentUser()?.name ?? ""),
+        telomere(
+          () => currentUser()?.name ?? "",
+          (entry, anchor) => setTelomereSelection({ entry, anchor }),
+        ),
         codeBlockLines,
         imageWidget,
         mermaidBlock,
@@ -281,6 +294,10 @@ export default function NoteEditor(props: NoteEditorProps) {
       <div class="page" classList={{ "not-persistent": !props.channel }}>
         <div ref={mountEditor} class="editor" />
       </div>
+      <TelomerePopover
+        selection={telomereSelection()}
+        onClose={() => setTelomereSelection(undefined)}
+      />
       {/* Reserves space below the editor so a long note's last line never
           lands flush against the bottom of the viewport -- mirrors Cosense's
           own .related-page-list. The links container shows whatever children

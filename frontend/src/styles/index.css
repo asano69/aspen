@@ -16,6 +16,7 @@
 @import "./components/card-grid.css";
 @import "./components/graph.css";
 @import "./components/menu.css";
+@import "./components/popover.css";
 @import "./components/dialog.css";
 @import "./components/quick-launch.css";
 @import "./components/page.css";

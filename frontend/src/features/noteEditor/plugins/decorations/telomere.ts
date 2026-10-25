@@ -58,8 +58,12 @@ export function mapEntries(
   return next;
 }
 
-// `author` returns the name shown for the user's own edits.
-export function telomere(author: () => string): Extension {
+// `author` returns the name shown for the user's own edits. `onSelect` is
+// called with a line's entry and its bar element when the bar is clicked.
+export function telomere(
+  author: () => string,
+  onSelect: (entry: TelomereEntry, anchor: HTMLElement) => void,
+): Extension {
   const field = StateField.define<TelomereState>({
     create: () => ({ entries: [], pending: null }),
     update(value, tr) {
@@ -71,6 +75,8 @@ export function telomere(author: () => string): Extension {
 
       if (tr.docChanged) {
         const edit: TelomereEntry = {
+          // The server assigns the ID of an edited line; it is not known here.
+          id: "",
           updatedAt: Date.now(),
           // The author of a remote edit is not known here.
           user: tr.annotation(Transaction.remote) ? "" : author(),
@@ -109,6 +115,19 @@ export function telomere(author: () => string): Extension {
       // Document changes already refresh the markers; this covers new data.
       lineMarkerChange: (update) =>
         update.startState.field(field) !== update.state.field(field),
+      domEventHandlers: {
+        click(view, line, event) {
+          const index = view.state.doc.lineAt(line.from).number - 1;
+          const entry = view.state.field(field).entries[index];
+          if (!entry) return false;
+          const target = event.target as HTMLElement;
+          onSelect(
+            entry,
+            target.closest<HTMLElement>(".telomere-border") ?? target,
+          );
+          return true;
+        },
+      },
     }),
   ];
 }
@@ -134,7 +153,6 @@ class TelomereMarker extends GutterMarker {
     const bar = document.createElement("div");
     bar.className = `telomere-border ${this.entry.status}`;
     bar.style.borderLeftWidth = `${this.thickness}px`;
-    bar.title = this.entry.user;
     return bar;
   }
 }

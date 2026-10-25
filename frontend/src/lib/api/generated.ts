@@ -100,6 +100,10 @@ export interface SearchResponse {
  */
 export interface TelomereLine {
   /**
+   * ID of the line (see internal/lineid).
+   */
+  id: string;
+  /**
    * Unix time of the last edit of the line.
    */
   updated: number /* int64 */;

@@ -78,6 +78,7 @@ func telomereLines(lines []lineid.Line, me string, left int64) []api.TelomereLin
 	out := make([]api.TelomereLine, len(lines))
 	for i, l := range lines {
 		out[i] = api.TelomereLine{
+			ID:      l.ID,
 			Updated: l.Updated,
 			User:    l.User,
 			Unread:  l.User != "" && l.User != me && l.Updated > left,

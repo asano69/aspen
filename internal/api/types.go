@@ -81,6 +81,8 @@ type SearchResponse struct {
 
 // TelomereLine is the edit record of one line of a card.
 type TelomereLine struct {
+	// ID of the line (see internal/lineid).
+	ID string `json:"id"`
 	// Unix time of the last edit of the line.
 	Updated int64 `json:"updated"`
 	// Email address of the user who made that edit; empty if unknown.

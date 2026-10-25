@@ -4,11 +4,17 @@ import type { TelomereEntry } from "@/lib/models/telomere";
 import { mapEntries } from "./telomere";
 
 const entry = (user: string): TelomereEntry => ({
+  id: user,
   updatedAt: 0,
   user,
   status: "read",
 });
-const edit: TelomereEntry = { updatedAt: 1, user: "me", status: "updated" };
+const edit: TelomereEntry = {
+  id: "",
+  updatedAt: 1,
+  user: "me",
+  status: "updated",
+};
 
 // Applies `spec` to `text` and maps one entry per line through it.
 function run(text: string, entries: TelomereEntry[], spec: object) {
