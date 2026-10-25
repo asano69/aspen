@@ -25,7 +25,12 @@ func newExportTestApp(t *testing.T) core.App {
 	if err != nil {
 		t.Fatalf("find pods collection: %v", err)
 	}
-	pods.Fields.Add(&core.DateField{Name: "deleted"})
+	pods.Fields.Add(
+		&core.DateField{Name: "deleted"},
+		&core.TextField{Name: "title"},
+		&core.NumberField{Name: "position"},
+		&core.FileField{Name: "cover", MaxSelect: 1},
+	)
 	if err := app.Save(pods); err != nil {
 		t.Fatalf("extend pods collection: %v", err)
 	}
@@ -67,7 +72,8 @@ func importPages(t *testing.T, app core.App, pod string, pages ...map[string]any
 	runImport(t, app, pod, string(data))
 }
 
-// runExport exports pod into a fresh directory.
+// runExport exports pod into a fresh directory and returns the pod's own
+// folder inside it.
 func runExport(t *testing.T, app core.App, pod string) (string, ExportResult) {
 	t.Helper()
 	dir := filepath.Join(t.TempDir(), "out")
@@ -75,7 +81,7 @@ func runExport(t *testing.T, app core.App, pod string) (string, ExportResult) {
 	if err != nil {
 		t.Fatalf("Export: %v", err)
 	}
-	return dir, result
+	return filepath.Join(dir, pod), result
 }
 
 // readFiles returns the files under dir by their "/" path (folders are left
@@ -142,7 +148,7 @@ func TestExport_WritesOnePodInTheDirectoryLayout(t *testing.T) {
 	}
 
 	m := readManifest(t, files)
-	want := manifestCard{Text: "cards/alpha.csn", Lines: "cards/alpha.json"}
+	want := manifestCard{Title: "alpha", Text: "cards/alpha.csn", Lines: "cards/alpha.json"}
 	if len(m.Cards) != 1 || m.Cards[0] != want || len(m.Assets) != 0 {
 		t.Errorf("manifest = %+v, want the card %+v and no assets", m, want)
 	}
@@ -154,7 +160,7 @@ func TestExport_EmptyPodStillHasItsFolders(t *testing.T) {
 
 	dir, _ := runExport(t, app, "src")
 
-	for _, sub := range []string{"cards", "assets"} {
+	for _, sub := range []string{"cards", "assets", "cover"} {
 		if info, err := os.Stat(filepath.Join(dir, sub)); err != nil || !info.IsDir() {
 			t.Errorf("%s is not a folder (err %v)", sub, err)
 		}

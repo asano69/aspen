@@ -1,7 +1,11 @@
 // export.go implements "cardpod export": it writes one pod to a directory.
+// The pod gets its own folder named after the pod inside the given directory
+// (the name cannot be changed), so exports of several pods can share one
+// directory:
 //
-//	<dir>/
-//	├── manifest.json                 cards and assets, in export order
+//	<dir>/<podName>/
+//	├── manifest.json                 pod name and title, cover, cards and assets
+//	├── cover/<file>                  the pod's cover image
 //	├── assets/<recordId>/<file>      attachments used by the cards
 //	└── cards/
 //	    ├── <stem>.csn                the text of a card
@@ -62,21 +66,28 @@ type ExportResult struct {
 	Assets int
 }
 
-// manifestCard lists the two files of one card.
+// manifestCard lists the two files of one card. Title is the card's resolved
+// title: the first line of the text is not enough to identify a card, because
+// two cards can start with the same line (their titles then differ by a
+// "_<number>" suffix).
 type manifestCard struct {
+	Title string `json:"title"`
 	Text  string `json:"text"`
 	Lines string `json:"lines"`
 }
 
-// manifest is the content of manifest.json. Paths are relative to the export
-// directory and use "/".
+// manifest is the content of manifest.json. Paths are relative to the pod's
+// export folder and use "/". PodName is always the name of that folder.
 type manifest struct {
-	Cards  []manifestCard `json:"cards"`
-	Assets []string       `json:"assets"`
+	PodName  string         `json:"pod_name"`
+	PodTitle string         `json:"pod_title"`
+	Cover    string         `json:"cover,omitempty"`
+	Cards    []manifestCard `json:"cards"`
+	Assets   []string       `json:"assets"`
 }
 
-// Export writes every live card of the pod named podName, and the attachments
-// they use, into dir.
+// Export writes every live card of the pod named podName, its cover and the
+// attachments the cards use, into dir/<podName>.
 func Export(app core.App, podName, dir string) (ExportResult, error) {
 	var result ExportResult
 
@@ -90,8 +101,11 @@ func Export(app core.App, podName, dir string) (ExportResult, error) {
 		return result, fmt.Errorf("find pod %q: %w", podName, err)
 	}
 
+	// The pod gets its own folder inside dir.
+	dir = filepath.Join(dir, pod.GetString("name"))
+
 	// Created up front, so empty folders exist too.
-	for _, sub := range []string{"cards", "assets"} {
+	for _, sub := range []string{"cards", "assets", "cover"} {
 		if err := os.MkdirAll(filepath.Join(dir, sub), 0o755); err != nil {
 			return result, fmt.Errorf("create %s: %w", sub, err)
 		}
@@ -105,7 +119,21 @@ func Export(app core.App, podName, dir string) (ExportResult, error) {
 		return result, fmt.Errorf("list cards: %w", err)
 	}
 
-	m := manifest{Cards: []manifestCard{}, Assets: []string{}}
+	fsys, err := app.NewFilesystem()
+	if err != nil {
+		return result, fmt.Errorf("open file storage: %w", err)
+	}
+	defer fsys.Close()
+
+	m := manifest{
+		PodName:  pod.GetString("name"),
+		PodTitle: pod.GetString("title"),
+		Cards:    []manifestCard{},
+		Assets:   []string{},
+	}
+	if m.Cover, err = exportCover(fsys, pod, dir); err != nil {
+		return result, err
+	}
 	used := map[string]bool{}
 	assets := map[string]bool{}
 	for _, card := range cards {
@@ -120,6 +148,7 @@ func Export(app core.App, podName, dir string) (ExportResult, error) {
 
 		stem := uniqueStem(exportStem(card.GetString("title")), used)
 		entry := manifestCard{
+			Title: card.GetString("title"),
 			Text:  "cards/" + stem + exportTextExt,
 			Lines: "cards/" + stem + exportLinesExt,
 		}
@@ -132,7 +161,7 @@ func Export(app core.App, podName, dir string) (ExportResult, error) {
 		}
 	}
 
-	m.Assets, err = exportAssets(app, dir, slices.Sorted(maps.Keys(assets)))
+	m.Assets, err = exportAssets(app, fsys, dir, slices.Sorted(maps.Keys(assets)))
 	if err != nil {
 		return result, err
 	}
@@ -230,17 +259,8 @@ func attachmentID(src string) (string, bool) {
 
 // exportAssets writes the attachments with the given record ids to
 // assets/<recordId>/<file> and returns their paths, relative to dir.
-func exportAssets(app core.App, dir string, ids []string) ([]string, error) {
+func exportAssets(app core.App, fsys *filesystem.System, dir string, ids []string) ([]string, error) {
 	written := []string{}
-	if len(ids) == 0 {
-		return written, nil
-	}
-	fsys, err := app.NewFilesystem()
-	if err != nil {
-		return nil, fmt.Errorf("open file storage: %w", err)
-	}
-	defer fsys.Close()
-
 	for _, id := range ids {
 		rel, err := exportAsset(app, fsys, dir, id)
 		if err != nil {
@@ -270,26 +290,49 @@ func exportAsset(app core.App, fsys *filesystem.System, dir, id string) (string,
 		return "", nil
 	}
 
-	reader, err := fsys.GetReader(record.BaseFilesPath() + "/" + name)
-	if err != nil {
+	rel := "assets/" + id + "/" + name
+	path := filepath.Join(dir, filepath.FromSlash(rel))
+	if err := copyStored(fsys, record.BaseFilesPath()+"/"+name, path); err != nil {
 		return "", err
+	}
+	return rel, nil
+}
+
+// exportCover writes the pod's cover image to cover/<file> and returns its
+// path relative to dir, or "" when the pod has no cover.
+func exportCover(fsys *filesystem.System, pod *core.Record, dir string) (string, error) {
+	name := pod.GetString("cover")
+	if name == "" {
+		return "", nil
+	}
+	rel := "cover/" + name
+	path := filepath.Join(dir, filepath.FromSlash(rel))
+	if err := copyStored(fsys, pod.BaseFilesPath()+"/"+name, path); err != nil {
+		return "", fmt.Errorf("export cover: %w", err)
+	}
+	return rel, nil
+}
+
+// copyStored copies the stored file under key to path, creating its folder.
+func copyStored(fsys *filesystem.System, key, path string) error {
+	reader, err := fsys.GetReader(key)
+	if err != nil {
+		return err
 	}
 	defer reader.Close()
 
-	rel := "assets/" + id + "/" + name
-	path := filepath.Join(dir, filepath.FromSlash(rel))
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return "", err
+		return err
 	}
 	f, err := os.Create(path)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if _, err := io.Copy(f, reader); err != nil {
 		f.Close()
-		return "", err
+		return err
 	}
-	return rel, f.Close()
+	return f.Close()
 }
 
 // writeFile writes data to rel (a "/" path) inside dir, creating its folder.

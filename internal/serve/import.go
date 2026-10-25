@@ -21,6 +21,7 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
+	"github.com/asano69/cardpod/internal/lineid"
 	"github.com/asano69/cardpod/internal/slug"
 )
 
@@ -195,23 +196,40 @@ func Import(app core.App, podName string, r io.ReaderAt, progress func(done, tot
 		return result, fmt.Errorf("find pod %q: %w", podName, err)
 	}
 
-	// New cards get ever-higher positions and the card grid lists the
-	// highest first, so importing in reverse keeps the file's order on
-	// screen.
-	for end := len(spans); end > 0; end -= importBatchSize {
+	return runBatched(app, len(spans), progress, func(tx core.App, i int) (bool, error) {
+		stop := stages.start("read page")
+		page, err := readPage(r, spans[i])
+		stop()
+		if err != nil {
+			return false, fmt.Errorf("read page %d: %w", i, err)
+		}
+		created, err := importImportedPage(tx, pod.Id, page)
+		if err != nil {
+			return false, fmt.Errorf("import page %q: %w", page.Title, err)
+		}
+		return created, nil
+	})
+}
+
+// runBatched calls do for each of total items and counts what it reports.
+// New cards get ever-higher positions and the card grid lists the highest
+// first, so items are handled last to first, which keeps the source's order
+// on screen. do must use the transaction's app, and reports whether it
+// created a card (false means it overwrote one).
+func runBatched(
+	app core.App,
+	total int,
+	progress func(done, total int),
+	do func(tx core.App, i int) (created bool, err error),
+) (ImportResult, error) {
+	var result ImportResult
+	for end := total; end > 0; end -= importBatchSize {
 		start := max(0, end-importBatchSize)
 		err := app.RunInTransaction(func(tx core.App) error {
-			// Everything inside the batch must use the transaction's app.
 			for i := end - 1; i >= start; i-- {
-				stop := stages.start("read page")
-				page, err := readPage(r, spans[i])
-				stop()
+				created, err := do(tx, i)
 				if err != nil {
-					return fmt.Errorf("read page %d: %w", i, err)
-				}
-				created, err := importImportedPage(tx, pod.Id, page)
-				if err != nil {
-					return fmt.Errorf("import page %q: %w", page.Title, err)
+					return err
 				}
 				if created {
 					result.Created++
@@ -219,7 +237,7 @@ func Import(app core.App, podName string, r io.ReaderAt, progress func(done, tot
 					result.Overwritten++
 				}
 				if progress != nil {
-					progress(result.Created+result.Overwritten, len(spans))
+					progress(result.Created+result.Overwritten, total)
 				}
 			}
 			return nil
@@ -236,16 +254,22 @@ func Import(app core.App, podName string, r io.ReaderAt, progress func(done, tot
 // record was created leaves a card without a note; re-running the import
 // fills it in.
 func importImportedPage(app core.App, pod string, page importPage) (created bool, err error) {
-	text := pageText(page)
+	return importCard(app, pod, page.Title, pageText(page), nil)
+}
+
+// importCard creates or finds the card titled title in pod and replaces its
+// text and lines (nil lines keep the stored ones). It reports whether the
+// card was newly created.
+func importCard(app core.App, pod, title, text string, lines []lineid.Line) (created bool, err error) {
 	stop := stages.start("find card")
-	card, err := findCardByTitle(app, pod, page.Title)
+	card, err := findCardByTitle(app, pod, title)
 	stop()
 	if err != nil {
 		return false, err
 	}
 	if card == nil {
 		stop = stages.start("create card")
-		card, err = createImportedCard(app, pod, page.Title, text)
+		card, err = createImportedCard(app, pod, title, text)
 		stop()
 		if err != nil {
 			return false, err
@@ -255,7 +279,7 @@ func importImportedPage(app core.App, pod string, page importPage) (created bool
 
 	// Writes the note file and the data derived from it.
 	stop = stages.start("replace content")
-	err = persistNote(app, card.Id, text, nil)
+	err = persistNote(app, card.Id, text, lines)
 	stop()
 	return created, err
 }
