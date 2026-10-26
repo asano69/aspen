@@ -1,7 +1,12 @@
-// import.go implements "cardpod import": it loads pages from a JSON export
-// into one pod. A card body is written to its content row (see contents.go),
-// the same way a live editing session stores it. Only the card record itself (pod,
-// title, position) is created the way createCardHandler creates it.
+// import.go implements "cardpod import". Its main form loads a folder written
+// by "cardpod export": the pod named in the manifest is created when it does
+// not exist, and its cards overwrite the cards with the same title. A second,
+// secondary form (ImportCosense) loads pages from a Cosense JSON export into a
+// pod that already exists.
+//
+// A card body is written to its content row (see contents.go), the same way a
+// live editing session stores it. Only the card record itself (pod, title,
+// position) is created the way createCardHandler creates it.
 //
 // The command opens the data directory in its own process, so run it while
 // the server is stopped: a card the running server already has open would not
@@ -19,7 +24,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
@@ -174,16 +181,17 @@ func readPage(r io.ReaderAt, span pageSpan) (importPage, error) {
 	return page, checkPage(&page)
 }
 
-// Import reads a JSON export from r and imports its pages into the pod named
-// podName. A page whose title matches an existing card in that pod
-// overwrites the card's body; any other page becomes a new card.
+// ImportCosense reads a Cosense JSON export from r and imports its pages into
+// the pod named podName, which must already exist. A page whose title matches
+// an existing card in that pod overwrites the card's body; any other page
+// becomes a new card.
 //
 // The file is read twice, one page at a time (see indexPages and readPage),
 // so memory use does not grow with the file's size.
 //
 // progress, when not nil, is called after each page with the number of pages
 // done so far and the total.
-func Import(app core.App, podName string, r io.ReaderAt, progress func(done, total int)) (ImportResult, error) {
+func ImportCosense(app core.App, podName string, r io.ReaderAt, progress func(done, total int)) (ImportResult, error) {
 	var result ImportResult
 
 	spans, err := indexPages(r)
@@ -211,12 +219,17 @@ func Import(app core.App, podName string, r io.ReaderAt, progress func(done, tot
 	})
 }
 
-// findImportPod returns the pod an import writes into, or an error when it does
-// not exist.
+// errPodNotFound is wrapped by findImportPod when the pod does not exist.
+var errPodNotFound = errors.New("no such pod")
+
+// findImportPod returns the live pod an import writes into. The error wraps
+// errPodNotFound when there is none.
 func findImportPod(app core.App, podName string) (*core.Record, error) {
-	pod, err := app.FindFirstRecordByFilter("pods", "name = {:name}", dbx.Params{"name": podName})
+	pod, err := app.FindFirstRecordByFilter(
+		"pods", "name = {:name} && "+notDeleted, dbx.Params{"name": podName},
+	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("pod %q not found", podName)
+		return nil, fmt.Errorf("pod %q not found: %w", podName, errPodNotFound)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("find pod %q: %w", podName, err)
@@ -224,27 +237,152 @@ func findImportPod(app core.App, podName string) (*core.Record, error) {
 	return pod, nil
 }
 
-// ImportDir imports an export folder (see export.go) into the pod named
-// podName. The attachments are imported first, then the cards in manifest
-// order. A card is matched by title and overwritten, as in Import. The cover is
-// not imported, because the pod already has one.
-//
-// progress, when not nil, is called after each card as in Import.
-func ImportDir(app core.App, podName, dir string, progress func(done, total int)) (ImportResult, error) {
+// ImportPlan describes what importing an export folder would do. PlanImport
+// builds it without changing anything, so a caller can ask for confirmation
+// first.
+type ImportPlan struct {
+	// PodName and PodTitle come from the manifest.
+	PodName  string
+	PodTitle string
+	// PodExists is true when a live pod with PodName exists already: the import
+	// then overwrites its cards with the same title. Otherwise the pod is
+	// created.
+	PodExists bool
+	// Cards and Assets count what the folder holds.
+	Cards  int
+	Assets int
+
+	dir      string
+	manifest manifest
+}
+
+// PlanImport reads the manifest of an export folder and checks it. Nothing is
+// written. It fails when the manifest is unreadable, or when the pod does not
+// exist and the manifest cannot describe a valid new pod.
+func PlanImport(app core.App, dir string) (ImportPlan, error) {
 	data, err := os.ReadFile(filepath.Join(dir, manifestName))
 	if err != nil {
-		return ImportResult{}, fmt.Errorf("read manifest: %w", err)
+		return ImportPlan{}, fmt.Errorf("read manifest (is %s an export folder?): %w", dir, err)
 	}
 	var m manifest
 	if err := json.Unmarshal(data, &m); err != nil {
-		return ImportResult{}, fmt.Errorf("invalid manifest: %w", err)
+		return ImportPlan{}, fmt.Errorf("invalid manifest: %w", err)
+	}
+	if m.PodName == "" {
+		return ImportPlan{}, errors.New("invalid manifest: pod_name is empty")
 	}
 
-	pod, err := findImportPod(app, podName)
+	plan := ImportPlan{
+		PodName:  m.PodName,
+		PodTitle: m.PodTitle,
+		Cards:    len(m.Cards),
+		Assets:   len(m.Assets),
+		dir:      dir,
+		manifest: m,
+	}
+	_, err = findImportPod(app, m.PodName)
+	switch {
+	case err == nil:
+		plan.PodExists = true
+	case errors.Is(err, errPodNotFound):
+		if err := checkNewPod(m); err != nil {
+			return ImportPlan{}, err
+		}
+	default:
+		return ImportPlan{}, err
+	}
+	return plan, nil
+}
+
+// podNameRe is the rule of the "pods" collection for a pod name.
+var podNameRe = regexp.MustCompile(`^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$`)
+
+const (
+	maxPodNameLen  = 48
+	maxPodTitleLen = 60
+)
+
+// checkNewPod reports why the manifest cannot be used to create a pod, in
+// words a user can act on. The same rules are enforced by the collection, but
+// its messages do not say which manifest field is at fault.
+func checkNewPod(m manifest) error {
+	if len(m.PodName) > maxPodNameLen || !podNameRe.MatchString(m.PodName) {
+		return fmt.Errorf("pod_name %q is not a valid pod name: use only letters, digits and hyphens, "+
+			"starting and ending with a letter or digit, at most %d characters", m.PodName, maxPodNameLen)
+	}
+	if slug.IsReservedPodName(m.PodName) {
+		return fmt.Errorf("pod_name %q is reserved", m.PodName)
+	}
+	title := strings.TrimSpace(m.PodTitle)
+	if title == "" {
+		return errors.New("pod_title is empty, so the pod cannot be created: " +
+			"set pod_title in manifest.json")
+	}
+	if utf8.RuneCountInString(title) > maxPodTitleLen {
+		return fmt.Errorf("pod_title is longer than %d characters", maxPodTitleLen)
+	}
+	return nil
+}
+
+// ApplyImport carries out a plan from PlanImport: it creates the pod when it
+// does not exist, then imports the attachments and the cards in manifest
+// order. A card is matched by title and overwritten, as in ImportCosense. The
+// cover is not imported, because a pod always gets its own generated one.
+//
+// progress, when not nil, is called after each card with the number of cards
+// done so far and the total.
+func ApplyImport(app core.App, plan ImportPlan, progress func(done, total int)) (ImportResult, error) {
+	pod, err := findOrCreateImportPod(app, plan)
 	if err != nil {
 		return ImportResult{}, err
 	}
+	return importFolder(app, pod, plan.dir, plan.manifest, progress)
+}
 
+// findOrCreateImportPod returns the pod of the plan, creating it (at the end
+// of the pod list) when it does not exist.
+func findOrCreateImportPod(app core.App, plan ImportPlan) (*core.Record, error) {
+	pod, err := findImportPod(app, plan.PodName)
+	if err == nil {
+		return pod, nil
+	}
+	if !errors.Is(err, errPodNotFound) {
+		return nil, err
+	}
+
+	collection, err := app.FindCachedCollectionByNameOrId("pods")
+	if err != nil {
+		return nil, fmt.Errorf("load pods collection: %w", err)
+	}
+	position, err := nextPodPosition(app)
+	if err != nil {
+		return nil, err
+	}
+	pod = core.NewRecord(collection)
+	pod.Set("name", plan.PodName)
+	pod.Set("title", strings.TrimSpace(plan.PodTitle))
+	pod.Set("position", position)
+	if err := app.Save(pod); err != nil {
+		return nil, fmt.Errorf("create pod %q: %w", plan.PodName, err)
+	}
+	return pod, nil
+}
+
+// nextPodPosition returns a position one past the highest live pod, like the
+// frontend does for a pod created in the UI.
+func nextPodPosition(app core.App) (float64, error) {
+	pods, err := app.FindRecordsByFilter("pods", notDeleted, "-position", 1, 0, nil)
+	if err != nil {
+		return 0, fmt.Errorf("find the last pod: %w", err)
+	}
+	if len(pods) == 0 {
+		return 0, nil
+	}
+	return pods[0].GetFloat("position") + 1, nil
+}
+
+// importFolder imports the attachments and cards of a manifest into pod.
+func importFolder(app core.App, pod *core.Record, dir string, m manifest, progress func(done, total int)) (ImportResult, error) {
 	for _, rel := range m.Assets {
 		content, err := readExportFile(dir, rel)
 		if err != nil {
@@ -257,6 +395,7 @@ func ImportDir(app core.App, podName, dir string, progress func(done, total int)
 
 	return runBatched(app, len(m.Cards), progress, func(tx core.App, i int) (bool, error) {
 		card := m.Cards[i]
+		// The card is matched in the pod found or created above.
 		text, err := readExportFile(dir, card.Text)
 		if err != nil {
 			return false, err

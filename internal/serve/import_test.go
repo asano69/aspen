@@ -40,7 +40,7 @@ func newImportTestApp(t *testing.T) core.App {
 
 func runImport(t *testing.T, app core.App, pod, json string) ImportResult {
 	t.Helper()
-	result, err := Import(app, pod, strings.NewReader(json), nil)
+	result, err := ImportCosense(app, pod, strings.NewReader(json), nil)
 	if err != nil {
 		t.Fatalf("Import: %v", err)
 	}
@@ -276,7 +276,7 @@ func TestImport_ReportsProgress(t *testing.T) {
 	createPod(t, app, "pod1")
 
 	var got [][2]int
-	_, err := Import(app, "pod1", strings.NewReader(`{"pages":[
+	_, err := ImportCosense(app, "pod1", strings.NewReader(`{"pages":[
 		{"title":"a","lines":["a"]},
 		{"title":"b","lines":["b"]}
 	]}`), func(done, total int) { got = append(got, [2]int{done, total}) })
@@ -291,7 +291,7 @@ func TestImport_ReportsProgress(t *testing.T) {
 func TestImport_UnknownPod(t *testing.T) {
 	app := newImportTestApp(t)
 
-	_, err := Import(app, "missing", strings.NewReader(`{"pages":[]}`), nil)
+	_, err := ImportCosense(app, "missing", strings.NewReader(`{"pages":[]}`), nil)
 	if err == nil || !strings.Contains(err.Error(), `pod "missing" not found`) {
 		t.Errorf("err = %v, want a pod-not-found error", err)
 	}
