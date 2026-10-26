@@ -16,7 +16,8 @@ import (
 )
 
 // newExportTestApp extends newImportTestApp with what Export reads beyond it:
-// the soft-delete field of pods and the files and pod_files collections.
+// the title, position and cover fields of pods and the files and pod_files
+// collections.
 func newExportTestApp(t *testing.T) core.App {
 	t.Helper()
 	app := newImportTestApp(t)
@@ -26,7 +27,6 @@ func newExportTestApp(t *testing.T) core.App {
 		t.Fatalf("find pods collection: %v", err)
 	}
 	pods.Fields.Add(
-		&core.DateField{Name: "deleted"},
 		&core.TextField{Name: "title"},
 		&core.NumberField{Name: "position"},
 		&core.FileField{Name: "cover", MaxSelect: 1},

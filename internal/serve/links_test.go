@@ -23,7 +23,7 @@ func newLinksTestApp(t *testing.T) core.App {
 	t.Cleanup(func() { _ = app.ResetBootstrapState() })
 
 	pods := core.NewBaseCollection("pods")
-	pods.Fields.Add(&core.TextField{Name: "name"})
+	pods.Fields.Add(&core.TextField{Name: "name"}, &core.DateField{Name: "deleted"})
 	if err := app.Save(pods); err != nil {
 		t.Fatalf("create pods collection: %v", err)
 	}

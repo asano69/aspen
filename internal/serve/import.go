@@ -30,6 +30,7 @@ import (
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 
 	"github.com/asano69/cardpod/internal/lineid"
 	"github.com/asano69/cardpod/internal/slug"
@@ -268,8 +269,13 @@ func PlanImport(app core.App, dir string) (ImportPlan, error) {
 	if err := json.Unmarshal(data, &m); err != nil {
 		return ImportPlan{}, fmt.Errorf("invalid manifest: %w", err)
 	}
-	if m.PodName == "" {
-		return ImportPlan{}, errors.New("invalid manifest: pod_name is empty")
+	// Checked before anything else, so an invalid name never reaches the
+	// database, whether or not such a pod exists.
+	if err := checkPodName(m.PodName); err != nil {
+		return ImportPlan{}, fmt.Errorf("invalid manifest: %w", err)
+	}
+	if err := checkManifestFiles(dir, m); err != nil {
+		return ImportPlan{}, err
 	}
 
 	plan := ImportPlan{
@@ -302,17 +308,26 @@ const (
 	maxPodTitleLen = 60
 )
 
-// checkNewPod reports why the manifest cannot be used to create a pod, in
-// words a user can act on. The same rules are enforced by the collection, but
-// its messages do not say which manifest field is at fault.
-func checkNewPod(m manifest) error {
-	if len(m.PodName) > maxPodNameLen || !podNameRe.MatchString(m.PodName) {
+// checkPodName reports why name cannot be a pod name, in words a user can act
+// on. The same rules are enforced by the collection, but its messages do not
+// say which manifest field is at fault.
+func checkPodName(name string) error {
+	if name == "" {
+		return errors.New("pod_name is empty")
+	}
+	if len(name) > maxPodNameLen || !podNameRe.MatchString(name) {
 		return fmt.Errorf("pod_name %q is not a valid pod name: use only letters, digits and hyphens, "+
-			"starting and ending with a letter or digit, at most %d characters", m.PodName, maxPodNameLen)
+			"starting and ending with a letter or digit, at most %d characters", name, maxPodNameLen)
 	}
-	if slug.IsReservedPodName(m.PodName) {
-		return fmt.Errorf("pod_name %q is reserved", m.PodName)
+	if slug.IsReservedPodName(name) {
+		return fmt.Errorf("pod_name %q is reserved", name)
 	}
+	return nil
+}
+
+// checkNewPod reports why the manifest cannot be used to create a pod: its
+// title must be usable (the name is checked by checkPodName).
+func checkNewPod(m manifest) error {
 	title := strings.TrimSpace(m.PodTitle)
 	if title == "" {
 		return errors.New("pod_title is empty, so the pod cannot be created: " +
@@ -327,23 +342,52 @@ func checkNewPod(m manifest) error {
 // ApplyImport carries out a plan from PlanImport: it creates the pod when it
 // does not exist, then imports the attachments and the cards in manifest
 // order. A card is matched by title and overwritten, as in ImportCosense. The
-// cover is not imported, because a pod always gets its own generated one.
+// cover of the manifest replaces the pod's cover; without one, a new pod gets
+// a generated cover.
 //
 // progress, when not nil, is called after each card with the number of cards
 // done so far and the total.
 func ApplyImport(app core.App, plan ImportPlan, progress func(done, total int)) (ImportResult, error) {
-	pod, err := findOrCreateImportPod(app, plan)
+	// Read before the pod is touched, so a missing file creates nothing.
+	cover, err := readImportCover(plan)
+	if err != nil {
+		return ImportResult{}, err
+	}
+	pod, err := findOrCreateImportPod(app, plan, cover)
 	if err != nil {
 		return ImportResult{}, err
 	}
 	return importFolder(app, pod, plan.dir, plan.manifest, progress)
 }
 
+// readImportCover reads the cover image named by the manifest, or returns nil
+// when it names none.
+func readImportCover(plan ImportPlan) (*filesystem.File, error) {
+	rel := plan.manifest.Cover
+	if rel == "" {
+		return nil, nil
+	}
+	content, err := readExportFile(plan.dir, rel)
+	if err != nil {
+		return nil, fmt.Errorf("read cover %s: %w", rel, err)
+	}
+	return filesystem.NewFileFromBytes(content, path.Base(rel))
+}
+
 // findOrCreateImportPod returns the pod of the plan, creating it (at the end
-// of the pod list) when it does not exist.
-func findOrCreateImportPod(app core.App, plan ImportPlan) (*core.Record, error) {
+// of the pod list) when it does not exist. A non-nil cover replaces the pod's
+// cover. A new pod without one gets a generated cover here: the hook that
+// does it for the server (see registerGeneratedImageHooks) is not registered
+// in this command.
+func findOrCreateImportPod(app core.App, plan ImportPlan, cover *filesystem.File) (*core.Record, error) {
 	pod, err := findImportPod(app, plan.PodName)
 	if err == nil {
+		if cover != nil {
+			pod.Set("cover", cover)
+			if err := app.Save(pod); err != nil {
+				return nil, fmt.Errorf("set cover of pod %q: %w", plan.PodName, err)
+			}
+		}
 		return pod, nil
 	}
 	if !errors.Is(err, errPodNotFound) {
@@ -362,6 +406,11 @@ func findOrCreateImportPod(app core.App, plan ImportPlan) (*core.Record, error) 
 	pod.Set("name", plan.PodName)
 	pod.Set("title", strings.TrimSpace(plan.PodTitle))
 	pod.Set("position", position)
+	if cover != nil {
+		pod.Set("cover", cover)
+	} else {
+		podCover.set(pod)
+	}
 	if err := app.Save(pod); err != nil {
 		return nil, fmt.Errorf("create pod %q: %w", plan.PodName, err)
 	}
@@ -416,10 +465,50 @@ func importFolder(app core.App, pod *core.Record, dir string, m manifest, progre
 // manifest, and it must stay inside the folder.
 func readExportFile(dir, rel string) ([]byte, error) {
 	local := filepath.FromSlash(rel)
-	if !filepath.IsLocal(local) {
-		return nil, fmt.Errorf("%q is not a path inside the export", rel)
+	if rel == "" || !filepath.IsLocal(local) {
+		return nil, fmt.Errorf("%q is not a path inside the export folder", rel)
 	}
 	return os.ReadFile(filepath.Join(dir, local))
+}
+
+// checkManifestFiles checks, before anything is written, that every file the
+// manifest names is an existing path inside the export folder. Each error
+// names the manifest entry at fault, so the manifest can be fixed by hand.
+func checkManifestFiles(dir string, m manifest) error {
+	check := func(what, rel string) error {
+		if rel == "" {
+			return fmt.Errorf("invalid manifest: %s is empty", what)
+		}
+		local := filepath.FromSlash(rel)
+		if !filepath.IsLocal(local) {
+			return fmt.Errorf("invalid manifest: %s (%s) is not a path inside the export folder", what, rel)
+		}
+		if _, err := os.Stat(filepath.Join(dir, local)); err != nil {
+			return fmt.Errorf("invalid manifest: %s (%s): %w", what, rel, err)
+		}
+		return nil
+	}
+
+	if m.Cover != "" {
+		if err := check(`"cover"`, m.Cover); err != nil {
+			return err
+		}
+	}
+	for i, card := range m.Cards {
+		where := fmt.Sprintf("cards[%d] (%q)", i, card.Title)
+		if err := check(where+` "text"`, card.Text); err != nil {
+			return err
+		}
+		if err := check(where+` "lines"`, card.Lines); err != nil {
+			return err
+		}
+	}
+	for i, rel := range m.Assets {
+		if err := check(fmt.Sprintf("files[%d]", i), rel); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // readExportLines reads the signed lines of a card from an export folder.
