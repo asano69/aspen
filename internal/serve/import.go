@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"math"
 	"os"
 	"path"
@@ -449,8 +450,12 @@ func importFolder(app core.App, pod *core.Record, dir string, m manifest, progre
 		if err != nil {
 			return false, err
 		}
-		lines, err := readExportLines(dir, card.Lines)
-		if err != nil {
+		// The lines metadata is optional. Without it the card gets fresh line
+		// IDs (or keeps the stored ones, see writeNote).
+		var lines []lineid.Line
+		if card.Lines == "" {
+			slog.Warn("import: card has no lines metadata", "card", card.Title)
+		} else if lines, err = readExportLines(dir, card.Lines); err != nil {
 			return false, err
 		}
 		created, err := importCard(tx, pod.Id, card.Title, string(text), lines)
@@ -498,6 +503,10 @@ func checkManifestFiles(dir string, m manifest) error {
 		where := fmt.Sprintf("cards[%d] (%q)", i, card.Title)
 		if err := check(where+` "text"`, card.Text); err != nil {
 			return err
+		}
+		// "lines" is optional: a card without it is imported without metadata.
+		if card.Lines == "" {
+			continue
 		}
 		if err := check(where+` "lines"`, card.Lines); err != nil {
 			return err

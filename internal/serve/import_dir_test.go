@@ -122,7 +122,6 @@ func TestPlanImport_NamesTheManifestEntryAtFault(t *testing.T) {
 		change func(m *manifest)
 		want   string
 	}{
-		{"empty lines", func(m *manifest) { m.Cards[0].Lines = "" }, `cards[0] ("alpha") "lines" is empty`},
 		{"empty text", func(m *manifest) { m.Cards[0].Text = "" }, `cards[0] ("alpha") "text" is empty`},
 		{"outside the folder", func(m *manifest) { m.Cards[0].Text = "../x.csn" }, "not a path inside the export folder"},
 		{"missing file", func(m *manifest) { m.Cards[0].Lines = "cards/none.json" }, `cards[0] ("alpha") "lines" (cards/none.json)`},
@@ -155,6 +154,43 @@ func TestPlanImport_NamesTheManifestEntryAtFault(t *testing.T) {
 	}
 	if n, _ := app.CountRecords("pods"); n != 0 {
 		t.Errorf("got %d pods, want 0: nothing may be created", n)
+	}
+}
+
+func TestApplyImport_CardWithoutLinesMetadata(t *testing.T) {
+	app := newExportTestApp(t)
+	dir := writeExport(t, "fresh", "Fresh")
+	path := filepath.Join(dir, manifestName)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var m manifest
+	if err := json.Unmarshal(data, &m); err != nil {
+		t.Fatal(err)
+	}
+	m.Cards[0].Lines = ""
+	if data, err = json.Marshal(m); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	plan, err := PlanImport(app, dir)
+	if err != nil {
+		t.Fatalf("PlanImport: %v", err)
+	}
+	if _, err := ApplyImport(app, plan, nil); err != nil {
+		t.Fatalf("ApplyImport: %v", err)
+	}
+
+	pod, err := findImportPod(app, "fresh")
+	if err != nil {
+		t.Fatalf("find pod: %v", err)
+	}
+	if got := cardText(t, app, cardInPod(t, app, pod.Id, "alpha").Id); got != "alpha\nbody" {
+		t.Errorf("card text = %q, want %q", got, "alpha\nbody")
 	}
 }
 
@@ -309,12 +345,10 @@ func TestApplyImport_MissingCoverFileCreatesNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	plan, err := PlanImport(app, dir)
-	if err != nil {
-		t.Fatalf("PlanImport: %v", err)
-	}
-	if _, err := ApplyImport(app, plan, nil); err == nil || !strings.Contains(err.Error(), "read cover") {
-		t.Errorf("err = %v, want a read-cover error", err)
+	// PlanImport already checks that every file of the manifest exists, so the
+	// missing cover is reported before anything can be created.
+	if _, err := PlanImport(app, dir); err == nil || !strings.Contains(err.Error(), `"cover" (cover/c.svg)`) {
+		t.Errorf("err = %v, want an error naming the missing cover", err)
 	}
 	if n, _ := app.CountRecords("pods"); n != 0 {
 		t.Errorf("got %d pods, want 0", n)
