@@ -137,7 +137,7 @@ func TestExport_WritesOnePodInTheDirectoryLayout(t *testing.T) {
 
 	dir, result := runExport(t, app, "src")
 	if result != (ExportResult{Cards: 1}) {
-		t.Errorf("result = %+v, want 1 card and no assets", result)
+		t.Errorf("result = %+v, want 1 card and no files", result)
 	}
 
 	files := readFiles(t, dir)
@@ -155,7 +155,7 @@ func TestExport_WritesOnePodInTheDirectoryLayout(t *testing.T) {
 	m := readManifest(t, files)
 	want := manifestCard{Title: "alpha", Text: "cards/alpha.csn", Lines: "cards/alpha.json"}
 	if len(m.Cards) != 1 || m.Cards[0] != want || len(m.Assets) != 0 {
-		t.Errorf("manifest = %+v, want the card %+v and no assets", m, want)
+		t.Errorf("manifest = %+v, want the card %+v and no files", m, want)
 	}
 }
 
@@ -165,7 +165,7 @@ func TestExport_EmptyPodStillHasItsFolders(t *testing.T) {
 
 	dir, _ := runExport(t, app, "src")
 
-	for _, sub := range []string{"cards", "assets", "cover"} {
+	for _, sub := range []string{"cards", "files", "cover"} {
 		if info, err := os.Stat(filepath.Join(dir, sub)); err != nil || !info.IsDir() {
 			t.Errorf("%s is not a folder (err %v)", sub, err)
 		}
@@ -300,17 +300,17 @@ func TestExport_WritesTheAttachmentsOfTheCardsOnce(t *testing.T) {
 		t.Errorf("result = %+v, want 2 cards and 1 asset", result)
 	}
 
-	asset := "assets/" + name
+	asset := "files/" + name
 	files := readFiles(t, dir)
 	if files[asset] != "png-bytes" {
 		t.Errorf("%s = %q, want %q", asset, files[asset], "png-bytes")
 	}
 	m := readManifest(t, files)
 	if len(m.Assets) != 1 || m.Assets[0] != asset {
-		t.Errorf("manifest assets = %v, want [%s]", m.Assets, asset)
+		t.Errorf("manifest files = %v, want [%s]", m.Assets, asset)
 	}
 	for entry := range files {
-		if strings.HasPrefix(entry, "assets/") && entry != asset {
+		if strings.HasPrefix(entry, "files/") && entry != asset {
 			t.Errorf("unexpected asset %q", entry)
 		}
 	}

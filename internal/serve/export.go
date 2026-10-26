@@ -4,9 +4,9 @@
 // directory:
 //
 //	<dir>/<podName>/
-//	├── manifest.json                 pod name and title, cover, cards and assets
+//	├── manifest.json                 pod name and title, cover, cards and files
 //	├── cover/<file>                  the pod's cover image
-//	├── assets/<filename>             attachments used by the cards
+//	├── files/<filename>             attachments used by the cards
 //	└── cards/
 //	    ├── <stem>.csn                the text of a card
 //	    └── <stem>.json               the signed lines of a card
@@ -83,7 +83,7 @@ type manifest struct {
 	PodTitle string         `json:"pod_title"`
 	Cover    string         `json:"cover,omitempty"`
 	Cards    []manifestCard `json:"cards"`
-	Assets   []string       `json:"assets"`
+	Assets   []string       `json:"files"`
 }
 
 // Export writes every live card of the pod named podName, its cover and the
@@ -105,7 +105,7 @@ func Export(app core.App, podName, dir string) (ExportResult, error) {
 	dir = filepath.Join(dir, pod.GetString("name"))
 
 	// Created up front, so empty folders exist too.
-	for _, sub := range []string{"cards", "assets", "cover"} {
+	for _, sub := range []string{"cards", "files", "cover"} {
 		if err := os.MkdirAll(filepath.Join(dir, sub), 0o755); err != nil {
 			return result, fmt.Errorf("create %s: %w", sub, err)
 		}
@@ -135,7 +135,7 @@ func Export(app core.App, podName, dir string) (ExportResult, error) {
 		return result, err
 	}
 	used := map[string]bool{}
-	assets := map[string]bool{}
+	files := map[string]bool{}
 	for _, card := range cards {
 		text, err := loadCardText(app, card)
 		if err != nil {
@@ -157,11 +157,11 @@ func Export(app core.App, podName, dir string) (ExportResult, error) {
 		}
 		m.Cards = append(m.Cards, entry)
 		for _, name := range attachmentNames(text) {
-			assets[name] = true
+			files[name] = true
 		}
 	}
 
-	m.Assets, err = exportAssets(app, fsys, dir, slices.Sorted(maps.Keys(assets)))
+	m.Assets, err = exportAssets(app, fsys, dir, slices.Sorted(maps.Keys(files)))
 	if err != nil {
 		return result, err
 	}
@@ -249,7 +249,7 @@ func attachmentNames(text string) []string {
 }
 
 // exportAssets writes the attachments with the given filenames to
-// assets/<filename> and returns their paths, relative to dir.
+// files/<filename> and returns their paths, relative to dir.
 func exportAssets(app core.App, fsys *filesystem.System, dir string, names []string) ([]string, error) {
 	written := []string{}
 	for _, name := range names {
@@ -281,7 +281,7 @@ func exportAsset(app core.App, fsys *filesystem.System, dir, name string) (strin
 		return "", nil
 	}
 
-	rel := "assets/" + name
+	rel := "files/" + name
 	path := filepath.Join(dir, filepath.FromSlash(rel))
 	if err := copyStored(fsys, file.BaseFilesPath()+"/"+stored, path); err != nil {
 		return "", err

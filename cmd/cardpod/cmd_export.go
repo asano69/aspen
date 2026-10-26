@@ -20,7 +20,7 @@ func exportCmd(app *pocketbase.PocketBase) *cobra.Command {
 The pod is written to a folder named after it inside the directory (the name
 cannot be changed). That folder gets a manifest.json that holds the pod's name
 and title and lists every file, the pod's cover in cover/, the text and the
-signed lines of every card in cards/, and the attachments they use in assets/.
+signed lines of every card in cards/, and the attachments they use in files/.
 Stop the server before running this command.`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
