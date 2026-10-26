@@ -23,7 +23,10 @@ import {
 //   editor has focus, so it is not a clue.
 // - "created" / "destroyed": the editor's lifetime. "destroyed during
 //   composition" means the editor was torn down while the IME was converting
-//   (e.g. a draft turning into an existing card).
+//   (e.g. a draft turning into an existing card). "created" also reports the
+//   editor destroyed just before it (afterDestroy), and "destroyed" carries a
+//   stack trace: an editor replaced while the browser's IME state still
+//   belonged to the removed one starts with the IME off.
 // - "update during composition": every CodeMirror update while composing, with
 //   its user events and effects, to spod dispatches that should not happen.
 // - "DOM mutation during composition": nodes added or removed under the
@@ -35,6 +38,8 @@ const PREFIX = "[ime-debug]";
 // How many recent events the idle trace keeps. It is dumped on blur, which is
 // when the user recovers from the bug by clicking outside and back.
 const TRACE_SIZE = 200;
+// How many of the newest trace entries are printed on blur.
+const TRACE_TAIL = 40;
 const SWITCH_KEYS = new Set(["Convert", "NonConvert"]);
 const STUCK_MS = 10_000;
 
@@ -43,6 +48,9 @@ const IME_KEY_RE =
   /^(Convert|NonConvert|KanaMode|Hiragana|Katakana|HiraganaKatakana|Romaji|Zenkaku|Hankaku|ZenkakuHankaku|Eisu|Lang\d|Unidentified|Compose|Dead)$/;
 
 let nextId = 1;
+
+// The editor destroyed last, so a new editor can report how soon it followed.
+let lastDestroyed: { id: number; at: number } | undefined;
 
 function isEnabled(): boolean {
   if (import.meta.env.DEV) return true;
@@ -152,7 +160,13 @@ class ImeDebug implements PluginValue {
     );
     this.observer.observe(dom, { childList: true, subtree: true });
 
-    this.log("created", this.snapshot());
+    this.log("created", {
+      ...this.snapshot(),
+      afterDestroy: lastDestroyed && {
+        id: lastDestroyed.id,
+        agoMs: Math.round(performance.now() - lastDestroyed.at),
+      },
+    });
   }
 
   update(update: ViewUpdate) {
@@ -189,8 +203,11 @@ class ImeDebug implements PluginValue {
         this.snapshot(),
       );
     }
+    lastDestroyed = { id: this.id, at: performance.now() };
     this.log("destroyed", {
       lifetimeMs: Math.round(performance.now() - this.createdAt),
+      // Shows what tore the editor down.
+      stack: new Error().stack,
     });
     clearTimeout(this.stuckTimer);
     this.observer.disconnect();
@@ -263,12 +280,16 @@ class ImeDebug implements PluginValue {
 
   // Prints the recent trace (see "trace before blur" in the file comment).
   private dumpTrace() {
+    // One line per entry and only the newest ones: a single long message is
+    // cut off by the console, which hid exactly the latest entries.
+    const tail = this.trace.slice(-TRACE_TAIL);
     console.log(
       PREFIX,
       `#${this.id}`,
       "trace before blur",
-      "\n" + this.trace.join("\n"),
+      `(last ${tail.length})`,
     );
+    for (const line of tail) console.log(PREFIX, `#${this.id}`, line);
     this.trace.length = 0;
   }
 

@@ -285,6 +285,11 @@ export default function NoteEditor(props: NoteEditorProps) {
 
     onCleanup(() => {
       unregisterDebug();
+      // Blur a focused editor before it is removed. Removing the focused
+      // element leaves the browser's IME state attached to it, so the editor
+      // that replaces it (a draft becoming a card, a card switch) could start
+      // with the IME off.
+      if (document.activeElement === view.contentDOM) view.contentDOM.blur();
       view.destroy();
     });
   };
