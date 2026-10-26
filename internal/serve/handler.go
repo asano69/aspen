@@ -79,6 +79,10 @@ func registerRoutes(e *core.ServeEvent) error {
 	admin.GET("/cards/{id}/telomere", telomereHandler)
 	admin.POST("/attachments", uploadAttachmentHandler)
 
+	// Uploaded images (see attachments.go). Public like any <img> source; it
+	// is registered before the SPA fallback below, so it wins that match.
+	e.Router.GET("/files/{name}", serveAttachmentHandler)
+
 	// Public-data-shaped but still gated behind authentication (any
 	// regular user or superuser), since it returns the same card fields
 	// the "cards"/"card_links" collections themselves do.

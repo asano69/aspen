@@ -3,8 +3,8 @@ import { resolveImageSrc } from "./attachmentPath";
 
 describe("resolveImageSrc", () => {
   it("resolves an attachment path against the attachments collection", () => {
-    expect(resolveImageSrc("@/abc123def456ghi/a.png")).toBe(
-      "/api/files/attachments/abc123def456ghi/a.png",
+    expect(resolveImageSrc("@/files/01G65Z755AFWAKHE12NY0CQ9FH.png")).toBe(
+      "/files/01G65Z755AFWAKHE12NY0CQ9FH.png",
     );
   });
 

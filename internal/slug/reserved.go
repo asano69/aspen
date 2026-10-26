@@ -24,6 +24,7 @@ var podNameReserved = map[string]bool{
 	"api":      true,
 	"admin":    true,
 	"settings": true,
+	"files":    true,
 	"_":        true,
 }
 

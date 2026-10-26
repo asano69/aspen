@@ -6,7 +6,7 @@
 //	<dir>/<podName>/
 //	├── manifest.json                 pod name and title, cover, cards and assets
 //	├── cover/<file>                  the pod's cover image
-//	├── assets/<recordId>/<file>      attachments used by the cards
+//	├── assets/<filename>             attachments used by the cards
 //	└── cards/
 //	    ├── <stem>.csn                the text of a card
 //	    └── <stem>.json               the signed lines of a card
@@ -156,8 +156,8 @@ func Export(app core.App, podName, dir string) (ExportResult, error) {
 			return result, fmt.Errorf("export card %s: %w", card.Id, err)
 		}
 		m.Cards = append(m.Cards, entry)
-		for _, id := range attachmentIDs(text) {
-			assets[id] = true
+		for _, name := range attachmentNames(text) {
+			assets[name] = true
 		}
 	}
 
@@ -233,38 +233,29 @@ func truncateBytes(s string, max int) string {
 	return s[:max]
 }
 
-// attachmentIDs returns the record ids of the attachments an image notation
-// in text refers to ("@/<recordId>/<filename>").
-func attachmentIDs(text string) []string {
-	var ids []string
+// attachmentNames returns the filenames of the attachments an image notation
+// in text refers to ("@/files/<filename>").
+func attachmentNames(text string) []string {
+	var names []string
 	parser.Parse(text).Walk(func(n *parser.Node) bool {
 		if n.Kind == parser.KindImage || n.Kind == parser.KindLinkedImage {
-			if id, ok := attachmentID(n.Text); ok {
-				ids = append(ids, id)
+			if name, ok := strings.CutPrefix(n.Text, attachmentPrefix); ok {
+				names = append(names, name)
 			}
 		}
 		return true
 	})
-	return ids
+	return names
 }
 
-func attachmentID(src string) (string, bool) {
-	rest, ok := strings.CutPrefix(src, "@/")
-	if !ok {
-		return "", false
-	}
-	id, _, ok := strings.Cut(rest, "/")
-	return id, ok
-}
-
-// exportAssets writes the attachments with the given record ids to
-// assets/<recordId>/<file> and returns their paths, relative to dir.
-func exportAssets(app core.App, fsys *filesystem.System, dir string, ids []string) ([]string, error) {
+// exportAssets writes the attachments with the given filenames to
+// assets/<filename> and returns their paths, relative to dir.
+func exportAssets(app core.App, fsys *filesystem.System, dir string, names []string) ([]string, error) {
 	written := []string{}
-	for _, id := range ids {
-		rel, err := exportAsset(app, fsys, dir, id)
+	for _, name := range names {
+		rel, err := exportAsset(app, fsys, dir, name)
 		if err != nil {
-			return nil, fmt.Errorf("export attachment %s: %w", id, err)
+			return nil, fmt.Errorf("export attachment %s: %w", name, err)
 		}
 		if rel != "" {
 			written = append(written, rel)
@@ -276,23 +267,23 @@ func exportAssets(app core.App, fsys *filesystem.System, dir string, ids []strin
 // exportAsset writes one attachment and returns its path relative to dir. An
 // attachment that no longer exists is skipped (the note keeps pointing at it,
 // as it did before the export) and gives "".
-func exportAsset(app core.App, fsys *filesystem.System, dir, id string) (string, error) {
-	record, err := app.FindRecordById("attachments", id)
+func exportAsset(app core.App, fsys *filesystem.System, dir, name string) (string, error) {
+	file, err := findStoredFile(app, name)
 	if errors.Is(err, sql.ErrNoRows) {
-		slog.Warn("export: attachment not found", "attachment", id)
+		slog.Warn("export: attachment not found", "attachment", name)
 		return "", nil
 	}
 	if err != nil {
 		return "", err
 	}
-	name := record.GetString("image")
-	if name == "" {
+	stored := file.GetString("file")
+	if stored == "" {
 		return "", nil
 	}
 
-	rel := "assets/" + id + "/" + name
+	rel := "assets/" + name
 	path := filepath.Join(dir, filepath.FromSlash(rel))
-	if err := copyStored(fsys, record.BaseFilesPath()+"/"+name, path); err != nil {
+	if err := copyStored(fsys, file.BaseFilesPath()+"/"+stored, path); err != nil {
 		return "", err
 	}
 	return rel, nil

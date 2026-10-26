@@ -56,6 +56,7 @@ export default defineConfig({
       "/api": { target: "http://127.0.0.1:3000", changeOrigin: true },
       "/_": { target: "http://127.0.0.1:3000", changeOrigin: true },
       "/health": { target: "http://127.0.0.1:3000", changeOrigin: true },
+      "/files": { target: "http://127.0.0.1:3000", changeOrigin: true },
 
       "/collab/": wsProxy,
       "/connection/": wsProxy,

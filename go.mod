@@ -7,6 +7,7 @@ require (
 	github.com/blevesearch/bleve/v2 v2.6.1
 	github.com/centrifugal/centrifuge v0.39.2
 	github.com/google/uuid v1.6.0
+	github.com/oklog/ulid/v2 v2.1.2
 	github.com/pocketbase/dbx v1.12.0
 	github.com/pocketbase/pocketbase v0.39.4
 	github.com/sig-0/boring-avatars-go v0.1.1

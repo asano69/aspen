@@ -64,14 +64,19 @@ export async function renameLinks(
 }
 
 
-// Uploads an image to the server (see internal/serve/attachments.go), which
-// shrinks it and stores it. Resolves to the attachment path
-// ("@/<recordId>/<filename>") to write in image notation; it has no origin
-// (see lib/models/attachmentPath.ts). requestKey: null keeps concurrent
-// uploads from auto-cancelling each other.
-export async function uploadAttachment(file: File): Promise<string> {
+// Uploads an image used in a pod to the server (see
+// internal/serve/attachments.go), which shrinks it and stores it once per
+// content. Resolves to the attachment path ("@/files/<ULID><ext>") to write in
+// image notation; it has neither an origin nor a pod (see
+// lib/models/attachmentPath.ts). requestKey: null keeps concurrent uploads
+// from auto-cancelling each other.
+export async function uploadAttachment(
+  file: File,
+  podId: string,
+): Promise<string> {
   const body = new FormData();
   body.append("image", file);
+  body.append("pod", podId);
   const res = await pb.send<UploadAttachmentResponse>(
     "/api/admin/attachments",
     { method: "POST", body, requestKey: null },

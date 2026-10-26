@@ -61,7 +61,7 @@ type RenameLinksResponse struct {
 
 
 // UploadAttachmentResponse is the body of POST /api/admin/attachments. URL is
-// the attachment path ("@/<recordId>/<filename>") to write in image notation.
+// the attachment path ("@/files/<ULID><ext>") to write in image notation.
 type UploadAttachmentResponse struct {
 	URL string `json:"url"`
 }

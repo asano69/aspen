@@ -10,13 +10,13 @@ import (
 	"unicode/utf8"
 
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/tools/filesystem"
 
+	"github.com/asano69/cardpod/internal/attachment"
 	"github.com/asano69/cardpod/internal/lineid"
 )
 
 // newExportTestApp extends newImportTestApp with what Export reads beyond it:
-// the soft-delete field of pods and the attachments collection.
+// the soft-delete field of pods and the files and pod_files collections.
 func newExportTestApp(t *testing.T) core.App {
 	t.Helper()
 	app := newImportTestApp(t)
@@ -35,31 +35,36 @@ func newExportTestApp(t *testing.T) core.App {
 		t.Fatalf("extend pods collection: %v", err)
 	}
 
-	attachments := core.NewBaseCollection("attachments")
-	attachments.Fields.Add(&core.FileField{Name: "image", MaxSelect: 1})
-	if err := app.Save(attachments); err != nil {
-		t.Fatalf("create attachments collection: %v", err)
+	files := core.NewBaseCollection("files")
+	files.Fields.Add(
+		&core.FileField{Name: "file", MaxSelect: 1},
+		&core.NumberField{Name: "filesize"},
+		&core.TextField{Name: "hash"},
+	)
+	if err := app.Save(files); err != nil {
+		t.Fatalf("create files collection: %v", err)
+	}
+	podFiles := core.NewBaseCollection("pod_files")
+	podFiles.Fields.Add(
+		&core.TextField{Name: "pod"},
+		&core.TextField{Name: "file"},
+		&core.TextField{Name: "filename"},
+	)
+	if err := app.Save(podFiles); err != nil {
+		t.Fatalf("create pod_files collection: %v", err)
 	}
 	return app
 }
 
-// createAttachment stores a small file and returns the note notation of it.
-func createAttachment(t *testing.T, app core.App, content string) (record *core.Record, src string) {
+// createAttachment stores a small file for the pod and returns its filename and
+// the note notation of it.
+func createAttachment(t *testing.T, app core.App, pod, content string) (name, src string) {
 	t.Helper()
-	collection, err := app.FindCollectionByNameOrId("attachments")
+	name, err := storeAttachment(app, pod, attachment.Result{Data: []byte(content), Ext: ".png"})
 	if err != nil {
-		t.Fatalf("find attachments collection: %v", err)
+		t.Fatalf("store attachment: %v", err)
 	}
-	file, err := filesystem.NewFileFromBytes([]byte(content), "a.png")
-	if err != nil {
-		t.Fatalf("make file: %v", err)
-	}
-	record = core.NewRecord(collection)
-	record.Set("image", file)
-	if err := app.Save(record); err != nil {
-		t.Fatalf("save attachment: %v", err)
-	}
-	return record, "@/" + record.Id + "/" + record.GetString("image")
+	return name, attachmentPrefix + name
 }
 
 // importPages imports pages given as title -> lines into pod.
@@ -282,12 +287,12 @@ func TestExportStem(t *testing.T) {
 
 func TestExport_WritesTheAttachmentsOfTheCardsOnce(t *testing.T) {
 	app := newExportTestApp(t)
-	createPod(t, app, "src")
-	attachment, src := createAttachment(t, app, "png-bytes")
-	missing := "@/zzzzzzzzzzzzzzz/gone.png"
+	src := createPod(t, app, "src")
+	name, ref := createAttachment(t, app, src.Id, "png-bytes")
+	missing := "@/files/MISSING.png"
 	importPages(t, app, "src",
-		map[string]any{"title": "one", "lines": []string{"one", "[" + src + "]", "[" + missing + "]"}},
-		map[string]any{"title": "two", "lines": []string{"two", "[[" + src + "]]"}},
+		map[string]any{"title": "one", "lines": []string{"one", "[" + ref + "]", "[" + missing + "]"}},
+		map[string]any{"title": "two", "lines": []string{"two", "[[" + ref + "]]"}},
 	)
 
 	dir, result := runExport(t, app, "src")
@@ -295,17 +300,17 @@ func TestExport_WritesTheAttachmentsOfTheCardsOnce(t *testing.T) {
 		t.Errorf("result = %+v, want 2 cards and 1 asset", result)
 	}
 
-	name := "assets/" + attachment.Id + "/" + attachment.GetString("image")
+	asset := "assets/" + name
 	files := readFiles(t, dir)
-	if files[name] != "png-bytes" {
-		t.Errorf("%s = %q, want %q", name, files[name], "png-bytes")
+	if files[asset] != "png-bytes" {
+		t.Errorf("%s = %q, want %q", asset, files[asset], "png-bytes")
 	}
 	m := readManifest(t, files)
-	if len(m.Assets) != 1 || m.Assets[0] != name {
-		t.Errorf("manifest assets = %v, want [%s]", m.Assets, name)
+	if len(m.Assets) != 1 || m.Assets[0] != asset {
+		t.Errorf("manifest assets = %v, want [%s]", m.Assets, asset)
 	}
 	for entry := range files {
-		if strings.HasPrefix(entry, "assets/") && entry != name {
+		if strings.HasPrefix(entry, "assets/") && entry != asset {
 			t.Errorf("unexpected asset %q", entry)
 		}
 	}

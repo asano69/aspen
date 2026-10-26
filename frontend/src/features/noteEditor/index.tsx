@@ -179,7 +179,11 @@ export default function NoteEditor(props: NoteEditorProps) {
         pasteUrlDecode(),
         // Uploads a pasted image and inserts it as "[url]" (see
         // plugins/interactions/pasteImage.ts).
-        pasteImage(uploadAttachment),
+        pasteImage(async (file) => {
+          const podId = pod()?.id;
+          if (!podId) throw new Error("The pod is not loaded yet.");
+          return uploadAttachment(file, podId);
+        }),
         // Converts pasted Markdown to Scrapbox notation (see
         // plugins/interactions/pasteMarkdown). Runs before
         // pasteCodeBlockIndent, which only sees pastes this one declines.
