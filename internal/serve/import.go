@@ -16,6 +16,9 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/pocketbase/dbx"
@@ -188,12 +191,9 @@ func Import(app core.App, podName string, r io.ReaderAt, progress func(done, tot
 		return result, err
 	}
 
-	pod, err := app.FindFirstRecordByFilter("pods", "name = {:name}", dbx.Params{"name": podName})
-	if errors.Is(err, sql.ErrNoRows) {
-		return result, fmt.Errorf("pod %q not found", podName)
-	}
+	pod, err := findImportPod(app, podName)
 	if err != nil {
-		return result, fmt.Errorf("find pod %q: %w", podName, err)
+		return result, err
 	}
 
 	return runBatched(app, len(spans), progress, func(tx core.App, i int) (bool, error) {
@@ -209,6 +209,91 @@ func Import(app core.App, podName string, r io.ReaderAt, progress func(done, tot
 		}
 		return created, nil
 	})
+}
+
+// findImportPod returns the pod an import writes into, or an error when it does
+// not exist.
+func findImportPod(app core.App, podName string) (*core.Record, error) {
+	pod, err := app.FindFirstRecordByFilter("pods", "name = {:name}", dbx.Params{"name": podName})
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("pod %q not found", podName)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find pod %q: %w", podName, err)
+	}
+	return pod, nil
+}
+
+// ImportDir imports an export folder (see export.go) into the pod named
+// podName. The attachments are imported first, then the cards in manifest
+// order. A card is matched by title and overwritten, as in Import. The cover is
+// not imported, because the pod already has one.
+//
+// progress, when not nil, is called after each card as in Import.
+func ImportDir(app core.App, podName, dir string, progress func(done, total int)) (ImportResult, error) {
+	data, err := os.ReadFile(filepath.Join(dir, manifestName))
+	if err != nil {
+		return ImportResult{}, fmt.Errorf("read manifest: %w", err)
+	}
+	var m manifest
+	if err := json.Unmarshal(data, &m); err != nil {
+		return ImportResult{}, fmt.Errorf("invalid manifest: %w", err)
+	}
+
+	pod, err := findImportPod(app, podName)
+	if err != nil {
+		return ImportResult{}, err
+	}
+
+	for _, rel := range m.Assets {
+		content, err := readExportFile(dir, rel)
+		if err != nil {
+			return ImportResult{}, err
+		}
+		if err := importAttachment(app, pod.Id, path.Base(rel), content); err != nil {
+			return ImportResult{}, fmt.Errorf("import attachment %s: %w", rel, err)
+		}
+	}
+
+	return runBatched(app, len(m.Cards), progress, func(tx core.App, i int) (bool, error) {
+		card := m.Cards[i]
+		text, err := readExportFile(dir, card.Text)
+		if err != nil {
+			return false, err
+		}
+		lines, err := readExportLines(dir, card.Lines)
+		if err != nil {
+			return false, err
+		}
+		created, err := importCard(tx, pod.Id, card.Title, string(text), lines)
+		if err != nil {
+			return false, fmt.Errorf("import card %q: %w", card.Title, err)
+		}
+		return created, nil
+	})
+}
+
+// readExportFile reads a file of an export folder. rel is a "/" path from the
+// manifest, and it must stay inside the folder.
+func readExportFile(dir, rel string) ([]byte, error) {
+	local := filepath.FromSlash(rel)
+	if !filepath.IsLocal(local) {
+		return nil, fmt.Errorf("%q is not a path inside the export", rel)
+	}
+	return os.ReadFile(filepath.Join(dir, local))
+}
+
+// readExportLines reads the signed lines of a card from an export folder.
+func readExportLines(dir, rel string) ([]lineid.Line, error) {
+	data, err := readExportFile(dir, rel)
+	if err != nil {
+		return nil, err
+	}
+	var lines []lineid.Line
+	if err := json.Unmarshal(data, &lines); err != nil {
+		return nil, fmt.Errorf("invalid lines file %s: %w", rel, err)
+	}
+	return lines, nil
 }
 
 // runBatched calls do for each of total items and counts what it reports.

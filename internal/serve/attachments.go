@@ -13,6 +13,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"path"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/pocketbase/dbx"
@@ -140,6 +141,47 @@ func findOrCreatePodFile(tx core.App, podID string, file *core.Record, ext strin
 	podFile.Set("file", file.Id)
 	podFile.Set("filename", filename)
 	return filename, tx.Save(podFile)
+}
+
+// importAttachment makes an attachment of an export available to podID under
+// its original filename, so the notes that refer to it keep working. The bytes
+// are stored as they are, without the processing done for uploads. Content is
+// stored once per hash, as in storeAttachment.
+func importAttachment(app core.App, podID, filename string, content []byte) error {
+	sum := sha256.Sum256(content)
+	result := attachment.Result{Data: content, Ext: path.Ext(filename)}
+	return app.RunInTransaction(func(tx core.App) error {
+		file, err := findOrCreateFile(tx, hex.EncodeToString(sum[:]), result)
+		if err != nil {
+			return err
+		}
+		return ensurePodFile(tx, podID, file.Id, filename)
+	})
+}
+
+// ensurePodFile makes filename refer to the file fileID in the pod. An existing
+// row with that filename is kept as it is.
+func ensurePodFile(tx core.App, podID, fileID, filename string) error {
+	_, err := tx.FindFirstRecordByFilter(
+		"pod_files", "pod = {:pod} && filename = {:name}",
+		dbx.Params{"pod": podID, "name": filename},
+	)
+	if err == nil {
+		return nil
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	collection, err := tx.FindCachedCollectionByNameOrId("pod_files")
+	if err != nil {
+		return err
+	}
+	podFile := core.NewRecord(collection)
+	podFile.Set("pod", podID)
+	podFile.Set("file", fileID)
+	podFile.Set("filename", filename)
+	return tx.Save(podFile)
 }
 
 // serveAttachmentHandler serves GET /files/{name}: the stored file behind a
