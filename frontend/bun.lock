@@ -35,6 +35,7 @@
         "remark": "^13.0.0",
         "remark-gfm": "^1.0.0",
         "sigma": "^4.0.0",
+        "solid-codemirror": "^2.3.3",
         "solid-js": "^1.9.12",
         "svg-pan-zoom": "^3.6.2",
         "tinykeys": "^4.0.1",
@@ -1278,6 +1279,8 @@
     "slash": ["slash@5.1.0", "", {}, "sha512-ZA6oR3T/pEyuqwMgAKT0/hAv8oAXckzbkmR0UkUosQ+Mc4RxGoJkRmwHgHufaenlyAgE1Mxgpdcrf75y6XcnDg=="],
 
     "slice-ansi": ["slice-ansi@4.0.0", "", { "dependencies": { "ansi-styles": "^4.0.0", "astral-regex": "^2.0.0", "is-fullwidth-code-point": "^3.0.0" } }, "sha512-qMCMfhY040cVHT43K9BFygqYbUPFZKHOg7K73mtTWJRb8pyP3fzf4Ixd5SzdEJQ6MRUg/WBnOLxghZtKKurENQ=="],
+
+    "solid-codemirror": ["solid-codemirror@2.3.3", "", { "dependencies": { "@codemirror/state": "^6.2.0", "@codemirror/view": "^6.12.0", "solid-js": "^1.7.5" } }, "sha512-Qu8VxPc6fv/ZcDZzYWM6Oznp8z4A1gqsSdhyYR3QfjOFVmG3feT0nUfZ5ecV2Oov0XB1jLvFOowvgtZ/7rczzw=="],
 
     "solid-js": ["solid-js@1.9.15", "", { "dependencies": { "csstype": "^3.1.0", "seroval": "~1.5.4", "seroval-plugins": "~1.5.4" } }, "sha512-EeiY2xfpZJqPLjXspVEKjAII4yv8NyG//NxZ3IpOFHdUNnnTyL0uJOeS9LWGvA7cFCz5y94cjFwYlmw5Luncsg=="],
 
