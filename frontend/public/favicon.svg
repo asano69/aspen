@@ -1,62 +1,51 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Icon: pea-pod
-  Set: Fluent Emoji Flat
-  Author: Microsoft Corporation (https://github.com/microsoft/fluentui-emoji)
-  License: MIT (https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE)
-  Source: https://iconify.design
--->
-<svg xmlns="http://www.w3.org/2000/svg"
-     xmlns:xlink="http://www.w3.org/1999/xlink"
-     viewBox="0 0 32 32"
-     width="32"
-     height="32">
-  <title>Pea Pod Icon</title>
-  <metadata>
-    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-             xmlns:dc="http://purl.org/dc/elements/1.1/"
-             xmlns:cc="http://creativecommons.org/ns#">
-      <cc:Work rdf:about="">
-        <dc:title>Pea Pod Icon</dc:title>
-        <dc:description>A stylized illustration of a pea pod, symbolizing growth, nature, and healthy eating. This icon can be used in various contexts such as food blogs, gardening websites, or health-related applications.</dc:description>
-        <dc:creator>
-          <cc:Agent>
-            <dc:title>Microsoft Corporation</dc:title>
-          </cc:Agent>
-        </dc:creator>
-        <dc:source>https://github.com/microsoft/fluentui-emoji</dc:source>
-        <dc:rights>
-          <cc:Agent>
-            <dc:title>Microsoft Corporation</dc:title>
-          </cc:Agent>
-        </dc:rights>
-        <cc:license rdf:resource="https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE"/>
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-        <dc:subject>
-          <rdf:Bag>
-            <rdf:li>pea</rdf:li>
-            <rdf:li>pod</rdf:li>
-            <rdf:li>vegetable</rdf:li>
-            <rdf:li>green</rdf:li>
-            <rdf:li>nature</rdf:li>
-            <rdf:li>growth</rdf:li>
-            <rdf:li>healthy</rdf:li>
-            <rdf:li>eating</rdf:li>
-            <rdf:li>food</rdf:li>
-            <rdf:li>garden</rdf:li>
-            <rdf:li>plant</rdf:li>
-            <rdf:li>illustration</rdf:li>
-            <rdf:li>icon</rdf:li>
-            <rdf:li>symbol</rdf:li>
-            <rdf:li>agriculture</rdf:li>
-          </rdf:Bag>
-        </dc:subject>
-      </cc:Work>
-      <cc:License rdf:about="https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE">
-        <dc:title>MIT (MIT)</dc:title>
-      </cc:License>
-    </rdf:RDF>
-  </metadata>
-  <g fill="none"><path fill="#5AB557" d="M8.5 12.5c-4.953 5.282-6.132 11.512-6.413 14.18c-.089.846.25 1.658.851 2.259c.673.672 1.606 1.012 2.546.864C8.69 29.298 16.348 27.652 21 23c7-7 7-18 7-18l-1-1S15 5.567 8.5 12.5"/><path fill="#276038" d="M9.5 14c-3.878 4.46-5.049 9.22-5.38 11.132c-.094.55.107 1.095.501 1.49c.756.755 1.986.74 2.724-.034L26 7l-1-1S14.5 8.25 9.5 14"/><path fill="#8DD753" fill-rule="evenodd" d="M30 5a3 3 0 0 1-.794 2.033l.339 1.692a6 6 0 0 1-.739 4.264l-.949 1.582a1 1 0 0 1-1.715 0l-.949-1.582a6 6 0 0 1-.738-4.264l.295-1.475l-1.476.295a6 6 0 0 1-4.263-.738l-1.582-.95a1 1 0 0 1 0-1.714l1.582-.95a6 6 0 0 1 4.263-.738l1.693.338A3 3 0 0 1 30 5" clip-rule="evenodd"/><path fill="#7DD74E" fill-rule="evenodd" d="M21.377 11.855a4 4 0 1 0-5.355 5.623zm-6.872 7.215a4 4 0 1 0-5.261 5.524z" clip-rule="evenodd"/></g>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1"  viewBox="0 0 379.236 379.236" xml:space="preserve" width="512" height="512">
+<g>
+	<g>
+		<g>
+			<rect x="174.158" y="40.843" style="fill:#997668;" width="30.925" height="66.389"/>
+			<rect x="174.158" y="40.843" style="opacity:0.3;fill:#222222;" width="30.925" height="30.056"/>
+		</g>
+	</g>
+	<g>
+		<g>
+			<path style="fill:#FF9500;" d="M270.346,284.571c18.977,0,34.357,15.383,34.357,34.357c0,18.975-15.381,34.357-34.357,34.357     H108.896c-18.975,0-34.357-15.383-34.357-34.357c0-18.975,15.383-34.357,34.357-34.357H270.346z"/>
+			<path style="opacity:0.2;fill:#222222;" d="M304.289,313.596c-2.563,16.441-16.781,29.024-33.943,29.024H108.896     c-17.16,0-31.381-12.583-33.943-29.024c-0.271,1.738-0.414,3.519-0.414,5.333c0,18.975,15.383,34.357,34.357,34.357h161.449     c18.977,0,34.357-15.383,34.357-34.357C304.703,317.114,304.561,315.334,304.289,313.596z"/>
+			<path style="opacity:0.2;fill:#222222;" d="M108.896,284.571c-18.975,0-34.357,15.383-34.357,34.357     c0,18.975,15.383,34.357,34.357,34.357h80.725v-68.715H108.896z"/>
+		</g>
+		<g>
+			<path style="fill:#FFC843;" d="M301.834,220.857c18.977,0,34.357,15.382,34.357,34.356c0,18.976-15.381,34.357-34.357,34.357     H77.408c-18.975,0-34.357-15.382-34.357-34.357c0-18.975,15.383-34.356,34.357-34.356H301.834z"/>
+			<path style="opacity:0.4;fill:#FF9500;" d="M335.777,249.881c-2.563,16.442-16.781,29.024-33.943,29.024H77.408     c-17.16,0-31.381-12.582-33.943-29.024c-0.271,1.738-0.414,3.519-0.414,5.333c0,18.976,15.383,34.357,34.357,34.357h224.426     c18.977,0,34.357-15.382,34.357-34.357C336.191,253.4,336.049,251.619,335.777,249.881z"/>
+			<path style="opacity:0.4;fill:#FF9500;" d="M77.408,220.857c-18.975,0-34.357,15.382-34.357,34.356     c0,18.976,15.383,34.357,34.357,34.357h112.213v-68.714H77.408z"/>
+		</g>
+		<circle style="fill:#333E48;" cx="245.933" cy="253.214" r="12.799"/>
+		<g>
+			<path style="fill:#FF9500;" d="M314.946,157.143c18.977,0,34.357,15.383,34.357,34.357s-15.381,34.357-34.357,34.357H64.296     c-18.975,0-34.357-15.383-34.357-34.357s15.383-34.357,34.357-34.357H314.946z"/>
+			<path style="opacity:0.2;fill:#222222;" d="M348.89,186.167c-2.563,16.441-16.781,29.024-33.943,29.024H64.296     c-17.16,0-31.381-12.583-33.943-29.024c-0.271,1.738-0.414,3.519-0.414,5.333c0,18.975,15.383,34.357,34.357,34.357h250.65     c18.977,0,34.357-15.383,34.357-34.357C349.304,189.686,349.161,187.905,348.89,186.167z"/>
+			<path style="opacity:0.2;fill:#222222;" d="M64.296,157.143c-18.975,0-34.357,15.383-34.357,34.357s15.383,34.357,34.357,34.357     h125.325v-68.715H64.296z"/>
+		</g>
+		<g>
+			<path style="fill:#FFC843;" d="M282.908,93.429c18.977,0,34.357,15.382,34.357,34.356c0,18.976-15.381,34.357-34.357,34.357     H96.334c-18.975,0-34.357-15.382-34.357-34.357c0-18.975,15.383-34.356,34.357-34.356H282.908z"/>
+			<path style="opacity:0.4;fill:#FF9500;" d="M316.852,122.452c-2.563,16.442-16.781,29.024-33.943,29.024H96.334     c-17.16,0-31.381-12.582-33.943-29.024c-0.271,1.738-0.414,3.519-0.414,5.333c0,18.976,15.383,34.357,34.357,34.357h186.574     c18.977,0,34.357-15.382,34.357-34.357C317.266,125.971,317.123,124.19,316.852,122.452z"/>
+			<path style="opacity:0.4;fill:#FF9500;" d="M96.334,93.429c-18.975,0-34.357,15.382-34.357,34.356     c0,18.976,15.383,34.357,34.357,34.357h93.287V93.429H96.334z"/>
+		</g>
+	</g>
+	<path style="fill:#985F35;" d="M364.344,55.735H14.893C6.668,55.735,0,49.068,0,40.843C0,32.618,6.668,25.95,14.893,25.95h349.451   c8.225,0,14.893,6.668,14.893,14.893C379.236,49.068,372.568,55.735,364.344,55.735z"/>
+</g>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </svg>
