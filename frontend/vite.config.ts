@@ -41,6 +41,11 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  // solid-codemirror needs a single instance of these packages, or
+  // "Unrecognized extension value" errors appear.
+  optimizeDeps: {
+    include: ["@codemirror/state", "@codemirror/view"],
+  },
   // __APP_NAME__ is a build-time constant (not a runtime env var), so it
   // can be referenced anywhere in src/ without an import.
   define: {

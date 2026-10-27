@@ -1,7 +1,6 @@
 /* eslint-disable solid/reactivity --
    The editor is created once per mount: props are read during setup, and
-   mountEditor is a ref callback, which the rule mistakes for a plain
-   function used in JSX. */
+   the extension list is built once. */
 import {
   createEffect,
   createSignal,
@@ -10,10 +9,10 @@ import {
   type JSX,
 } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, drawSelection } from "@codemirror/view";
 import { history } from "@codemirror/commands";
 import { closeBrackets } from "@codemirror/autocomplete";
+import { createCodeMirror } from "solid-codemirror";
 import { collabExtension, cursorsExtension, type Channel } from "cm-websocket";
 import { hangingIndent } from "./plugins/decorations/hangingIndent";
 import { wordBreak } from "./plugins/decorations/wordBreak";
@@ -97,142 +96,131 @@ export default function NoteEditor(props: NoteEditorProps) {
   const handleSlugCandidate = (candidate: TitleCandidate) => {
     props.onConfirmedTitle(candidate);
   };
-  // Solid doesn't auto-unmount ref callbacks the way React's new
-  // ref-cleanup convention does, so `view.destroy()` is wired to
-  // onCleanup explicitly below.
-  const mountEditor = (el: HTMLDivElement) => {
-    // The document always starts empty: with a channel, the room's update
-    // history is replayed into it (see cm-websocket's collabExtension).
-    const state = EditorState.create({
-      doc: "",
-      extensions: [
-        EditorView.lineWrapping,
-        // Debug-only IME logging (see imeDebug.ts).
-        imeDebug(),
-        // Draws the cursor/selection itself (via coordsAtPos) instead
-        // of relying on the browser's native contenteditable caret.
-        // Needed because IndentMarkWidget replaces an indent character
-        // with a widget (see hangingIndent.ts): right after
-        // Tab inserts a new widget, the native caret can render at a
-        // stale layout position until the next reflow forces the browser
-        // to recompute it.
-        drawSelection(),
-        // Auto-closes (), [], {}, '', "", `` and types over an existing
-        // closer instead of duplicating it. Also handles nested brackets
-        // on its own -- "[" twice in a row produces "[[|]]".
-        closeBrackets(),
-        // Undo/redo. @codemirror/collab keeps the history correct across
-        // remote updates (receiveUpdates tags them as not undoable).
-        history(),
-        // Live editing with the server and the other editors' cursors. The
-        // cursors extension must come after the collab one.
-        ...(props.channel
-          ? [
-              collabExtension(props.channel),
-              cursorsExtension(props.channel, {
-                name: currentUser()?.name ?? "anonymous",
-              }),
-            ]
-          : []),
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged) props.onDocChanged?.();
-        }),
-        titleCandidateExtension(handleSlugCandidate),
-        titleLineHighlight,
-        editorTheme,
-        // Hanging indent for wrapped lines, and the Scrapbox/Cosense-
-        // style bullet dot on a line's leading indent (see
-        // hangingIndent.ts) -- each character of the parser's Indent
-        // node is replaced 1:1 with a fixed-width "pad" element, so deleting
-        // one behaves like deleting any other single character.
-        hangingIndent,
-        // Controls how lines wrap (see wordBreak.ts / editorTheme.ts's
-        // ".cm-line" rule).
-        wordBreak,
-        // Bar left of each line: who edited it and whether it is unread (see
-        // plugins/decorations/telomere.ts).
-        telomere(
-          () => currentUser()?.name ?? "",
-          (entry, anchor) => setTelomereSelection({ entry, anchor }),
-        ),
-        codeBlockLines,
-        imageWidget,
-        mermaidBlock,
-        emptyLinks,
-        // Keeps a blank line at the end of the document (see
-        // plugins/interactions/trailingBlankLine.ts).
-        trailingBlankLine,
-        // Suggests existing card titles while a wiki link is typed (see
-        // plugins/interactions/titleCompletion.ts).
-        titleCompletion(() => pod()?.id),
-        // Cardpod's own Scrapbox-style syntax parser (see
-        // parser/cardpod/index.ts). syntaxReveal reads this same syntax tree
-        // to decide when to hide/show the raw markup around the cursor,
-        // Obsidian-style (see syntaxReveal.ts).
-        cardpodSyntax(),
-        // Colors tokens inside `code:` blocks once their language has
-        // resolved (see parser/cardpod/codeLanguages.ts).
-        syntaxHighlighting(defaultHighlightStyle),
-        syntaxReveal,
-        wikiLinkNavigation(props.podSlug, navigate),
-        externalLinkNavigation(),
-        pasteUrlDecode(),
-        // Uploads a pasted image and inserts it as "[url]" (see
-        // plugins/interactions/pasteImage.ts).
-        pasteImage(async (file) => {
-          const podId = pod()?.id;
-          if (!podId) throw new Error("The pod is not loaded yet.");
-          return uploadAttachment(file, podId);
-        }),
-        // Converts pasted Markdown to Scrapbox notation (see
-        // plugins/interactions/pasteMarkdown). Runs before
-        // pasteCodeBlockIndent, which only sees pastes this one declines.
-        pasteMarkdown(),
-        // Keeps a multi-line paste inside a `code:` block from ending the
-        // block (see pasteCodeBlockIndent.ts).
-        pasteCodeBlockIndent(),
-        // Menu above a selection: merge into another page, or copy as plain
-        // text (see plugins/interactions/selectionMenu.ts).
-        selectionMenu(props.onMergeSelection),
-        // A single real tab character per indent level, not spaces --
-        // indentMore/indentLess (bound below) both insert/remove whatever
-        // this unit is. The parser itself accepts any ECMAScript whitespace
-        // as indentation (see parser/cardpod/indent.ts).
-        indentUnit.of("\t"),
-        // Every key binding, grouped by origin and ordered by precedence
-        // (see keymaps.ts): Cardpod's own bindings win over the library
-        // keymaps that follow them, since each group becomes its own
-        // keymap.of(...) extension.
-        ...defaultKeymapGroups.map((group) => keymap.of(group.bindings)),
-      ],
-    });
 
-    const view = new EditorView({ state, parent: el });
+  // solid-codemirror owns the EditorView's lifetime: the view is created when
+  // `ref` is attached and destroyed with this component. The document always
+  // starts empty: with a channel, the room's update history is replayed into
+  // it (see cm-websocket's collabExtension).
+  const { ref, editorView, createExtension } = createCodeMirror({ value: "" });
+
+  // Every extension in one list, so their relative precedence is exactly the
+  // order written here.
+  createExtension([
+    EditorView.lineWrapping,
+    // Debug-only IME logging (see imeDebug.ts).
+    imeDebug(),
+    // Draws the cursor/selection itself (via coordsAtPos) instead
+    // of relying on the browser's native contenteditable caret.
+    // Needed because IndentMarkWidget replaces an indent character
+    // with a widget (see hangingIndent.ts): right after
+    // Tab inserts a new widget, the native caret can render at a
+    // stale layout position until the next reflow forces the browser
+    // to recompute it.
+    drawSelection(),
+    // Auto-closes (), [], {}, '', "", `` and types over an existing
+    // closer instead of duplicating it. Also handles nested brackets
+    // on its own -- "[" twice in a row produces "[[|]]".
+    closeBrackets(),
+    // Undo/redo. @codemirror/collab keeps the history correct across
+    // remote updates (receiveUpdates tags them as not undoable).
+    history(),
+    // Live editing with the server and the other editors' cursors. The
+    // cursors extension must come after the collab one.
+    ...(props.channel
+      ? [
+          collabExtension(props.channel),
+          cursorsExtension(props.channel, {
+            name: currentUser()?.name ?? "anonymous",
+          }),
+        ]
+      : []),
+    EditorView.updateListener.of((update) => {
+      if (update.docChanged) props.onDocChanged?.();
+    }),
+    titleCandidateExtension(handleSlugCandidate),
+    titleLineHighlight,
+    editorTheme,
+    // Hanging indent for wrapped lines, and the Scrapbox/Cosense-
+    // style bullet dot on a line's leading indent (see
+    // hangingIndent.ts) -- each character of the parser's Indent
+    // node is replaced 1:1 with a fixed-width "pad" element, so deleting
+    // one behaves like deleting any other single character.
+    hangingIndent,
+    // Controls how lines wrap (see wordBreak.ts / editorTheme.ts's
+    // ".cm-line" rule).
+    wordBreak,
+    // Bar left of each line: who edited it and whether it is unread (see
+    // plugins/decorations/telomere.ts).
+    telomere(
+      () => currentUser()?.name ?? "",
+      (entry, anchor) => setTelomereSelection({ entry, anchor }),
+    ),
+    codeBlockLines,
+    imageWidget,
+    mermaidBlock,
+    emptyLinks,
+    // Keeps a blank line at the end of the document (see
+    // plugins/interactions/trailingBlankLine.ts).
+    trailingBlankLine,
+    // Suggests existing card titles while a wiki link is typed (see
+    // plugins/interactions/titleCompletion.ts).
+    titleCompletion(() => pod()?.id),
+    // Cardpod's own Scrapbox-style syntax parser (see
+    // parser/cardpod/index.ts). syntaxReveal reads this same syntax tree
+    // to decide when to hide/show the raw markup around the cursor,
+    // Obsidian-style (see syntaxReveal.ts).
+    cardpodSyntax(),
+    // Colors tokens inside `code:` blocks once their language has
+    // resolved (see parser/cardpod/codeLanguages.ts).
+    syntaxHighlighting(defaultHighlightStyle),
+    syntaxReveal,
+    wikiLinkNavigation(props.podSlug, navigate),
+    externalLinkNavigation(),
+    pasteUrlDecode(),
+    // Uploads a pasted image and inserts it as "[url]" (see
+    // plugins/interactions/pasteImage.ts).
+    pasteImage(async (file) => {
+      const podId = pod()?.id;
+      if (!podId) throw new Error("The pod is not loaded yet.");
+      return uploadAttachment(file, podId);
+    }),
+    // Converts pasted Markdown to Scrapbox notation (see
+    // plugins/interactions/pasteMarkdown). Runs before
+    // pasteCodeBlockIndent, which only sees pastes this one declines.
+    pasteMarkdown(),
+    // Keeps a multi-line paste inside a `code:` block from ending the
+    // block (see pasteCodeBlockIndent.ts).
+    pasteCodeBlockIndent(),
+    // Menu above a selection: merge into another page, or copy as plain
+    // text (see plugins/interactions/selectionMenu.ts).
+    selectionMenu(props.onMergeSelection),
+    // A single real tab character per indent level, not spaces --
+    // indentMore/indentLess (bound below) both insert/remove whatever
+    // this unit is. The parser itself accepts any ECMAScript whitespace
+    // as indentation (see parser/cardpod/indent.ts).
+    indentUnit.of("\t"),
+    // Every key binding, grouped by origin and ordered by precedence
+    // (see keymaps.ts): Cardpod's own bindings win over the library
+    // keymaps that follow them, since each group becomes its own
+    // keymap.of(...) extension.
+    ...defaultKeymapGroups.map((group) => keymap.of(group.bindings)),
+  ]);
+
+  // Runs once the view exists. It is created after createExtension above, so
+  // it runs after the extensions are installed: the initial dispatches below
+  // must reach the collab and title plugins.
+  const start = (view: EditorView) => {
     // Lets cardpodDebug.dumpTree() in the browser console find this editor.
-    const unregisterDebug = registerDebugView(view);
+    onCleanup(registerDebugView(view));
     props.onView?.(view);
 
-    // Feeds the shared link results (see lib/stores/linkAliveStore.ts) into
-    // the editor as a predicate (see emptyLinks.ts). CodeMirror is outside
-    // Solid's tracking, so this effect re-runs on the store's version signal
-    // and sends a fresh predicate. The predicate runs untracked: it asks for a
-    // result the first time it sees a link, and treats "not answered yet" as
-    // alive so links never flash red.
-    createEffect(() => {
-      linkAliveVersion();
-      const podId = pod()?.id;
-      untrack(() =>
-        view.dispatch({
-          effects: setLinkAlive.of(
-            podId
-              ? (titleLc) => {
-                  requestLinkAlive(podId, titleLc);
-                  return linkAlive(podId, titleLc) ?? true;
-                }
-              : null,
-          ),
-        }),
-      );
+    // Blur a focused editor before it is removed. Removing the focused
+    // element leaves the browser's IME state attached to it, so the editor
+    // that replaces it (a draft becoming a card, a card switch) could start
+    // with the IME off. This cleanup is registered after the library's own
+    // effect, so it runs before the library destroys the view.
+    onCleanup(() => {
+      if (document.activeElement === view.contentDOM) view.contentDOM.blur();
     });
 
     // Seed the document's first line with initialTitle for a brand-new draft
@@ -282,17 +270,37 @@ export default function NoteEditor(props: NoteEditorProps) {
         view.focus();
       }, 0);
     }
-
-    onCleanup(() => {
-      unregisterDebug();
-      // Blur a focused editor before it is removed. Removing the focused
-      // element leaves the browser's IME state attached to it, so the editor
-      // that replaces it (a draft becoming a card, a card switch) could start
-      // with the IME off.
-      if (document.activeElement === view.contentDOM) view.contentDOM.blur();
-      view.destroy();
-    });
   };
+
+  createEffect(() => {
+    const view = editorView();
+    if (view) untrack(() => start(view));
+  });
+
+  // Feeds the shared link results (see lib/stores/linkAliveStore.ts) into
+  // the editor as a predicate (see emptyLinks.ts). CodeMirror is outside
+  // Solid's tracking, so this effect re-runs on the store's version signal
+  // and sends a fresh predicate. The predicate runs untracked: it asks for a
+  // result the first time it sees a link, and treats "not answered yet" as
+  // alive so links never flash red.
+  createEffect(() => {
+    const view = editorView();
+    if (!view) return;
+    linkAliveVersion();
+    const podId = pod()?.id;
+    untrack(() =>
+      view.dispatch({
+        effects: setLinkAlive.of(
+          podId
+            ? (titleLc) => {
+                requestLinkAlive(podId, titleLc);
+                return linkAlive(podId, titleLc) ?? true;
+              }
+            : null,
+        ),
+      }),
+    );
+  });
 
   // The page's own look (padding, shadow, radius) lives in
   // styles/components/page.css's ".page". An editor with no channel is still
@@ -301,7 +309,7 @@ export default function NoteEditor(props: NoteEditorProps) {
   return (
     <>
       <div class="page" classList={{ "not-persistent": !props.channel }}>
-        <div ref={mountEditor} class="editor" />
+        <div ref={ref} class="editor" />
       </div>
       <TelomerePopover
         selection={telomereSelection()}
