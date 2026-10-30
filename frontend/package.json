@@ -12,7 +12,7 @@
     "lint:css": "stylelint \"src/**/*.css\""
   },
   "dependencies": {
-    "@codemirror/autocomplete": "",
+    "@codemirror/autocomplete": "^6.20.3",
     "@codemirror/collab": "^6.1.1",
     "@codemirror/commands": "^6.7.1",
     "@codemirror/language-data": "^6.5.1",
@@ -30,7 +30,6 @@
     "@sigma/node-image": "^4.0.0",
     "@solidjs/router": "^0.16.1",
     "centrifuge": "^5.7.4",
-    "cm-websocket": "file:../cm-websocket",
     "dexie": "^4.0.11",
     "globals": "^17.7.0",
     "graphology": "^0.26.0",

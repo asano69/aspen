@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/asano69/cmgo/ot"
+	"github.com/asano69/cardpod/internal/cmgo/ot"
 )
 
 // recorder is a Tracker that remembers what it was told.

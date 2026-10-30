@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/asano69/cmgo/authority"
+	"github.com/asano69/cardpod/internal/cmgo/authority"
 )
 
 // updatesMessage is sent by the server: updates starting at index From.

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/asano69/cmgo/authority"
+	"github.com/asano69/cardpod/internal/cmgo/authority"
 )
 
 func newTestClient() *client {

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/asano69/cmgo/ot"
+	"github.com/asano69/cardpod/internal/cmgo/ot"
 )
 
 // serverID is the clientID of updates that the authority makes itself. It
