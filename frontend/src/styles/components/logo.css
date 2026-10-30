@@ -1,5 +1,5 @@
 /* Public classes: .logo-box, .logo-group, .logo-link, .logo-button, .logo,
- * .logo-version.
+ * .logo-icon, .logo-version.
  * The app icon with its optional title and version (see components/Logo.tsx).
  * .logo is the title text. */
 @layer components {
@@ -34,6 +34,17 @@
 
   .logo {
     font-family: var(--font-display);
+  }
+
+  /* The inlined logo.svg fills its wrapper, which the caller sizes. */
+  .logo-icon {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .logo-icon > svg {
+    width: 100%;
+    height: 100%;
   }
 
   .logo-version {

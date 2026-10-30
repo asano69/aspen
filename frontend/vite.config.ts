@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin, type ProxyOptions } from "vite";
 import solid from "vite-plugin-solid";
 
@@ -14,6 +16,28 @@ const injectAppNameHtml: Plugin = {
   name: "inject-app-name-html",
   transformIndexHtml(html) {
     return html.replace(/%APP_NAME%/g, appName ?? "");
+  },
+};
+
+// The app logo (src/assets/logo.svg) is the single source of the icon: Logo.tsx
+// inlines it, and this plugin serves/emits it as /favicon.svg, so the two can
+// never drift apart.
+const logoPath = fileURLToPath(new URL("./src/assets/logo.svg", import.meta.url));
+const faviconFromLogo: Plugin = {
+  name: "favicon-from-logo",
+  configureServer(server) {
+    server.middlewares.use("/favicon.svg", (_req, res) => {
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.end(readFileSync(logoPath));
+    });
+  },
+  generateBundle() {
+    this.addWatchFile(logoPath);
+    this.emitFile({
+      type: "asset",
+      fileName: "favicon.svg",
+      source: readFileSync(logoPath),
+    });
   },
 };
 
@@ -36,7 +60,7 @@ const wsProxy: ProxyOptions = {
 };
 
 export default defineConfig({
-  plugins: [solid(), injectAppNameHtml],
+  plugins: [solid(), injectAppNameHtml, faviconFromLogo],
   // Resolves the "@/*" alias declared in tsconfig.json's "paths".
   resolve: {
     tsconfigPaths: true,
