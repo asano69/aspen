@@ -324,3 +324,37 @@ func TestExport_UnknownPod(t *testing.T) {
 		t.Errorf("err = %v, want a pod-not-found error", err)
 	}
 }
+
+// Round-trips a title that contains "/" through export and import.
+func TestExportImport_SlashInTitleSurvives(t *testing.T) {
+	app := newExportTestApp(t)
+	podsExtended(t, app)
+	src := createPod(t, app, "src")
+	src.Set("title", "Src")
+	if err := app.Save(src); err != nil {
+		t.Fatal(err)
+	}
+	importPages(t, app, "src", map[string]any{"title": "a/b", "lines": []string{"a/b", "body"}})
+
+	dir, _ := runExport(t, app, "src")
+	if got := readManifest(t, readFiles(t, dir)).Cards[0].Title; got != "a/b" {
+		t.Fatalf("manifest title = %q, want %q", got, "a/b")
+	}
+
+	// Import into a fresh database.
+	other := newExportTestApp(t)
+	plan, err := PlanImport(other, dir)
+	if err != nil {
+		t.Fatalf("PlanImport: %v", err)
+	}
+	if _, err := ApplyImport(other, plan, nil); err != nil {
+		t.Fatalf("ApplyImport: %v", err)
+	}
+	pod, err := findImportPod(other, "src")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := cardInPod(t, other, pod.Id, "a/b").GetString("title"); got != "a/b" {
+		t.Errorf("imported title = %q, want %q", got, "a/b")
+	}
+}
