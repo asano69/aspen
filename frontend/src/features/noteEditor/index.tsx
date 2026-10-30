@@ -13,7 +13,7 @@ import { EditorView, keymap, drawSelection } from "@codemirror/view";
 import { history } from "@codemirror/commands";
 import { closeBrackets } from "@codemirror/autocomplete";
 import { createCodeMirror } from "solid-codemirror";
-import { collabExtension, cursorsExtension, type Channel } from "cm-websocket";
+import { collabExtension, type Channel } from "cm-websocket";
 import { hangingIndent } from "./plugins/decorations/hangingIndent";
 import { wordBreak } from "./plugins/decorations/wordBreak";
 import { codeBlockLines } from "./plugins/decorations/codeBlockLines";
@@ -124,16 +124,8 @@ export default function NoteEditor(props: NoteEditorProps) {
     // Undo/redo. @codemirror/collab keeps the history correct across
     // remote updates (receiveUpdates tags them as not undoable).
     history(),
-    // Live editing with the server and the other editors' cursors. The
-    // cursors extension must come after the collab one.
-    ...(props.channel
-      ? [
-          collabExtension(props.channel),
-          cursorsExtension(props.channel, {
-            name: currentUser()?.name ?? "anonymous",
-          }),
-        ]
-      : []),
+    // Live editing with the server, so several tabs or devices stay in sync.
+    ...(props.channel ? [collabExtension(props.channel)] : []),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) props.onDocChanged?.();
     }),

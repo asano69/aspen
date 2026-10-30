@@ -1,0 +1,1 @@
+export { collabExtension } from "./plugin";

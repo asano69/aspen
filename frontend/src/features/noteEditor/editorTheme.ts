@@ -23,10 +23,7 @@ export const editorTheme = EditorView.theme({
   },
   ".cm-scroller": {
     fontFamily: "var(--font-editor)",
-    // The page scrolls, not the editor, so nothing needs clipping here. With
-    // the default "overflow: auto", a remote name flag at the right edge of a
-    // wrapped line (it extends rightwards from the caret) was cut off instead
-    // of showing in the page's padding.
+    // The page scrolls, not the editor, so nothing needs clipping here.
     overflow: "visible",
   },
   ".cm-content": {
@@ -80,78 +77,6 @@ export const editorTheme = EditorView.theme({
   ".cm-selectionLayer": {
     zIndex: "1 !important",
     pointerEvents: "none",
-  },
-
-  // Remote cursors (y-codemirror.next): a 2px green caret with a small green
-  // name flag above it. Its base theme only shows the flag while the caret is
-  // hovered; it is always shown here.
-  ".cm-ySelectionCaret": {
-    opacity: "0.7",
-  },
-
-  ".cm-ySelectionCaretDot": {
-    display: "none",
-  },
-  ".cm-ySelectionInfo": {
-    opacity: "1",
-    top: "-7px",
-    width: "50px",
-    height: "14px",
-    padding: "0 2px",
-    fontFamily: "var(--font-sans)",
-    fontSize: "10px",
-    lineHeight: "14px",
-    color: "#fff",
-    backgroundColor: "green",
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
-    overflow: "hidden",
-    // The flag sits inside a ".cm-line", whose hanging indent
-    // (".cm-line.indent") sets a negative text-indent and whose baseline sets
-    // word-break: break-all. Both are inherited and would shift the name left
-    // (cutting off its first characters) or break it, so they are reset here.
-    textIndent: "0",
-    wordBreak: "normal",
-  },
-
-  // Flags of collaborators outside the visible area (see
-  // plugins/decorations/outsideCursors.ts). Positioned in screen
-  // coordinates, so they are fixed.
-  ".shared-cursors": {
-    pointerEvents: "none",
-  },
-  ".shared-cursors .cursor": {
-    position: "fixed",
-    zIndex: "101",
-    width: "2px",
-    height: "20px",
-    opacity: "0.7",
-    backgroundColor: "green",
-  },
-  ".shared-cursors .user-flag": {
-    marginTop: "-7px",
-    width: "50px",
-    height: "14px",
-    padding: "0 2px",
-    fontFamily: "var(--font-sans)",
-    fontSize: "10px",
-    lineHeight: "14px",
-    color: "#fff",
-    backgroundColor: "green",
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
-    overflow: "hidden",
-  },
-  ".shared-cursors .cursor.outside-top, .shared-cursors .cursor.outside-bottom":
-    {
-      zIndex: "1001",
-      opacity: "0.3",
-    },
-  ".shared-cursors .cursor.outside-top .user-flag": {
-    marginTop: "7px",
-  },
-  ".shared-cursors .cursor.outside-bottom .user-flag": {
-    marginTop: "-7px",
   },
 
   ".cm-line": {

@@ -101,4 +101,6 @@ require (
 	modernc.org/sqlite v1.52.0 // indirect
 )
 
+replace github.com/asano69/cmgo => ../cmgo
+
 tool github.com/gzuidhof/tygo
