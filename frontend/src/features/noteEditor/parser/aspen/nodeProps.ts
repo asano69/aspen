@@ -1,5 +1,5 @@
 // Shared NodeProps and Rule/RuleMatch types used by every syntax rule
-// in parser/cardpod (rules/bold.ts, rules/inlineCode.ts, ...). Kept in
+// in parser/aspen (rules/bold.ts, rules/inlineCode.ts, ...). Kept in
 // their own file, separate from index.ts, so a rule module can import
 // these without creating a circular dependency with index.ts -- which
 // in turn imports every rule module to assemble the `rules` array.

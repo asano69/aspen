@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EditorState } from "@codemirror/state";
-import { cardpodSyntax } from "../../parser/cardpod";
+import { aspenSyntax } from "../../parser/aspen";
 import {
   buildEmptyLinkDecorations,
   emptyLinks,
@@ -10,7 +10,7 @@ import {
 function markedTexts(doc: string, isAlive: ((lc: string) => boolean) | null) {
   const state = EditorState.create({
     doc,
-    extensions: [cardpodSyntax(), emptyLinks],
+    extensions: [aspenSyntax(), emptyLinks],
   }).update({ effects: setLinkAlive.of(isAlive) }).state;
 
   const texts: string[] = [];

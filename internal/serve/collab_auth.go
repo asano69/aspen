@@ -15,7 +15,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/auth"
+	"github.com/asano69/aspen/internal/auth"
 )
 
 type userKey struct{}

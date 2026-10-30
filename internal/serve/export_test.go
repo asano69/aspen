@@ -11,8 +11,8 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/attachment"
-	"github.com/asano69/cardpod/internal/lineid"
+	"github.com/asano69/aspen/internal/attachment"
+	"github.com/asano69/aspen/internal/lineid"
 )
 
 // newExportTestApp extends newImportTestApp with what Export reads beyond it:

@@ -6,7 +6,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/wikilink"
+	"github.com/asano69/aspen/internal/wikilink"
 )
 
 // syncDerived brings every row derived from a card's saved text up to date:

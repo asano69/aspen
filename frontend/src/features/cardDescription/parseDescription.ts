@@ -1,7 +1,7 @@
 import type { SyntaxNode } from "@lezer/common";
 
-import { cardpodSyntaxLanguage, isMark } from "../noteEditor/parser/cardpod";
-import { decideBracketNodeType } from "../noteEditor/parser/cardpod/rules/bracket";
+import { aspenSyntaxLanguage, isMark } from "../noteEditor/parser/aspen";
+import { decideBracketNodeType } from "../noteEditor/parser/aspen/rules/bracket";
 import type { DescriptionSegment } from "./types";
 
 // A card description has no title line (the server drops it, see
@@ -78,13 +78,13 @@ function walk(node: SyntaxNode, doc: string, out: DescriptionSegment[]) {
   push(out, { kind: "text", text: doc.slice(pos, node.to) });
 }
 
-// Turns a card description (raw Cardpod text, title line excluded) into
+// Turns a card description (raw Aspen text, title line excluded) into
 // flat segments: decorations (bold, italic, ...) and image notation are
 // stripped, wiki links, external links, hashtags and inline code are
 // kept as their own segments. Pure: knows nothing about the DOM.
 export function parseDescription(text: string): DescriptionSegment[] {
   const doc = DUMMY_TITLE + text;
   const out: DescriptionSegment[] = [];
-  walk(cardpodSyntaxLanguage.parser.parse(doc).topNode, doc, out);
+  walk(aspenSyntaxLanguage.parser.parse(doc).topNode, doc, out);
   return out;
 }

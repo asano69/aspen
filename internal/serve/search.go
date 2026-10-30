@@ -11,8 +11,8 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/api"
-	"github.com/asano69/cardpod/internal/search"
+	"github.com/asano69/aspen/internal/api"
+	"github.com/asano69/aspen/internal/search"
 )
 
 // searchEngine is set once at startup (or by CLI commands) and may be nil
@@ -106,7 +106,7 @@ func searchHandler(e *core.RequestEvent) error {
 }
 
 
-// Reindex rebuilds the whole index; used by `cardpod reindex`. It opens the
+// Reindex rebuilds the whole index; used by `aspen reindex`. It opens the
 // index itself, so the server must be stopped (Bleve allows one writer).
 func Reindex(app core.App) (int, error) {
 	engine, err := search.OpenBleve(filepath.Join(app.DataDir(), "search.bleve"))

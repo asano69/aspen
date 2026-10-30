@@ -1,5 +1,5 @@
-// Package parser parses the subset of Cardpod's Scrapbox-compatible syntax
-// needed by backend services. Its rules mirror the frontend parser/cardpod
+// Package parser parses the subset of Aspen's Scrapbox-compatible syntax
+// needed by backend services. Its rules mirror the frontend parser/aspen
 // rules and should be kept in lockstep with them.
 package parser
 

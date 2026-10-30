@@ -1,3 +1,3 @@
 debug:
-    $ cardpodDebug.dumpTree()
+    $ aspenDebug.dumpTree()
 

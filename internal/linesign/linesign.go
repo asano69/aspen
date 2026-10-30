@@ -17,7 +17,7 @@ import (
 	"slices"
 	"unicode/utf16"
 
-	"github.com/asano69/cardpod/internal/lineid"
+	"github.com/asano69/aspen/internal/lineid"
 )
 
 // Signer holds the signing key of the server.
@@ -110,7 +110,7 @@ func (s *Signer) Sign(doc []uint16, lines []lineid.Line, user string, now int64)
 // message is what gets signed. The prefix keeps the signature from being valid
 // for any other purpose.
 func message(l lineid.Line) []byte {
-	return fmt.Appendf(nil, "cardpod-line-v1\n%s\n%s\n%d\n%s\n%s",
+	return fmt.Appendf(nil, "aspen-line-v1\n%s\n%s\n%d\n%s\n%s",
 		l.ID, l.Hash, l.Updated, l.User, l.Key)
 }
 

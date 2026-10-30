@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/asano69/cardpod/internal/linesign"
-	"github.com/asano69/cardpod/internal/realtime"
-	"github.com/asano69/cardpod/internal/replica"
-	"github.com/asano69/cardpod/internal/static"
-	"github.com/asano69/cardpod/internal/version"
+	"github.com/asano69/aspen/internal/linesign"
+	"github.com/asano69/aspen/internal/realtime"
+	"github.com/asano69/aspen/internal/replica"
+	"github.com/asano69/aspen/internal/static"
+	"github.com/asano69/aspen/internal/version"
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
 
-// registerRoutes wires up every HTTP route served by cardpod. It is passed
+// registerRoutes wires up every HTTP route served by aspen. It is passed
 // to app.OnServe().BindFunc in serve.go, keeping all route/handler
 // definitions in this file while serve.go stays focused on server setup
 // and startup.

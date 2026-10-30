@@ -1,6 +1,6 @@
-// Cardpod syntax is parsed by @lezer/markdown's line-oriented block
+// Aspen syntax is parsed by @lezer/markdown's line-oriented block
 // pipeline. Its CommonMark parsers are all removed below: we retain only the
-// incremental block/inline infrastructure and install Cardpod's own grammar.
+// incremental block/inline infrastructure and install Aspen's own grammar.
 import {
   Language,
   LanguageSupport,
@@ -26,7 +26,7 @@ import { parseTitle } from "./rules/title";
 
 export { hideContent, isIndent, isMark, revealStyle };
 
-// Names of @lezer/markdown's own parsers, which are not Cardpod node names.
+// Names of @lezer/markdown's own parsers, which are not Aspen node names.
 // They must stay exactly as the library spells them (e.g. "InlineCode",
 // "Image"), or `remove` silently stops removing them.
 const defaultParsers = [
@@ -51,8 +51,8 @@ const defaultParsers = [
 ] as const;
 
 // `Paragraph` deliberately remains. It is the neutral leaf block provided by
-// the markdown infrastructure and is where Cardpod's inline parsers run.
-const cardpodParser = parser.configure({
+// the markdown infrastructure and is where Aspen's inline parsers run.
+const aspenParser = parser.configure({
   remove: defaultParsers,
   defineNodes: [
     { name: "Title", block: true },
@@ -146,27 +146,27 @@ const cardpodParser = parser.configure({
   parseBlock: [
     // Must stay first: the title line is plain text, so no other block rule
     // may see it (see rules/title.ts).
-    { name: "CardpodTitle", parse: parseTitle },
+    { name: "AspenTitle", parse: parseTitle },
     {
-      name: "CardpodCodeBlock",
+      name: "AspenCodeBlock",
       parse: parseCodeBlock,
       endLeaf: (_, line) => startsIndentedBlock(line, "code:") !== null,
     },
     {
-      name: "CardpodTable",
+      name: "AspenTable",
       parse: parseTable,
       endLeaf: (_, line) => startsIndentedBlock(line, "table:") !== null,
     },
-    { name: "CardpodQuote", parse: parseQuote },
-    { name: "CardpodParagraph", parse: parseParagraph },
+    { name: "AspenQuote", parse: parseQuote },
+    { name: "AspenParagraph", parse: parseParagraph },
   ],
   parseInline: [
-    { name: "CardpodDecoration", parse: parseDecoration },
-    { name: "CardpodBlank", parse: parseBlank },
-    { name: "CardpodBracket", parse: parseBracket },
-    { name: "CardpodInlineCode", parse: parseInlineCode },
-    { name: "CardpodHashTag", parse: parseHashTag },
-    { name: "CardpodBareUrl", parse: parseBareUrl },
+    { name: "AspenDecoration", parse: parseDecoration },
+    { name: "AspenBlank", parse: parseBlank },
+    { name: "AspenBracket", parse: parseBracket },
+    { name: "AspenInlineCode", parse: parseInlineCode },
+    { name: "AspenHashTag", parse: parseHashTag },
+    { name: "AspenBareUrl", parse: parseBareUrl },
   ],
   // Nests a `code:` block's content in whatever language its metadata
   // (e.g. "code:ts") resolves to, loaded on demand -- see
@@ -175,10 +175,10 @@ const cardpodParser = parser.configure({
 });
 
 function node(name: string): NodeType {
-  const type = cardpodParser.nodeSet.types.find(
+  const type = aspenParser.nodeSet.types.find(
     (candidate) => candidate.name === name,
   );
-  if (!type) throw new Error(`Cardpod parser is missing its ${name} node type`);
+  if (!type) throw new Error(`Aspen parser is missing its ${name} node type`);
   return type;
 }
 
@@ -215,15 +215,15 @@ export const TableCell = node("TableCell");
 export const Indent = node("indent");
 export const Title = node("Title");
 
-const cardpodLanguageData = defineLanguageFacet({});
+const aspenLanguageData = defineLanguageFacet({});
 
-export const cardpodSyntaxLanguage = new Language(
-  cardpodLanguageData,
-  cardpodParser,
+export const aspenSyntaxLanguage = new Language(
+  aspenLanguageData,
+  aspenParser,
   [],
-  "cardpod",
+  "aspen",
 );
 
-export function cardpodSyntax(): LanguageSupport {
-  return new LanguageSupport(cardpodSyntaxLanguage);
+export function aspenSyntax(): LanguageSupport {
+  return new LanguageSupport(aspenSyntaxLanguage);
 }

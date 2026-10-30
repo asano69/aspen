@@ -7,8 +7,8 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/auth"
-	"github.com/asano69/cardpod/internal/replica"
+	"github.com/asano69/aspen/internal/auth"
+	"github.com/asano69/aspen/internal/replica"
 )
 
 const (

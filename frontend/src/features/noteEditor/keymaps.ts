@@ -1,5 +1,5 @@
 // Every CodeMirror key binding used by the note editor, grouped by
-// origin (Cardpod's own shortcuts vs. each library's own keymap) and
+// origin (Aspen's own shortcuts vs. each library's own keymap) and
 // listed in the precedence order CodeMirror's own keymap() facet
 // expects: within a group, the first matching binding wins; across
 // groups, earlier keymap.of(...) extensions win over later ones (see
@@ -27,13 +27,13 @@ export interface KeymapGroup {
   bindings: readonly KeyBinding[];
 }
 
-// Cardpod's own editing shortcuts -- the ones a user is most likely to
+// Aspen's own editing shortcuts -- the ones a user is most likely to
 // want to remap. Tab/Shift-Tab live here rather than in defaultKeymap
-// since Cardpod's own indent semantics must win over the library's,
+// since Aspen's own indent semantics must win over the library's,
 // and a remapped Tab is exactly the kind of thing a future override
 // targets.
-export const cardpodKeymap: KeymapGroup = {
-  id: "cardpod",
+export const aspenKeymap: KeymapGroup = {
+  id: "aspen",
   bindings: [
     { key: "Tab", run: indentMore },
     { key: "Shift-Tab", run: indentLess },
@@ -62,11 +62,11 @@ export const defaultKeymapGroup: KeymapGroup = {
 };
 
 // Every group enabled out of the box, already in the precedence order
-// index.tsx needs: Cardpod's own bindings first, so they win over
+// index.tsx needs: Aspen's own bindings first, so they win over
 // defaultKeymap's own Tab/`/`*` bindings; the library keymaps follow
 // in their usual relative order.
 export const defaultKeymapGroups: readonly KeymapGroup[] = [
-  cardpodKeymap,
+  aspenKeymap,
   closeBracketsKeymapGroup,
   historyKeymapGroup,
   defaultKeymapGroup,

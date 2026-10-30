@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { TreeFragment } from "@lezer/common";
 
-import { cardpodSyntaxLanguage } from "..";
+import { aspenSyntaxLanguage } from "..";
 
-const parser = cardpodSyntaxLanguage.parser;
+const parser = aspenSyntaxLanguage.parser;
 
 function tree(input: string): string {
   return parser.parse(input).toString();
@@ -28,7 +28,7 @@ function reparse(
   return parser.parse(after, fragments).toString();
 }
 
-describe("Cardpod title line", () => {
+describe("Aspen title line", () => {
   it("claims a lone first line as the title", () => {
     expect(tree("Only title")).toBe("Document(Title)");
   });

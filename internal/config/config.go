@@ -1,4 +1,4 @@
-// Package config loads the configuration for cardpod serve from
+// Package config loads the configuration for aspen serve from
 // environment variables.
 package config
 
@@ -23,17 +23,17 @@ type Config struct {
 //
 // Recognised variables:
 //
-//	CARDPOD_SERVER_HOST         default "0.0.0.0"
-//	CARDPOD_SERVER_PORT         default 3000
+//	ASPEN_SERVER_HOST         default "0.0.0.0"
+//	ASPEN_SERVER_PORT         default 3000
 func Load() (*Config, error) {
-	port, err := envInt("CARDPOD_SERVER_PORT", 3000)
+	port, err := envInt("ASPEN_SERVER_PORT", 3000)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := &Config{
 		Server: ServerConfig{
-			Host: envString("CARDPOD_SERVER_HOST", "0.0.0.0"),
+			Host: envString("ASPEN_SERVER_HOST", "0.0.0.0"),
 			Port: port,
 		},
 	}

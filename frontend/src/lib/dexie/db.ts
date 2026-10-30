@@ -32,7 +32,7 @@ class ReplicaDB extends Dexie {
   checkpoints!: Table<CheckpointRecord, [string, string]>;
 
   constructor() {
-    super("cardpod-replica");
+    super("aspen-replica");
     this.version(1).stores({
       cards: "id, pod, [pod+pin+position]",
       card_links: "id, source, [target_pod+target_titleLc]",
@@ -79,4 +79,4 @@ export const db = new ReplicaDB();
 
 // Drops the database used before replication was generalized. Can be removed
 // once no browser still has it.
-void Dexie.delete("cardpod-cards-cache");
+void Dexie.delete("aspen-cards-cache");

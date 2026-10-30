@@ -15,9 +15,9 @@ Requires the server to be running (e.g. `make server`).
 Usage:
     python scripts/load_test_cards.py [--count 100000] [--base-url http://localhost:3000]
 
-Environment variables (fall back to cardpod.env's own defaults):
-    CARDPOD_ADMIN_EMAIL     (default: admin@mail.internal)
-    CARDPOD_ADMIN_PASSWORD  (default: password)
+Environment variables (fall back to aspen.env's own defaults):
+    ASPEN_ADMIN_EMAIL     (default: admin@mail.internal)
+    ASPEN_ADMIN_PASSWORD  (default: password)
 """
 
 import argparse
@@ -113,10 +113,10 @@ def main():
     parser.add_argument("--pod-name", default=DEFAULT_POT_NAME)
     parser.add_argument("--count", type=int, default=DEFAULT_CARD_COUNT)
     parser.add_argument(
-        "--email", default=os.environ.get("CARDPOD_ADMIN_EMAIL", "admin@mail.internal")
+        "--email", default=os.environ.get("ASPEN_ADMIN_EMAIL", "admin@mail.internal")
     )
     parser.add_argument(
-        "--password", default=os.environ.get("CARDPOD_ADMIN_PASSWORD", "password")
+        "--password", default=os.environ.get("ASPEN_ADMIN_PASSWORD", "password")
     )
     args = parser.parse_args()
 

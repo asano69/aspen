@@ -16,7 +16,7 @@ export interface DebugNode {
 // Converts `tree` into plain nested objects, replacing each node's
 // from/to positions with the source text it covers. Trees mounted by
 // nested languages (e.g. inside `code:` blocks) are skipped: this is a
-// debugger for Cardpod's own grammar.
+// debugger for Aspen's own grammar.
 export function syntaxTreeToJson(tree: Tree, doc: string): DebugNode {
   const root: DebugNode[] = [];
   // Each entry is the children array the next entered node is added to.
@@ -70,12 +70,12 @@ function dumpCurrentEditor(): void {
   const json = getSyntaxTreeJson();
   if (!json) {
     console.warn(
-      "[cardpodDebug] no editor is mounted, or parsing did not finish in time",
+      "[aspenDebug] no editor is mounted, or parsing did not finish in time",
     );
     return;
   }
   console.log(json);
 }
 
-// Usage from the browser console: cardpodDebug.dumpTree()
-Object.assign(window, { cardpodDebug: { dumpTree: dumpCurrentEditor } });
+// Usage from the browser console: aspenDebug.dumpTree()
+Object.assign(window, { aspenDebug: { dumpTree: dumpCurrentEditor } });

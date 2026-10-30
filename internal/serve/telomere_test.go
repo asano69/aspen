@@ -3,7 +3,7 @@ package serve
 import (
 	"testing"
 
-	"github.com/asano69/cardpod/internal/lineid"
+	"github.com/asano69/aspen/internal/lineid"
 )
 
 func TestTelomereLines_Unread(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/asano69/cardpod/internal/cmgo/persistence"
+	"github.com/asano69/aspen/internal/cmgo/persistence"
 )
 
 const room = "data.txt"

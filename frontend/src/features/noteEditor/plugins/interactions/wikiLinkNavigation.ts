@@ -1,6 +1,6 @@
 import { EditorView } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
-import { HashTag, WikiLink } from "../../parser/cardpod";
+import { HashTag, WikiLink } from "../../parser/aspen";
 import { hashTagTitle } from "@/lib/models/hashTagTitle";
 import { titleToSegment } from "@/lib/models/slugify";
 

@@ -46,7 +46,7 @@ describe("wrapBacktick", () => {
 });
 
 describe("wrapBold", () => {
-  it("wraps a selection in Cardpod's [* ] bold syntax and places the cursor right after the *", () => {
+  it("wraps a selection in Aspen's [* ] bold syntax and places the cursor right after the *", () => {
     const { handled, result } = runCommand(wrapBold, "hello world", 6, 11);
     expect(handled).toBe(true);
     expect(result.doc.toString()).toBe("hello [* world]");

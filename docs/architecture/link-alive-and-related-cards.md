@@ -18,7 +18,7 @@ wikiリンク（`[title]`）の「有効／無効」の判定、関連カード�
 責務は4層に分かれている。上の層は下の層の中身を知らない。
 
 ```
-[構文解析]  Lezer (parser/cardpod)
+[構文解析]  Lezer (parser/aspen)
             WikiLink ノードを作るだけ。リンク先が存在するかは知らない
                 │
 [判定]      dexie/linkAliveQuery.ts の computeAlive(pod, titleLc)

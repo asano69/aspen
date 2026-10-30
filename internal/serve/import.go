@@ -1,5 +1,5 @@
-// import.go implements "cardpod import". Its main form loads a folder written
-// by "cardpod export": the pod named in the manifest is created when it does
+// import.go implements "aspen import". Its main form loads a folder written
+// by "aspen export": the pod named in the manifest is created when it does
 // not exist, and its cards overwrite the cards with the same title. A second,
 // secondary form (ImportCosense) loads pages from a Cosense JSON export into a
 // pod that already exists.
@@ -33,8 +33,8 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 
-	"github.com/asano69/cardpod/internal/lineid"
-	"github.com/asano69/cardpod/internal/slug"
+	"github.com/asano69/aspen/internal/lineid"
+	"github.com/asano69/aspen/internal/slug"
 )
 
 // The JSON layout accepted by Import is {"pages": [...]}. Unknown fields are

@@ -1,9 +1,9 @@
 .PHONY: lint
 
-include cardpod.env
+include aspen.env
 export
 
-BINARY := cardpod
+BINARY := aspen
 
 # Ports used by the dev servers (frontend, backend, and PocketBase-style API)
 PORTS := 3000 3001
@@ -15,12 +15,12 @@ all: # (*) Build frontend assets and start the server
 
 
 init:
-	fastmod --hidden cardpod $(notdir $(CURDIR)) --glob '!Makefile'
+	fastmod --hidden aspen $(notdir $(CURDIR)) --glob '!Makefile'
 	fastmod --hidden CARDEX $(shell echo '$(notdir $(CURDIR))' | tr '[:lower:]' '[:upper:]') --glob '!Makefile'
-	find . -depth \( -type f -o -type d \) -name '*cardpod*' | while read -r f; do \
-		mv -- "$$f" "$$(dirname "$$f")/$$(basename "$$f" | sed 's/cardpod/$(notdir $(CURDIR))/g')"; \
+	find . -depth \( -type f -o -type d \) -name '*aspen*' | while read -r f; do \
+		mv -- "$$f" "$$(dirname "$$f")/$$(basename "$$f" | sed 's/aspen/$(notdir $(CURDIR))/g')"; \
 	done
-	fastmod cardpod $(notdir $(CURDIR))
+	fastmod aspen $(notdir $(CURDIR))
 
 
 
@@ -34,16 +34,16 @@ build-front: deps-front
 
 .PHONY: build
 build: build-front
-	go build -ldflags="-X github.com/asano69/cardpod/internal/version.Version=$(VERSION)" -o $(BINARY) ./cmd/$(BINARY)
+	go build -ldflags="-X github.com/asano69/aspen/internal/version.Version=$(VERSION)" -o $(BINARY) ./cmd/$(BINARY)
 
 .PHONY: build-back
 build-back:
-	go build -ldflags="-X github.com/asano69/cardpod/internal/version.Version=$(VERSION)" -o $(BINARY) ./cmd/$(BINARY)
+	go build -ldflags="-X github.com/asano69/aspen/internal/version.Version=$(VERSION)" -o $(BINARY) ./cmd/$(BINARY)
 
 
 .PHONY: server
 server: 
-	#./cardpod migrate up --dir=pb_data
+	#./aspen migrate up --dir=pb_data
 	./$(BINARY) superuser upsert admin@mail.internal password --dir=pb_data
 	./$(BINARY) serve --dev
 
@@ -95,7 +95,7 @@ format:
 # 本番では、後方互換性のために残しておいたほうが良いかも。
 migrate-collections:
 	ls -1 migrations/*.go | sort | head -n -1 | xargs rm -f
-	yes | go run ./cmd/cardpod migrate collections
+	yes | go run ./cmd/aspen migrate collections
 	ls -1 migrations/*.go | sort | head -n -1 | xargs rm -f
 
 install: build

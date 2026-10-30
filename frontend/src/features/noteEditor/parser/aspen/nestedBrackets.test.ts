@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { cardpodSyntaxLanguage } from ".";
+import { aspenSyntaxLanguage } from ".";
 
 // Shared with the Go test (internal/parser/nested_test.go): the cases are
 // the contract between the two parsers for nested brackets, taken from what
@@ -25,7 +25,7 @@ const TITLE_LINE = "T\n";
 
 function inlineNodes(text: string): string[] {
   const doc = TITLE_LINE + text;
-  const line = cardpodSyntaxLanguage.parser.parse(doc).topNode.firstChild
+  const line = aspenSyntaxLanguage.parser.parse(doc).topNode.firstChild
     ?.nextSibling;
   const nodes: string[] = [];
   for (let node = line?.firstChild; node; node = node.nextSibling) {

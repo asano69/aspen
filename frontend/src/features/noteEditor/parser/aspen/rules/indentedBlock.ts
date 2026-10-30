@@ -12,7 +12,7 @@ export function startsIndentedBlock(line: Line, prefix: string): number | null {
 
 // Consumes every immediately following line whose indentation is deeper than
 // `indent`. The terminating line deliberately remains current so the
-// markdown block pipeline can dispatch it as the next Cardpod block.
+// markdown block pipeline can dispatch it as the next Aspen block.
 export function consumeIndentedLines(
   cx: BlockContext,
   line: Line,

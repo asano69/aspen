@@ -39,7 +39,7 @@ import {
   syntaxHighlighting,
   defaultHighlightStyle,
 } from "@codemirror/language";
-import { cardpodSyntax } from "./parser/cardpod";
+import { aspenSyntax } from "./parser/aspen";
 import { syntaxReveal } from "./plugins/decorations/syntaxReveal";
 import { wikiLinkNavigation } from "./plugins/interactions/wikiLinkNavigation";
 import { externalLinkNavigation } from "./plugins/interactions/externalLinkNavigation";
@@ -157,13 +157,13 @@ export default function NoteEditor(props: NoteEditorProps) {
     // Suggests existing card titles while a wiki link is typed (see
     // plugins/interactions/titleCompletion.ts).
     titleCompletion(() => pod()?.id),
-    // Cardpod's own Scrapbox-style syntax parser (see
-    // parser/cardpod/index.ts). syntaxReveal reads this same syntax tree
+    // Aspen's own Scrapbox-style syntax parser (see
+    // parser/aspen/index.ts). syntaxReveal reads this same syntax tree
     // to decide when to hide/show the raw markup around the cursor,
     // Obsidian-style (see syntaxReveal.ts).
-    cardpodSyntax(),
+    aspenSyntax(),
     // Colors tokens inside `code:` blocks once their language has
-    // resolved (see parser/cardpod/codeLanguages.ts).
+    // resolved (see parser/aspen/codeLanguages.ts).
     syntaxHighlighting(defaultHighlightStyle),
     syntaxReveal,
     wikiLinkNavigation(props.podSlug, navigate),
@@ -189,10 +189,10 @@ export default function NoteEditor(props: NoteEditorProps) {
     // A single real tab character per indent level, not spaces --
     // indentMore/indentLess (bound below) both insert/remove whatever
     // this unit is. The parser itself accepts any ECMAScript whitespace
-    // as indentation (see parser/cardpod/indent.ts).
+    // as indentation (see parser/aspen/indent.ts).
     indentUnit.of("\t"),
     // Every key binding, grouped by origin and ordered by precedence
-    // (see keymaps.ts): Cardpod's own bindings win over the library
+    // (see keymaps.ts): Aspen's own bindings win over the library
     // keymaps that follow them, since each group becomes its own
     // keymap.of(...) extension.
     ...defaultKeymapGroups.map((group) => keymap.of(group.bindings)),
@@ -202,7 +202,7 @@ export default function NoteEditor(props: NoteEditorProps) {
   // it runs after the extensions are installed: the initial dispatches below
   // must reach the collab and title plugins.
   const start = (view: EditorView) => {
-    // Lets cardpodDebug.dumpTree() in the browser console find this editor.
+    // Lets aspenDebug.dumpTree() in the browser console find this editor.
     onCleanup(registerDebugView(view));
     props.onView?.(view);
 

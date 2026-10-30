@@ -1,4 +1,4 @@
-// export.go implements "cardpod export": it writes one pod to a directory.
+// export.go implements "aspen export": it writes one pod to a directory.
 // The pod gets its own folder named after the pod inside the given directory
 // (the name cannot be changed), so exports of several pods can share one
 // directory:
@@ -41,8 +41,8 @@ import (
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"github.com/spf13/pathologize"
 
-	"github.com/asano69/cardpod/internal/lineid"
-	"github.com/asano69/cardpod/internal/parser"
+	"github.com/asano69/aspen/internal/lineid"
+	"github.com/asano69/aspen/internal/parser"
 )
 
 const (

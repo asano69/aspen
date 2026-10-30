@@ -20,7 +20,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 
-	"github.com/asano69/cardpod/internal/parser"
+	"github.com/asano69/aspen/internal/parser"
 )
 
 // diagramRenderer renders the source of a code block to an SVG.

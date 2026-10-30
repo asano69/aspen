@@ -13,7 +13,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 )
 
-const analyzerName = "cardpod_unicode"
+const analyzerName = "aspen_unicode"
 
 // Bleve is an Engine backed by an on-disk Bleve index, stored separately
 // from the PocketBase SQLite database.

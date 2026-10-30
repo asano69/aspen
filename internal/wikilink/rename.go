@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode/utf16"
 
-	"github.com/asano69/cardpod/internal/parser"
+	"github.com/asano69/aspen/internal/parser"
 )
 
 // Edit replaces Len UTF-16 code units of a card's text, starting at From, with

@@ -43,7 +43,7 @@ class CardsCacheDB extends Dexie {
   checkpoints!: EntityTable<CheckpointRecord, "podId">;
 
   constructor() {
-    super("cardpod-cards-cache");
+    super("aspen-cards-cache");
     this.version(1).stores({
       cards: "id, pod, [pod+pin+position]",
       checkpoints: "podId",

@@ -72,7 +72,7 @@ export default function UserMenu() {
 
           <DropdownMenu.Item onSelect={handleSettings} class="menu-item">
             <About size={16} />
-            About Cardpod
+            About Aspen
           </DropdownMenu.Item>
           <DropdownMenu.Item onSelect={handleSettings} class="menu-item">
             <Help size={16} />

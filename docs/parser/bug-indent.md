@@ -1,17 +1,17 @@
 ## 問題の所在
 
-Cardpodのパーサ（`@lezer/markdown`ベース）には、**「インデント」を統一的に扱う概念が構文木レベルに存在しません**。インデント判定は複数の場所にバラバラに実装されていて、しかも互いに矛盾しています。
+Aspenのパーサ（`@lezer/markdown`ベース）には、**「インデント」を統一的に扱う概念が構文木レベルに存在しません**。インデント判定は複数の場所にバラバラに実装されていて、しかも互いに矛盾しています。
 
 ### 1. パーサ層（構文木）にインデントの概念がない
 
-`parser/cardpod/index.ts`の`defineNodes`を見ると、`CodeBlock` / `Table` / `Quote` / `Bold` / `Italic` などのノード型はあっても、`BulletList`のような「箇条書き」ノードや、行ごとの「インデント深度」を保持する仕組みは一切ありません。
+`parser/aspen/index.ts`の`defineNodes`を見ると、`CodeBlock` / `Table` / `Quote` / `Bold` / `Italic` などのノード型はあっても、`BulletList`のような「箇条書き」ノードや、行ごとの「インデント深度」を保持する仕組みは一切ありません。
 
 比較として：
 - **scrapbox-parser**の`Row.ts`は`parseToRows`で全行に対し`/^\s+/`で`indent`を計算し、`Line.ts`がその`indent`を使って箇条書き構造を組んでいます。
 - **cosy**の`parser/block.rs`も`input.chars().take_while(|&c| c == ' ').count()`で明示的にインデント長を測ってから分岐します。
 - **cache/lezer-md**（本家Markdownパーサ）は`Line.countIndent`でタブストップまで考慮した列位置ベースのインデント計算を持ち、`BulletList`/`ListItem`ノードとして構文木に反映しています。
 
-Cardpodにはこれに相当するものが存在しません。
+Aspenにはこれに相当するものが存在しません。
 
 ### 2. 「インデントかどうか」の判定はデコレーション層・コマンド層に散らばっている
 

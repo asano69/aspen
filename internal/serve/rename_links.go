@@ -17,9 +17,9 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/api"
-	"github.com/asano69/cardpod/internal/slug"
-	"github.com/asano69/cardpod/internal/wikilink"
+	"github.com/asano69/aspen/internal/api"
+	"github.com/asano69/aspen/internal/slug"
+	"github.com/asano69/aspen/internal/wikilink"
 )
 
 // renameLinksHandler serves POST /api/admin/cards/{id}/rename-links.

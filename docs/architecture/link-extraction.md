@@ -4,7 +4,7 @@
 
 ## 1. 要点
 
-- 抽出規則の正は**フロントエンドのパーサ**（`parser/cardpod`）。Go の `internal/parser` はそれに揃える。二重実装は許容するが、共有フィクスチャで常に同じ結果になることを保証する。
+- 抽出規則の正は**フロントエンドのパーサ**（`parser/aspen`）。Go の `internal/parser` はそれに揃える。二重実装は許容するが、共有フィクスチャで常に同じ結果になることを保証する。
 - リンクの同一性は **`titleLc`**（`internal/slug.ToLowerKey` / `titleToLowerKey`）。表記が違っても `titleLc` が同じなら同じリンク。
 - サーバーは保存のたびに `card_links` を本文に同期する。クライアントは `card_links` を Dexie に**サーバーの純粋なミラー**として持つ。
 - **開いているカード自身の発リンクだけ**は、保存を待たずにクライアントが ytext から直接導出し、`relatedStore` の `liveOwnLinks` に載せる。1 hop / 2 hop はそれと Dexie から導出する（`related-cards-offline-plan.md`）。
@@ -38,7 +38,7 @@
 
 | 層 | 場所 |
 | --- | --- |
-| TS（正） | `parser/cardpod/*`、純粋関数 `lib/models/extractLinks.ts` |
+| TS（正） | `parser/aspen/*`、純粋関数 `lib/models/extractLinks.ts` |
 | Go | `internal/parser/*`、`LinkTitles()` → `internal/wikilink.orderedTargets` |
 | 契約 | `testdata/link-extraction.json`（両方のテストが同じ JSON を読む） |
 
@@ -129,7 +129,7 @@
 
 | ファイル | 役割 |
 | --- | --- |
-| `frontend/src/features/noteEditor/parser/cardpod/*` | 抽出規則の正（Lezer パーサ） |
+| `frontend/src/features/noteEditor/parser/aspen/*` | 抽出規則の正（Lezer パーサ） |
 | `frontend/src/lib/models/extractLinks.ts` | 本文からリンクを抽出する純粋関数 |
 | `frontend/src/lib/models/hashTagTitle.ts` | ハッシュタグのタイトル導出（3か所で共有） |
 | `frontend/src/lib/models/slugify.ts` | `titleToLowerKey`（Go の `ToLowerKey` と対） |

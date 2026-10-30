@@ -1,10 +1,10 @@
 import { IterMode } from "@lezer/common";
 
 import {
-  cardpodSyntaxLanguage,
+  aspenSyntaxLanguage,
   HashTag,
   WikiLink,
-} from "@/features/noteEditor/parser/cardpod";
+} from "@/features/noteEditor/parser/aspen";
 import { hashTagTitle } from "./hashTagTitle";
 import { titleToLowerKey } from "./slugify";
 
@@ -22,7 +22,7 @@ export function extractLinks(text: string): ExtractedLink[] {
   const links: ExtractedLink[] = [];
   const seen = new Set<string>();
 
-  cardpodSyntaxLanguage.parser.parse(text).iterate({
+  aspenSyntaxLanguage.parser.parse(text).iterate({
     // Code blocks are nested-language trees; they hold no links of ours.
     mode: IterMode.IgnoreMounts,
     enter(node) {

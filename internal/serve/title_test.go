@@ -24,7 +24,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/slug"
+	"github.com/asano69/aspen/internal/slug"
 )
 
 func TestResolveTitle_PreservesCandidateWhitespaceVariants(t *testing.T) {

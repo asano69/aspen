@@ -1,6 +1,6 @@
-# Cardpod パーサ実装計画（統合版）
+# Aspen パーサ実装計画（統合版）
 
-`docs/parser/cardpod-parser.md` と `docs/parser/scrapbox-parser.md` はそれぞれ別の切り口（前者は「cosy を網羅性チェックリストとして使う」、後者は「scrapbox-parser を依存の少ない順にフェーズ分けする」）で書かれていて、そのままでは実装順序が一本化されていない。このドキュメントは両者を統合し、**この順番で実装すれば手戻りが最小になる**という単一のロードマップを示す。
+`docs/parser/aspen-parser.md` と `docs/parser/scrapbox-parser.md` はそれぞれ別の切り口（前者は「cosy を網羅性チェックリストとして使う」、後者は「scrapbox-parser を依存の少ない順にフェーズ分けする」）で書かれていて、そのままでは実装順序が一本化されていない。このドキュメントは両者を統合し、**この順番で実装すれば手戻りが最小になる**という単一のロードマップを示す。
 
 以後、このドキュメントを実装時の唯一の参照先とする。個別記法の細かい正規表現・エッジケースは都度 `scrapbox-parser`（TypeScript, 正規表現ベース）を、記法の網羅漏れチェックは `cosy`（Rust, winnow ベース）を参照する、という役割分担は変えない。
 
@@ -14,18 +14,18 @@
 | ------------------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sb-spec/cosy`                                                | **① 網羅性チェックリスト**、かつ **② 構造・曖昧性解消ロジックの正解** | ①: `parser/mod.rs` の block ディスパッチ条件と `parser/node.rs` の `alt((...))` の並びを「サポートすべき記法一覧」として使う。②: **block分岐/行継続判定（`parser/block.rs`）と 角括弧の多義性解消（`parser/bracket.rs` 以下一式）は、ロジック構造そのものを移植元にする。** 理由は後述。 |
 | `sb-spec/scrapbox-parser`                                     | **③ 単純記法の実装ソース**、かつ **④ 全記法共通のテストケース抽出元** | ③: 依存関係のない単純な行内記法（HashTag, Blank など）は正規表現をそのまま拝借してよい。④: `test/**/*.test.ts` の入力ケースは cosy 由来のロジックで実装した記法も含め、全フェーズで regression test の元ネタとして使う。                                                                 |
-| Cardpod (`frontend/src/components/noteEditor/parser/cardpod`) | **実装先**                                                            | `@lezer/markdown` ベース。既存の `Bold` / `WikiLink` / `Code` / `CodeBlock` と同じ形（`nodeProps` で `revealStyle` / `isMark` を付け、`syntaxReveal.ts` が汎用的に表示制御する）を崩さずに拡張していく。                                                                                 |
+| Aspen (`frontend/src/components/noteEditor/parser/aspen`) | **実装先**                                                            | `@lezer/markdown` ベース。既存の `Bold` / `WikiLink` / `Code` / `CodeBlock` と同じ形（`nodeProps` で `revealStyle` / `isMark` を付け、`syntaxReveal.ts` が汎用的に表示制御する）を崩さずに拡張していく。                                                                                 |
 
 ### なぜ block分岐・曖昧性解消は cosy を正解とするか
 
 - **block分岐（Phase 0 の設計根拠）**: scrapbox-parser の `Pack.ts` は「全行を先にスキャンして pack にまとめる」事前パス方式で、Lezer の `BlockContext`（行を前から順にストリーム処理しながら、その場で「自分の担当か」を判定する）とは構造が違う。cosy の `parse_block` は「インデント数を数える → prefix で if/else 分岐 → デフォルトは line」という形で、これはそのまま Lezer の `BlockParser` が書くべき形と一致する。**Phase 0 の共通ヘルパーは cosy の `parse_block` の分岐構造を model にする。**
-- **角括弧の多義性解消（Phase 3 の設計根拠）**: scrapbox-parser は「正規表現を優先順位配列で並べて先勝ち」方式で、正規表現同士が重なるケース（例: `test/line/formula.test.ts` の「Formula の直後に decoration が続く」ケース）を個別のテストで力業で潰している。これは新しい記法を足すたびに既存の正規表現との衝突を心配する必要があるということで、Cardpod のように後から記法を継ぎ足していく前提には向かない。cosy は `bracket_content.rs::take_bracket_content` でネスト深度を数えて正しく `]` の対応を取り、`links_and_pages.rs` では `split_once`/`rsplit_once` でトークンを構造的に分類してから dispatch している。これは優先順位ゲームではなく構造的に曖昧性を解く実装なので、**Phase 3 の角括弧ディスパッチャは cosy のロジックを Lezer 用に移植する。** scrapbox-parser はこのフェーズでは regression test のケース抽出専用に留める（実装ロジックの参照元にはしない）。
+- **角括弧の多義性解消（Phase 3 の設計根拠）**: scrapbox-parser は「正規表現を優先順位配列で並べて先勝ち」方式で、正規表現同士が重なるケース（例: `test/line/formula.test.ts` の「Formula の直後に decoration が続く」ケース）を個別のテストで力業で潰している。これは新しい記法を足すたびに既存の正規表現との衝突を心配する必要があるということで、Aspen のように後から記法を継ぎ足していく前提には向かない。cosy は `bracket_content.rs::take_bracket_content` でネスト深度を数えて正しく `]` の対応を取り、`links_and_pages.rs` では `split_once`/`rsplit_once` でトークンを構造的に分類してから dispatch している。これは優先順位ゲームではなく構造的に曖昧性を解く実装なので、**Phase 3 の角括弧ディスパッチャは cosy のロジックを Lezer 用に移植する。** scrapbox-parser はこのフェーズでは regression test のケース抽出専用に留める（実装ロジックの参照元にはしない）。
 
 上記2箇所以外（Phase 1, Phase 4, Phase 5 の大半）は、cosy 側の実装が Rust/winnow の1行パーサ寄りで Lezer への移植メリットが薄いため、従来通り scrapbox-parser の正規表現を実装ソースとして使う。
 
 ## 1. 現状のアーキテクチャ（前提知識）
 
-- `index.ts` が `cardpodParser`（`@lezer/markdown` の `parser.configure()`）を組み立てている。CommonMark の block/inline パーサは全部 `remove` してあり、`Paragraph` だけが残っている。
+- `index.ts` が `aspenParser`（`@lezer/markdown` の `parser.configure()`）を組み立てている。CommonMark の block/inline パーサは全部 `remove` してあり、`Paragraph` だけが残っている。
 - **inline** 拡張は `parseInline` 配列に `{ name, parse }` を足す形（`rules/bold.ts`, `rules/wikiLink.ts`, `rules/inlineCode.ts`）。`InlineContext` を受け取り、マッチしなければ `-1`、マッチすれば `cx.addElement(...)` で範囲とノードを登録する。
 - **block** 拡張は `parseBlock` 配列に `{ name, parse }` を足す形（`rules/fencedCode.ts` のみ現状）。`BlockContext` と `Line` を受け取り、`cx.nextLine()` で複数行を消費できる。
 - 表示制御は記法固有のコードを増やさず、`nodeProps.ts` の `revealStyle`（常時スタイルを当てるクラス）と `isMark`（カーソルが触れていない時だけ隠す delimiter）の2つのプロパティだけで `syntaxReveal.ts` が汎用処理している。**新しい記法もこの2プロパティに乗せるだけで表示制御が済む設計を維持する**。
@@ -35,13 +35,13 @@
 
 ## 2. 記法カバレッジ・チェックリスト
 
-cosy のディスパッチ順序をそのまま「要件一覧」として転記し、Cardpod での現状・対応フェーズを併記する。
+cosy のディスパッチ順序をそのまま「要件一覧」として転記し、Aspen での現状・対応フェーズを併記する。
 
 ### block レベル（cosy: `parser/block.rs` の分岐順）
 
-> **Title（1行目）**: cosy には無く、scrapbox-parser の `Title.ts` / `hasTitle` に相当する。Cardpod では常に1行目がカードのタイトルなので、`rules/title.ts` が1行目だけを常に先頭で claim し、以下の分岐は2行目以降にのみ適用される。✅ 実装済み。
+> **Title（1行目）**: cosy には無く、scrapbox-parser の `Title.ts` / `hasTitle` に相当する。Aspen では常に1行目がカードのタイトルなので、`rules/title.ts` が1行目だけを常に先頭で claim し、以下の分岐は2行目以降にのみ適用される。✅ 実装済み。
 
-| 記法               | 判定条件           | scrapbox-parser 実装 | Cardpod 現状                                                                                                                         | 対応フェーズ |
+| 記法               | 判定条件           | scrapbox-parser 実装 | Aspen 現状                                                                                                                         | 対応フェーズ |
 | ------------------ | ------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | CodeBlock          | `code:` prefix     | `CodeBlock.ts`       | ✅ 実装済み（`rules/codeBlock.ts`。タブのインデント復帰で終了）                                                                      | —            |
 | Table              | `table:` prefix    | `Table.ts`           | ✅ 実装済み（`rules/table.ts`。セルは inline parser に委譲）                                                                         | —            |
@@ -52,7 +52,7 @@ cosy のディスパッチ順序をそのまま「要件一覧」として転記
 
 ### inline レベル（cosy: `parser/node.rs` の `alt()` 順）
 
-| 記法                                        | scrapbox-parser 実装                                         | Cardpod 現状                                                             | 対応フェーズ |
+| 記法                                        | scrapbox-parser 実装                                         | Aspen 現状                                                             | 対応フェーズ |
 | ------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------ |
 | InlineCode `` `x` ``                        | `CodeNode.ts`                                                | ✅ 実装済み（`rules/inlineCode.ts`）                                     | —            |
 | HashTag `#tag`                              | `HashTagNode.ts`                                             | ✅ 実装済み                                                              | —            |
@@ -81,12 +81,12 @@ Phase 4（Quote / Helpfeel / CommandLine / NumberList）はどれも「行頭パ
   1. 行頭の空白を数えて indent を確定する（`parse_block` の `indent_len` 相当）。
   2. prefix を順番に if/else でチェックし、どの block 種別かを決める（`parse_block` の `if input.starts_with(...) else if ... else` の連鎖）。
   3. 該当する block パーサに委譲し、無ければ通常の line（Paragraph）として扱う。
-- `rules/` に `lineBlock.ts`（仮）として、この3ステップに対応する共通ヘルパーを用意する。「prefix を除いた残りを inline パースに委譲する」部分は `codeLanguages.ts` の `parseMixed` パターン（`CodeBlock` の中身を別言語パーサに委譲している部分）を参考にし、単一行ブロックの場合は「prefix 以降の残り全部を、外側と同じ `cardpodParser` のインライン規則で再帰的に解釈させる」だけでよい。
+- `rules/` に `lineBlock.ts`（仮）として、この3ステップに対応する共通ヘルパーを用意する。「prefix を除いた残りを inline パースに委譲する」部分は `codeLanguages.ts` の `parseMixed` パターン（`CodeBlock` の中身を別言語パーサに委譲している部分）を参考にし、単一行ブロックの場合は「prefix 以降の残り全部を、外側と同じ `aspenParser` のインライン規則で再帰的に解釈させる」だけでよい。
 - 成果物: 単一行ブロック共通ヘルパー1つ + それを使った最小サンプル1つ（例えば `Quote` の骨組みだけ）。
 
 **DoD**: 新しい単一行ブロック記法を1つ追加するのに、rules/ に1ファイル足して登録するだけで済む状態になっていること。かつ、prefix 判定の分岐構造が cosy の `parse_block` と1対1で対応付けられる状態になっていること。
 
-**実施結果**: `rules/lineBlock.ts` に cosy と同順の `code:` → `table:` → `>` → `? ` → `$ `/`% ` のディスパッチを実装した。未対応の種別は Paragraph にフォールスルーさせ、最小の利用例として `rules/quote.ts` を追加した。Quote の本文は `cx.parser.parseInline` に渡すため、既存の Cardpod inline 記法をそのまま再帰的に解釈する。
+**実施結果**: `rules/lineBlock.ts` に cosy と同順の `code:` → `table:` → `>` → `? ` → `$ `/`% ` のディスパッチを実装した。未対応の種別は Paragraph にフォールスルーさせ、最小の利用例として `rules/quote.ts` を追加した。Quote の本文は `cx.parser.parseInline` に渡すため、既存の Aspen inline 記法をそのまま再帰的に解釈する。
 
 ### Phase 1: 単純な行内トークン
 
@@ -124,7 +124,7 @@ if (cx.slice(pos, pos + 3) !== "[* ") return -1;
 - の連続数（* ** **_...）を強度レベル（_-1〜*-10、10個以上は10に丸め）に変換する
   装飾文字の組み合わせ（decos の集合）に応じて CSS を出し分ける（太字・イタリック・取り消し線・下線などを複合適用できるようにする）
 
-Lezer/Cardpod パーサでの設計:
+Lezer/Aspen パーサでの設計:
 
 - 現状の Bold/BoldMark を単純に Decoration/DecorationMark に改名するだけでは足りません。理由は、decos はノードごとに異なる可変長の属性であり、Lezer の NodeType は静的な種類分けしかできない（revealStyle/isMark は node type 単位のプロパティ）ためです。
 
@@ -270,7 +270,7 @@ export function parseDecoration(
 - 実装順序（依存の少ない順、cosy の `bracket.rs` の並びに準拠）:
   1. Math (`[$ x]`) — 単純な prefix 判定
   2. Icon (`[x.icon]`) — 単純な suffix 判定
-  3. ProjectLink (`[/project/page]`) — Cardpod に project 概念が無ければ見送り可（要判断）
+  3. ProjectLink (`[/project/page]`) — Aspen に project 概念が無ければ見送り可（要判断）
   4. Coordinate/GoogleMap（優先度低。時間が余れば対応、なければ見送り可）
   5. links_and_pages 相当（ExternalLink / Image / LinkedImage / ラベル付きリンク / InternalLink）— 一番複雑なので最後
   6. StrongImage / StrongIcon / Strong（`[[...]]`）は cosy の `strong.rs` を参照し、上記の分類ロジックを再利用する形にする
@@ -302,17 +302,17 @@ Phase 0 で作った共通ヘルパーを使って、prefix 判定＋残りを i
 `cx.nextLine()` パターンを使い、終端条件を「明示的な close マーク」ではなく「タブのインデントレベルが戻ったら終了」にする。
 
 - 参照: `scrapbox-parser/src/block/Table.ts`（タブ区切りでセルを分割し、各セルを再度 inline パースする部分）
-- Cardpod 版インデントはタブ文字が単位（`bulletEnter.ts` / `hangingIndent.ts` と同じ `\t` 基準）なので、scrapbox 本家のスペースインデントとは前提が異なる点に注意。既存の `LEADING_TABS_RE` と同じ考え方で終端判定する。
+- Aspen 版インデントはタブ文字が単位（`bulletEnter.ts` / `hangingIndent.ts` と同じ `\t` 基準）なので、scrapbox 本家のスペースインデントとは前提が異なる点に注意。既存の `LEADING_TABS_RE` と同じ考え方で終端判定する。
 
-`code:` prefix による CodeBlock は Table と同じ「複数行・インデント終端」構造として同時に実装する。Cardpod 独自の ` ``` ` フェンス記法は廃止し、以後は Scrapbox / Helpfeel 互換の `code:` 記法だけをコードブロックとして扱う。
+`code:` prefix による CodeBlock は Table と同じ「複数行・インデント終端」構造として同時に実装する。Aspen 独自の ` ``` ` フェンス記法は廃止し、以後は Scrapbox / Helpfeel 互換の `code:` 記法だけをコードブロックとして扱う。
 
-**DoD**: `scrapbox-parser/test/table/index.test.ts` のケースが Table として block 化され、`scrapbox-parser/test/codeBlock/index.test.ts` のケースが CodeBlock として block 化されること。セル本文は Cardpod の inline 規則で再帰的にパースされ、コード本文は raw text のままであること。
+**DoD**: `scrapbox-parser/test/table/index.test.ts` のケースが Table として block 化され、`scrapbox-parser/test/codeBlock/index.test.ts` のケースが CodeBlock として block 化されること。セル本文は Aspen の inline 規則で再帰的にパースされ、コード本文は raw text のままであること。
 
 **実施結果**: `rules/indentedBlock.ts` にタブ基準の共通行収集処理を追加し、`rules/table.ts` と `rules/codeBlock.ts` がこれを利用するようにした。`table:` の後続タブ行は `TableRow` / `TableCell` として構造化し、各セルは既存 inline parser に委譲する。`code:` の後続タブ行は raw の `CodeBlock` 本文として保持し、`code:typescript` および `code:main.rs(rust)` のメタデータから既存の遅延言語ハイライトも利用できる。旧 `rules/fencedCode.ts` と ` ``` ` ブロック構文は削除した。
 
 ## 4. 各フェーズ共通の進め方
 
-1. 対象記法について、**先にテストケースを Cardpod の `*.test.ts` に移植する**（レッドの状態で始める）。既存の `parser/cardpod/index.test.ts` や `bulletEnter.test.ts` のように、パース結果のツリー文字列や AST を assert するスタイルに合わせる。ケースの出典は基本 scrapbox-parser の `test/**/*.test.ts` だが、**Phase 0 / Phase 3 に限っては cosy 側の `tests/integration.rs` や `src/parser/bracket/*.rs` 内の `#[cfg(test)]` ケース（特にネスト括弧・複数トークン分類のケース）も必ず含める**。scrapbox-parser 単体では拾えない構造的なエッジケースがそちらにしかないため。
+1. 対象記法について、**先にテストケースを Aspen の `*.test.ts` に移植する**（レッドの状態で始める）。既存の `parser/aspen/index.test.ts` や `bulletEnter.test.ts` のように、パース結果のツリー文字列や AST を assert するスタイルに合わせる。ケースの出典は基本 scrapbox-parser の `test/**/*.test.ts` だが、**Phase 0 / Phase 3 に限っては cosy 側の `tests/integration.rs` や `src/parser/bracket/*.rs` 内の `#[cfg(test)]` ケース（特にネスト括弧・複数トークン分類のケース）も必ず含める**。scrapbox-parser 単体では拾えない構造的なエッジケースがそちらにしかないため。
 2. `rules/` に parse 関数を実装。既存の `decoration.ts` / `bracket.ts` / `inlineCode.ts` / `codeBlock.ts` のいずれかを雛形にする（inline か block かで選ぶ）。
 3. `index.ts` の `defineNodes` / `parseBlock` or `parseInline` / `props`（`revealStyle`, `isMark`）に登録する。
 4. 表示が必要なら `editorTheme.ts` に CSS を足す。ナビゲーションが必要なら `wikiLinkNavigation.ts` を参考にする。
@@ -323,7 +323,7 @@ Phase 0 で作った共通ヘルパーを使って、prefix 判定＋残りを i
 - **Decoration の完全汎用化**（`*` 以外の装飾文字、強調レベル）: Phase 2 で見送りと決定済み。
 - **GoogleMap**: 個人〜小規模チーム Wiki というプロダクト特性上、優先度は最低。Phase 3 の最後に時間があれば着手する程度でよい。
 - **` ``` ` フェンスによるコードブロック**: `code:` 記法へ完全移行したため非対応。フェンス文字列は通常テキストとして扱う。
-- **Cardpod 独自拡張構文**: Scrapbox 互換の記法一式（Phase 1〜5）が完了してから着手する。既存記法と衝突しない構文を選ぶこと（例えば `[* text]` は Bold として予約済みなので使わない）。
+- **Aspen 独自拡張構文**: Scrapbox 互換の記法一式（Phase 1〜5）が完了してから着手する。既存記法と衝突しない構文を選ぶこと（例えば `[* text]` は Bold として予約済みなので使わない）。
 
 この5フェーズ＋見送り事項の一覧を守れば、cosy 側のチェックリストと scrapbox-parser 側のフェーズ分けの両方を矛盾なく満たせる。
 

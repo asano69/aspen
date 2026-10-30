@@ -8,7 +8,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
 
-	"github.com/asano69/cardpod/internal/parser"
+	"github.com/asano69/aspen/internal/parser"
 )
 
 // updatePreview refreshes a card's derived description and image fields from

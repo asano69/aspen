@@ -12,7 +12,7 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/spf13/cobra"
 
-	"github.com/asano69/cardpod/internal/serve"
+	"github.com/asano69/aspen/internal/serve"
 )
 
 const (
@@ -20,14 +20,14 @@ const (
 	formatCosense = "cosense"
 )
 
-// importCmd defines the "cardpod import" cobra command. RunE stays a thin
+// importCmd defines the "aspen import" cobra command. RunE stays a thin
 // wrapper: it checks the arguments, asks for confirmation, then delegates to
 // internal/serve for the import.
 func importCmd(app *pocketbase.PocketBase) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "import <dir>",
 		Short: "Import a pod from an export folder",
-		Long: `Import a folder written by "cardpod export".
+		Long: `Import a folder written by "aspen export".
 
 The pod named by pod_name in the folder's manifest.json is created when it does
 not exist (with pod_title as its title), or has its cards overwritten when it
@@ -36,7 +36,7 @@ to skip the question.
 
 A Cosense JSON export can be imported too, into a pod that already exists:
 
-  cardpod import --format cosense data.json --pod <name>
+  aspen import --format cosense data.json --pod <name>
 
 Stop the server before running this command.`,
 		Args: cobra.ExactArgs(1),

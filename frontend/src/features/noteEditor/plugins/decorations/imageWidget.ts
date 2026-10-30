@@ -6,8 +6,8 @@ import {
 } from "@codemirror/view";
 import type { EditorState } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
-import { Image, LinkedImage, StrongImage } from "../../parser/cardpod";
-import { decideBracketNodeType } from "../../parser/cardpod/rules/bracket";
+import { Image, LinkedImage, StrongImage } from "../../parser/aspen";
+import { decideBracketNodeType } from "../../parser/aspen/rules/bracket";
 import { resolveImageSrc } from "@/lib/models/attachmentPath";
 import { decorationPlugin } from "./decorationPlugin";
 

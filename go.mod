@@ -1,4 +1,4 @@
-module github.com/asano69/cardpod
+module github.com/asano69/aspen
 
 go 1.26.9
 

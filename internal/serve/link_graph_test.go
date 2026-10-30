@@ -8,7 +8,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/slug"
+	"github.com/asano69/aspen/internal/slug"
 )
 
 // The fixture is shared with the frontend (see docs/architecture/related-cards-offline.md).

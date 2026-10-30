@@ -33,7 +33,7 @@
 3. **`isReady()`待ちのレースコンディションが消える**：SignalDBはハイドレーション未完了で書き込むとロストする問題があり `writeCache`/`deleteFromCache`にコメント付きの回避策がありましたが、DexieはIndexedDBに直接アクセスするので、この種の待ち合わせが不要になります。
 4. **`pin`はbooleanではなく`0`/`1`のnumberとして保存**：IndexedDBのindexキーとしてbooleanを使えるかはブラウザ実装差があるため、安全側に倒します。
 5. **スキーマはStage2で使うcompound indexを最初から宣言**：`[pod+pin+position]`をStage1の時点で `stores()` に含めておき、Stage2でDBバージョンを上げ直す必要がないようにします（IndexedDBのバージョンアップはコストが高いので1回で済ませる）。
-6. **旧SignalDBのIndexedDBデータへの移行はしない**：`CLAUDE.md`の「後方互換性は維持しなくてよい」方針に従い、新しいDB名（例：`cardpod-cards-cache`）を使い、旧データは単に孤立させます（SignalDB自体も過去の実装から意図的に別名にしていた前例があります）。
+6. **旧SignalDBのIndexedDBデータへの移行はしない**：`CLAUDE.md`の「後方互換性は維持しなくてよい」方針に従い、新しいDB名（例：`aspen-cards-cache`）を使い、旧データは単に孤立させます（SignalDB自体も過去の実装から意図的に別名にしていた前例があります）。
 
 ### 変更対象ファイル
 - `mv frontend/src/lib/signaldb frontend/src/lib/dexie`（ディレクトリごとリネーム、`CLAUDE.md`の慣習に従いmvコマンドで提示）

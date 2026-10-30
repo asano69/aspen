@@ -21,7 +21,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
 
-	"github.com/asano69/cardpod/internal/lineid"
+	"github.com/asano69/aspen/internal/lineid"
 )
 
 const contentsCollection = "card_contents"

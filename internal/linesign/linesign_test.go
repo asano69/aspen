@@ -7,7 +7,7 @@ import (
 	"testing"
 	"unicode/utf16"
 
-	"github.com/asano69/cardpod/internal/lineid"
+	"github.com/asano69/aspen/internal/lineid"
 )
 
 func units(s string) []uint16 { return utf16.Encode([]rune(s)) }

@@ -17,8 +17,8 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
 
-	"github.com/asano69/cardpod/internal/api"
-	"github.com/asano69/cardpod/internal/slug"
+	"github.com/asano69/aspen/internal/api"
+	"github.com/asano69/aspen/internal/slug"
 )
 
 // linkedCard is one entry in the links1hop and links2hop responses. It holds

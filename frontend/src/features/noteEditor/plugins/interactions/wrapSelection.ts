@@ -7,7 +7,7 @@ import { EditorSelection } from "@codemirror/state";
 // (@codemirror/autocomplete, see index.tsx) already wraps a selection
 // for "[", "(", "{" and quotes; this covers two symbols it doesn't
 // handle: backtick (inline code, see rules/inlineCode.ts) and
-// asterisk (Cardpod's own "[* text]" bold syntax -- not a paired
+// asterisk (Aspen's own "[* text]" bold syntax -- not a paired
 // bracket at all, see rules/decoration.ts).
 //
 // `cursorOffset` is where the (collapsed) cursor lands after

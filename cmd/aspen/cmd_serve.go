@@ -7,17 +7,17 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/spf13/cobra"
 
-	"github.com/asano69/cardpod/internal/config"
-	"github.com/asano69/cardpod/internal/serve"
+	"github.com/asano69/aspen/internal/config"
+	"github.com/asano69/aspen/internal/serve"
 )
 
-// serveCmd defines the "cardpod serve" cobra command. RunE stays a thin
+// serveCmd defines the "aspen serve" cobra command. RunE stays a thin
 // wrapper: load config, then delegate to internal/serve for the actual
 // server implementation.
 //
 // --host/--port are optional overrides on top of config.Load()'s env-based
 // config. cmd.Flags().Changed is checked so an unset flag never clobbers a
-// value that came from CARDPOD_SERVER_HOST/CARDPOD_SERVER_PORT.
+// value that came from ASPEN_SERVER_HOST/ASPEN_SERVER_PORT.
 func serveCmd(app *pocketbase.PocketBase) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "serve",
@@ -54,8 +54,8 @@ func serveCmd(app *pocketbase.PocketBase) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("host", "", "Server host, overrides CARDPOD_SERVER_HOST")
-	cmd.Flags().Int("port", 0, "Server port, overrides CARDPOD_SERVER_PORT")
+	cmd.Flags().String("host", "", "Server host, overrides ASPEN_SERVER_HOST")
+	cmd.Flags().Int("port", 0, "Server port, overrides ASPEN_SERVER_PORT")
 
 	return cmd
 }

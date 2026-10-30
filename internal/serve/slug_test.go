@@ -9,7 +9,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/slug"
+	"github.com/asano69/aspen/internal/slug"
 )
 
 // newSlugTestApp boots a throwaway PocketBase app with just the "cards"

@@ -6,10 +6,10 @@ import {
   type ViewUpdate,
 } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
-import { CodeBlock, CodeBlockMark } from "../../parser/cardpod";
+import { CodeBlock, CodeBlockMark } from "../../parser/aspen";
 
 // Full-line background for a `code:` block (see
-// parser/cardpod/rules/codeBlock.ts). A plain Decoration.mark only
+// parser/aspen/rules/codeBlock.ts). A plain Decoration.mark only
 // colors the actual text runs it covers, so a blank line inside the
 // block -- or the gap past the last character of a line, out to the
 // edge of the editor -- would show through with no background at all.

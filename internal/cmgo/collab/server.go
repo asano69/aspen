@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/asano69/cardpod/internal/cmgo/authority"
+	"github.com/asano69/aspen/internal/cmgo/authority"
 )
 
 // Tracker follows the document and adds a message of its own to the stream.

@@ -20,7 +20,7 @@ package main
 // Safe to re-run: a regenerated cover matches the pattern again, so a second
 // run simply regenerates it once more.
 //
-// IMPORTANT: stop the cardpod server before running this, so nothing else is
+// IMPORTANT: stop the aspen server before running this, so nothing else is
 // writing to the same data directory at the same time.
 
 import (
@@ -32,7 +32,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/serve"
+	"github.com/asano69/aspen/internal/serve"
 )
 
 // generatedCoverRe matches the file name of a generated cover as stored by
@@ -40,7 +40,7 @@ import (
 var generatedCoverRe = regexp.MustCompile(`^cover_[a-z0-9]{10}\.svg$`)
 
 func main() {
-	dir := flag.String("dir", envOr("CARDPOD_DATA_DIR", "pb_data"), "PocketBase data directory")
+	dir := flag.String("dir", envOr("ASPEN_DATA_DIR", "pb_data"), "PocketBase data directory")
 	dryRun := flag.Bool("dry-run", false, "print what would change without writing anything")
 	flag.Parse()
 

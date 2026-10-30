@@ -1,4 +1,4 @@
-import { countIndent } from "../../parser/cardpod/indent";
+import { countIndent } from "../../parser/aspen/indent";
 
 // An explicit language in trailing parentheses, as in "main.rs(rust)".
 // Mirrors codeLanguages.ts's readInfo.

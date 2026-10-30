@@ -49,7 +49,7 @@ superuser は PocketBase のルールを常にバイパスし、`apis.RequireAut
 
 ### `cards` を絞る理由
 
-- カード作成は `/api/admin/cards` (`e.App` で動くのでルールをバイパス) と `cardpod import` だけ。REST の create は不要。
+- カード作成は `/api/admin/cards` (`e.App` で動くのでルールをバイパス) と `aspen import` だけ。REST の create は不要。
 - 論理削除は `deleted` の update で行うので、`deleteRule` は null のままで足りる。
 - `title` / `titleLc` / `description` / `image` はサーバーが解決・導出する値。REST で直接書かれると、一意性や pull の整合性が壊れる。フロントが送るのは `pin` / `position` / `deleted` / `query` だけなので、他は拒否する。
 

@@ -17,12 +17,12 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/cmgo/authority"
-	"github.com/asano69/cardpod/internal/cmgo/collab"
+	"github.com/asano69/aspen/internal/cmgo/authority"
+	"github.com/asano69/aspen/internal/cmgo/collab"
 
-	"github.com/asano69/cardpod/internal/lineid"
-	"github.com/asano69/cardpod/internal/linesign"
-	"github.com/asano69/cardpod/internal/parser"
+	"github.com/asano69/aspen/internal/lineid"
+	"github.com/asano69/aspen/internal/linesign"
+	"github.com/asano69/aspen/internal/parser"
 )
 
 // settleDelay is how long after the first unsaved edit the room is saved.

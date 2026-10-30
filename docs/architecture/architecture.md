@@ -1,6 +1,6 @@
 # Architecture
 
-Cardpodの全体構成をまとめる。個々の設計判断の経緯は各機能のソースコード内コメント、およびオフライン同期については`docs/signaldb-offline-sync.md`を参照。
+Aspenの全体構成をまとめる。個々の設計判断の経緯は各機能のソースコード内コメント、およびオフライン同期については`docs/signaldb-offline-sync.md`を参照。
 
 ## 1. 全体構成
 
@@ -13,7 +13,7 @@ Cardpodの全体構成をまとめる。個々の設計判断の経緯は各機�
                                └───────────────────────┘
 ```
 
-- バックエンドは単一のGoバイナリ(`cmd/cardpod`)。PocketBase(`internal/serve`)がREST APIとSQLiteを、`reearth/ygo`がYjsのWebSocket同期を、`centrifugal/centrifuge`がカード変更のリアルタイム配信を担当する。
+- バックエンドは単一のGoバイナリ(`cmd/aspen`)。PocketBase(`internal/serve`)がREST APIとSQLiteを、`reearth/ygo`がYjsのWebSocket同期を、`centrifugal/centrifuge`がカード変更のリアルタイム配信を担当する。
 - フロントエンドはSolid.jsのSPA(`frontend/`)で、Viteでビルドされ`internal/static`にGoバイナリへ埋め込まれる。
 
 ## 2. データモデル (PocketBase collections)
@@ -31,7 +31,7 @@ Cardpodの全体構成をまとめる。個々の設計判断の経緯は各機�
 ## 3. カード編集 (Yjs)
 
 - 本文はCodeMirror 6 + Yjsの`Y.Text`（プレーンテキスト、Markdown/ProseMirror的なノードツリーではない）。
-- 独自のScrapbox/Cosense互換記法パーサ(`frontend/src/features/noteEditor/parser/cardpod/`)を`@lezer/markdown`の骨組みの上に構築している。フロントエンドとバックエンド(`internal/parser/`)で同じ規則を並行実装しており、両者は同期して保守する必要がある(README参照)。
+- 独自のScrapbox/Cosense互換記法パーサ(`frontend/src/features/noteEditor/parser/aspen/`)を`@lezer/markdown`の骨組みの上に構築している。フロントエンドとバックエンド(`internal/parser/`)で同じ規則を並行実装しており、両者は同期して保守する必要がある(README参照)。
 - 1行目は常にタイトル候補として扱われ、フロントの`titleCandidatePlugin.ts`がデバウンス付きでクライアント側の下書き作成(`DraftCardEditor`)をトリガーする。既存カードのタイトル確定はサーバー側の`title_watch.go`がYjsドキュメントを直接observeして行う（クライアントの往復不要）。
 - Yjsの永続化は`internal/serve/ydoc.go`：更新は`card_ydocs`にappend-onlyで保存され、閾値を超えると1レコードに圧縮される。
 

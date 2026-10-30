@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "cardpod-frontend",
+      "name": "aspen-frontend",
       "dependencies": {
         "@codemirror/autocomplete": "^6.20.3",
         "@codemirror/collab": "^6.1.1",

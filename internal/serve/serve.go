@@ -13,7 +13,7 @@ import (
 
 	"log/slog"
 
-	"github.com/asano69/cardpod/internal/config"
+	"github.com/asano69/aspen/internal/config"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"

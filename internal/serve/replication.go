@@ -16,7 +16,7 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/replica"
+	"github.com/asano69/aspen/internal/replica"
 )
 
 const (

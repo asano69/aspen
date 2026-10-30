@@ -6,7 +6,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/attachment"
+	"github.com/asano69/aspen/internal/attachment"
 )
 
 // newAttachmentTestApp extends newLinksTestApp with the "files" and

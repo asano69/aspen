@@ -7,7 +7,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cardpod/internal/parser"
+	"github.com/asano69/aspen/internal/parser"
 )
 
 const (

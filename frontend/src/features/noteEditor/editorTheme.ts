@@ -238,7 +238,7 @@ export const editorTheme = EditorView.theme({
     fontStyle: "italic",
   },
 
-  // Inline code span (see parser/cardpod's Code node): a monospace
+  // Inline code span (see parser/aspen's Code node): a monospace
   // font plus GitHub's own subtle code-background tint.
   ".code.highlight": {
     fontFamily: "var(--font-mono)",
@@ -327,7 +327,7 @@ export const editorTheme = EditorView.theme({
     whiteSpace: "pre-wrap",
   },
 
-  // WikiLink node (see parser/cardpod's WikiLink node and
+  // WikiLink node (see parser/aspen's WikiLink node and
   // wikiLinkNavigation.ts): styled like the old ProseMirror editor's
   // autolinks (see components.css's ".ProseMirror a") so it reads as
   // clickable.
@@ -349,7 +349,7 @@ export const editorTheme = EditorView.theme({
   },
 
 
-  // Quote (see parser/cardpod's Quote node and rules/quote.ts).
+  // Quote (see parser/aspen's Quote node and rules/quote.ts).
   // Italic + a muted color is enough to distinguish a quoted line
   // from ordinary text without a block-level treatment (this decoration
   // is a plain Decoration.mark over the whole line's range, not a

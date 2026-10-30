@@ -2,11 +2,11 @@ import { EditorView } from "@codemirror/view";
 import { indentUnit } from "@codemirror/language";
 import type { EditorState } from "@codemirror/state";
 import type { SyntaxNode } from "@lezer/common";
-import { countIndent } from "../../parser/cardpod/indent";
+import { countIndent } from "../../parser/aspen/indent";
 import { enclosingCodeBlock } from "./bulletEnter";
 
 // A `code:` block only lasts while its lines are indented deeper than
-// the declaration (see parser/cardpod/rules/indentedBlock.ts), and a
+// the declaration (see parser/aspen/rules/indentedBlock.ts), and a
 // truly empty line has indent 0, so it ends the block too. Pasted code
 // carries its own indentation (usually starting at column 0), which
 // would therefore cut the block short. This prefixes every line after

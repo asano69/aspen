@@ -2,7 +2,7 @@ import type { BlockContext, Line } from "@lezer/markdown";
 
 import { countIndent, isBlankLine } from "../indent";
 
-// Markdown's built-in Paragraph leaf block coalesces adjacent lines. Cardpod
+// Markdown's built-in Paragraph leaf block coalesces adjacent lines. Aspen
 // treats every source line as an outline row, so claim one non-blank line at a
 // time and make its indentation an explicit syntax child.
 export function parseParagraph(cx: BlockContext, line: Line): boolean {

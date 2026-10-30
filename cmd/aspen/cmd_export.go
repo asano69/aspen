@@ -6,10 +6,10 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/spf13/cobra"
 
-	"github.com/asano69/cardpod/internal/serve"
+	"github.com/asano69/aspen/internal/serve"
 )
 
-// exportCmd defines the "cardpod export" cobra command. RunE stays a thin
+// exportCmd defines the "aspen export" cobra command. RunE stays a thin
 // wrapper: delegate to internal/serve, which writes the directory.
 func exportCmd(app *pocketbase.PocketBase) *cobra.Command {
 	return &cobra.Command{
