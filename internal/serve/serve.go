@@ -27,6 +27,7 @@ func Run(app *pocketbase.PocketBase, cfg *config.Config) error {
 
 	app.OnServe().BindFunc(registerRoutes)
 	app.OnServe().BindFunc(openSearchEngine)
+	app.OnServe().BindFunc(startPodRepos)
 	registerValidationHooks(app)
 	registerLinkCleanupHooks(app)
 	registerSearchHooks(app)
