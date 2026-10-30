@@ -11,7 +11,7 @@ import (
 // coverSize is the width and height of the generated SVG, in pixels.
 const coverSize = 240
 
-// coverPalette is the bauhaus palette used for generated covers.
+// coverPalette is the marble palette used for generated covers.
 var coverPalette = []string{"#00686c", "#32c2b9", "#edecb3", "#fad928", "#ff9915"}
 
 var podCover = generatedImage{
@@ -20,7 +20,7 @@ var podCover = generatedImage{
 	fileName:   "cover.svg",
 	seed:       func(pod *core.Record) string { return pod.GetString("title") },
 	svg: func(title string) []byte {
-		return []byte(avatars.Generate(avatars.Bauhaus, title, coverPalette, coverSize, true))
+		return []byte(avatars.Generate(avatars.Marble, title, coverPalette, coverSize, true))
 	},
 }
 
