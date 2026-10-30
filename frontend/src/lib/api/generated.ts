@@ -75,7 +75,7 @@ export interface RenameLinksResponse {
 }
 /**
  * UploadAttachmentResponse is the body of POST /api/admin/attachments. URL is
- * the attachment path ("@/<recordId>/<filename>") to write in image notation.
+ * the attachment path ("@/files/<ULID><ext>") to write in image notation.
  */
 export interface UploadAttachmentResponse {
   url: string;

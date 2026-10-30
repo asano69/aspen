@@ -69,6 +69,9 @@ func TestTitleAndBlocks(t *testing.T) {
 		{"raw title", "  [raw]\n[page]", "  [raw]", "Document(Title,Line(link))"},
 		{"blank first line has no title", " \u3000\n[page]", "", "Document(Line(link))"},
 		{"code title stays title", "code:x\n\t[page]", "code:x", "Document(Title,Line(link))"},
+		// Trimming is the job of title resolution (see titleBase in
+		// internal/serve), not of the parser.
+		{"trailing whitespace stays raw", "abc  \n[page]", "abc  ", "Document(Title,Line(link))"},
 		{"blank line ends code", testTitle + "code:x\n\t[hidden]\n\n[shown]", "T", "Document(Title,CodeBlock,Line(link))"},
 	}
 	for _, tt := range cases {

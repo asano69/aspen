@@ -1,0 +1,32 @@
+[
+  { "name": "plain-text-is-unchanged", "candidate": "abc", "title": "abc" },
+  { "name": "trailing-space", "candidate": "abc ", "title": "abc" },
+  { "name": "trailing-many-spaces", "candidate": "abc       ", "title": "abc" },
+  { "name": "trailing-tab", "candidate": "abc\t", "title": "abc" },
+  { "name": "trailing-mixed-whitespace", "candidate": "abc \t  \t", "title": "abc" },
+  { "name": "trailing-fullwidth-space", "candidate": "abc\u3000", "title": "abc" },
+  { "name": "leading-space", "candidate": "  abc", "title": "abc" },
+  { "name": "leading-and-trailing", "candidate": "\t abc \u3000", "title": "abc" },
+  { "name": "inner-spaces-are-kept-without-brackets", "candidate": "a  b", "title": "a  b" },
+  { "name": "inner-spaces-kept-trailing-stripped", "candidate": "a  b   ", "title": "a  b" },
+  { "name": "inner-tab-is-kept", "candidate": "a\tb", "title": "a\tb" },
+  { "name": "inner-fullwidth-space-is-kept", "candidate": "a\u3000b", "title": "a\u3000b" },
+  { "name": "whitespace-only", "candidate": "  \t ", "title": "Untitled", "empty": true },
+
+  { "name": "bracket-collapses-inner-spaces", "candidate": "[a  b]", "title": "a b" },
+  { "name": "bracket-then-trailing-spaces", "candidate": "[abc]   ", "title": "abc" },
+  { "name": "bracket-with-trailing-spaces-inside", "candidate": "[abc   ]", "title": "abc" },
+  { "name": "bracket-with-trailing-fullwidth-space-inside", "candidate": "[abc\u3000]", "title": "abc" },
+  { "name": "decoration-is-not-interpreted", "candidate": "[* bold]", "title": "* bold" },
+  { "name": "fullwidth-space-is-not-a-separator", "candidate": "[日本語\u3000タイトル]", "title": "日本語\u3000タイトル" },
+  { "name": "mixed-brackets", "candidate": "[A B[X]C D]", "title": "A B X C D" },
+
+  { "name": "empty-brackets", "candidate": "[]", "title": "Untitled", "empty": true },
+  { "name": "nested-empty-brackets", "candidate": "[[]]", "title": "Untitled", "empty": true },
+  { "name": "blank-brackets", "candidate": "[ ]", "title": "Untitled", "empty": true },
+  { "name": "empty-brackets-then-trailing-spaces", "candidate": "[]   ", "title": "Untitled", "empty": true },
+  { "name": "empty-brackets-after-text", "candidate": "abc[]", "title": "abc" },
+  { "name": "empty-brackets-before-text", "candidate": "[]abc", "title": "abc" },
+  { "name": "empty-brackets-between-words", "candidate": "a [] b", "title": "a b" },
+  { "name": "empty-brackets-then-trailing-spaces-after-text", "candidate": "abc[]   ", "title": "abc" }
+]

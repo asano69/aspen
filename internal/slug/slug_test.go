@@ -38,6 +38,26 @@ func TestStripBracketLinks(t *testing.T) {
 	}
 }
 
+func TestStripBracketLinks_OnlyBracketsAndSpacesSeparate(t *testing.T) {
+	cases := []struct {
+		candidate string
+		want      string
+	}{
+		{"abc[]", "abc"},
+		{"[]abc", "abc"},
+		{"a [] b", "a b"},
+		{"[ ]", ""},
+		{"[* bold]", "* bold"},      // decorations are not interpreted
+		{"[a\tb]", "a\tb"},          // a tab is not a separator
+		{"[a\u3000b]", "a\u3000b"}, // neither is a full-width space
+	}
+	for _, c := range cases {
+		if got := StripBracketLinks(c.candidate); got != c.want {
+			t.Errorf("StripBracketLinks(%q) = %q, want %q", c.candidate, got, c.want)
+		}
+	}
+}
+
 func TestFromTitle_ReservedWordGetsSuffixed(t *testing.T) {
 	if got := FromTitle("new"); got != "new_" {
 		t.Errorf("FromTitle(\"new\") = %q, want %q", got, "new_")
