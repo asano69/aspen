@@ -21,6 +21,7 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
+	"github.com/asano69/aspen/internal/parser"
 	"github.com/asano69/aspen/internal/slug"
 )
 
@@ -105,12 +106,15 @@ func titleBase(candidate TitleCandidate) string {
 	if strings.ContainsAny(base, "[]") {
 		base = slug.StripBracketLinks(base)
 	}
+	// A title never starts or ends with whitespace (any ECMAScript \s).
+	base = parser.TrimSpace(base)
 	if base == "" {
 		base = defaultTitle
 	}
 	// The "cards" collection cannot store a longer title, so it is cut here.
-	// The document's first line itself stays whole.
-	base = slug.TruncateRunes(base, slug.MaxTitleRunes)
+	// The document's first line itself stays whole. The cut may land right
+	// after whitespace, so it is trimmed again.
+	base = parser.TrimSpace(slug.TruncateRunes(base, slug.MaxTitleRunes))
 	// A base that case-insensitively matches a reserved route segment (see
 	// internal/slug.IsReserved) is disambiguated here, before the
 	// uniqueness loop runs. Without this, such a title would only be

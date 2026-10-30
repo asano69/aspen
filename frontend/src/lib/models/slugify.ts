@@ -116,5 +116,7 @@ export function slugToTitle(slug: string): string {
 // .target_titleLc).
 export function titleToLowerKey(title: string): string {
   const base = /[[\]]/.test(title) ? splitWords(title).join(" ") : title;
-  return base.toLowerCase().replaceAll(" ", "_");
+  // String.prototype.trim removes exactly ECMAScript whitespace, the same set
+  // as parser.TrimSpace on the server.
+  return base.trim().toLowerCase().replaceAll(" ", "_");
 }

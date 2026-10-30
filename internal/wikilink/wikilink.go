@@ -134,14 +134,21 @@ func Sync(app core.App, cardID, text string) error {
 // normalizes to no usable text. Shared by Sync and RenameEdits, so both always
 // agree on which links point at the same card.
 func linkKey(title string) string {
-	base := title
-	if strings.ContainsAny(base, "[]") {
-		base = slug.StripBracketLinks(base)
-	}
+	base := linkTitle(title)
 	if base == "" {
 		return ""
 	}
 	return slug.ToLowerKey(base)
+}
+
+// linkTitle returns the title a link stores: brackets are stripped like a
+// card title's are, then leading and trailing whitespace is removed. It is ""
+// when nothing usable is left.
+func linkTitle(title string) string {
+	if strings.ContainsAny(title, "[]") {
+		title = slug.StripBracketLinks(title)
+	}
+	return parser.TrimSpace(title)
 }
 
 // target is one distinct link target of a card.
@@ -171,11 +178,8 @@ func orderedTargets(titles []string) []target {
 		}
 		seen[key] = true
 		// target_title must not contain brackets (see the card_links schema),
-		// so they are stripped the same way linkKey strips them.
-		if strings.ContainsAny(title, "[]") {
-			title = slug.StripBracketLinks(title)
-		}
-		targets = append(targets, target{titleLc: key, title: title})
+		// so it is cleaned the same way linkKey cleans it.
+		targets = append(targets, target{titleLc: key, title: linkTitle(title)})
 	}
 	return targets
 }

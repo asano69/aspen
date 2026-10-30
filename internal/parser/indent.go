@@ -15,6 +15,10 @@ func isJSSpace(r rune) bool {
 // definition of a word separator.
 func IsSpace(r rune) bool { return isJSSpace(r) }
 
+// TrimSpace removes leading and trailing ECMAScript whitespace (\s) from s, so
+// a full-width space or a tab at either end is dropped like an ASCII space.
+func TrimSpace(s string) string { return strings.TrimFunc(s, isJSSpace) }
+
 // measureIndent returns leading ECMAScript-whitespace character count and the
 // byte offset immediately after it.
 func measureIndent(line string) (depth, offset int) {
