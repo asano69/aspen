@@ -40,6 +40,15 @@ export default defineConfig({
   // Resolves the "@/*" alias declared in tsconfig.json's "paths".
   resolve: {
     tsconfigPaths: true,
+    // Force a single instance of the CodeMirror core packages. With
+    // node_modules hoisted to the repository root, bun can install several
+    // copies, which breaks instanceof checks ("Unrecognized extension value").
+    dedupe: [
+      "@codemirror/state",
+      "@codemirror/view",
+      "@codemirror/language",
+      "@lezer/common",
+    ],
   },
   // solid-codemirror needs a single instance of these packages, or
   // "Unrecognized extension value" errors appear.
@@ -55,6 +64,11 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 3001,
     allowedHosts: true,
+    // node_modules lives at the repository root, outside frontend/, so Vite
+    // must be allowed to serve files from there (fonts are fetched via /@fs/).
+    fs: {
+      allow: [".."],
+    },
     proxy: {
       // Use 127.0.0.1 explicitly to avoid localhost resolving to ::1 (IPv6)
       // while PocketBase only listens on 127.0.0.1 (IPv4).
