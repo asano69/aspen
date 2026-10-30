@@ -46,7 +46,9 @@ export default function GraphView(props: GraphViewProps) {
       setSelected(null);
     }
     const edgeColor = cssColor("--tool-color");
-    graph.forEachEdge((edge) => graph.setEdgeAttribute(edge, "color", edgeColor));
+    graph.forEachEdge((edge) =>
+      graph.setEdgeAttribute(edge, "color", edgeColor),
+    );
 
     const sigma = new Sigma(graph, container, {
       primitives: {

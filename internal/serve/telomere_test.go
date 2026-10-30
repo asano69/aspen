@@ -1,33 +1,27 @@
 package serve
 
 import (
+	"encoding/json"
+	"slices"
 	"testing"
 
+	"github.com/asano69/aspen/internal/api"
 	"github.com/asano69/aspen/internal/lineid"
 )
 
-func TestTelomereLines_Unread(t *testing.T) {
+func TestTelomereLines_KeepsOnlyWhatTheEditorShows(t *testing.T) {
 	lines := []lineid.Line{
-		{Updated: 5, User: "alice"}, // someone else, after I left
-		{Updated: 5, User: "bob"},   // my own edit
-		{Updated: 5, User: ""},      // no known author
-		{Updated: 1, User: "alice"}, // someone else, before I left
+		{ID: "a", Updated: 5, User: "alice", Hash: "h", Key: "k", Signature: "s"},
+		{ID: "b", Updated: 6},
 	}
-	got := telomereLines(lines, "bob", 3)
-
-	want := []bool{true, false, false, false}
-	for i, w := range want {
-		if got[i].Unread != w {
-			t.Errorf("line %d: unread = %v, want %v", i, got[i].Unread, w)
-		}
-	}
-	if got[0].Updated != 5 || got[0].User != "alice" {
-		t.Errorf("line 0 = %+v, want updated 5 by alice", got[0])
+	want := []api.TelomereLine{{ID: "a", Updated: 5, User: "alice"}, {ID: "b", Updated: 6}}
+	if got := telomereLines(lines); !slices.Equal(got, want) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 }
 
 func TestTelomereLines_NoLinesIsAnEmptyList(t *testing.T) {
-	if got := telomereLines(nil, "bob", 0); got == nil || len(got) != 0 {
+	if got := telomereLines(nil); got == nil || len(got) != 0 {
 		t.Errorf("got %#v, want an empty non-nil slice", got)
 	}
 }
@@ -49,5 +43,44 @@ func TestLastLeft(t *testing.T) {
 	}
 	if got, err := lastLeft(app, "alice", "card1"); err != nil || got == 0 {
 		t.Errorf("after leaving: (%d, %v), want a time", got, err)
+	}
+}
+
+func decodeLinesMessage(t *testing.T, data []byte) []api.TelomereLine {
+	t.Helper()
+	var msg linesMessage
+	if err := json.Unmarshal(data, &msg); err != nil {
+		t.Fatalf("decode %s: %v", data, err)
+	}
+	if msg.Type != "lines" {
+		t.Fatalf("type = %q, want %q", msg.Type, "lines")
+	}
+	return msg.Lines
+}
+
+// The message must follow every edit: a stale cached encoding would show the
+// old lines to every editor.
+func TestRoom_MessageFollowsTheLines(t *testing.T) {
+	app := newImportTestApp(t)
+	pod := createPod(t, app, "pod1")
+	card := createLinksTestCard(t, app, pod.Id, "T", "")
+	m := newRooms(app)
+
+	r, err := m.acquire(card.Id)
+	if err != nil {
+		t.Fatalf("acquire: %v", err)
+	}
+	defer m.release(r)
+
+	r.Replace("T\nb")
+	first := decodeLinesMessage(t, r.Message())
+	if len(first) != 2 {
+		t.Fatalf("got %d lines, want 2", len(first))
+	}
+
+	r.Replace("T\nb\nc")
+	second := decodeLinesMessage(t, r.Message())
+	if len(second) != 3 || second[0].ID != first[0].ID {
+		t.Errorf("lines = %v, want 3 lines, the first keeping its ID %q", second, first[0].ID)
 	}
 }

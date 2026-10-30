@@ -17,8 +17,7 @@ export function bracketContainsCode(cx: InlineContext, pos: number): boolean {
     if (ch === 91) {
       if (blankEnd(cx, i) >= 0) return true;
       depth++;
-    }
-    else if (ch === 93) {
+    } else if (ch === 93) {
       if (depth === 0) return false;
       depth--;
     } else if (ch === 96 && codeSpanClose(cx, i) >= 0) return true;

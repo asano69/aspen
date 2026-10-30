@@ -10,8 +10,7 @@ import type { TitleCandidate } from "@/lib/models/card";
 import { extractLinks } from "@/lib/models/extractLinks";
 import { authToken } from "@/lib/api/auth";
 import { fetchTelomere } from "@/lib/api/cardApi";
-import { telomereEntries } from "@/lib/models/telomere";
-import { setTelomereBase } from "./plugins/decorations/telomere";
+import { createLineMeta, type LinesMessage } from "@/lib/stores/lineMeta";
 import { cardsById } from "@/lib/stores/cardsStore";
 import { closeOwnLinks, setOwnLinks } from "@/lib/stores/relatedStore";
 
@@ -56,17 +55,16 @@ export default function ExistingCardEditor(props: ExistingCardEditorProps) {
   const currentText = () => view?.state.doc.toString() ?? "";
   props.onContentSnapshot?.(currentText);
 
-  // Loads who edited each line and which lines are unread (see
-  // internal/serve/telomere.go). The editor applies it as soon as its text has
-  // arrived and has the same number of lines.
-  let closed = false;
+  // The server sends who edited each line, and when, once when this editor
+  // joins and after every accepted edit (see room.Message in
+  // internal/serve/rooms.go).
+  const lineMeta = createLineMeta();
+  onCleanup(channel.on<LinesMessage>("lines", lineMeta.apply));
+
+  // Who the user is and when they last left the card: with the lines, they
+  // decide which lines are unread (see internal/serve/telomere.go).
   fetchTelomere(props.cardId)
-    .then((response) => {
-      if (closed || !view) return;
-      view.dispatch({
-        effects: setTelomereBase.of(telomereEntries(response.lines)),
-      });
-    })
+    .then(lineMeta.setReader)
     .catch((err) => console.error("[telomere] failed to load:", err));
 
   // The editor is shown at once: the room's text fills it as it arrives.
@@ -94,7 +92,6 @@ export default function ExistingCardEditor(props: ExistingCardEditorProps) {
   };
 
   onCleanup(() => {
-    closed = true;
     clearTimeout(linksTimer);
     props.onReady?.(false);
     closeOwnLinks(props.cardId);
@@ -106,12 +103,17 @@ export default function ExistingCardEditor(props: ExistingCardEditorProps) {
       channel={channel}
       onView={(v) => (view = v)}
       onDocChanged={scheduleOwnLinks}
+      lineEntries={lineMeta.entries}
       podSlug={props.podSlug}
       onConfirmedTitle={confirm}
       initialText={props.initialText}
       initialSelection={props.initialSelection}
     >
-      <RelatedCards cardId={props.cardId} title={cardsById[props.cardId]?.title} podSlug={props.podSlug()} />
+      <RelatedCards
+        cardId={props.cardId}
+        title={cardsById[props.cardId]?.title}
+        podSlug={props.podSlug()}
+      />
     </NoteEditor>
   );
 }

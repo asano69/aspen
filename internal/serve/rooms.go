@@ -6,6 +6,7 @@
 package serve
 
 import (
+	"encoding/json"
 	"log/slog"
 	"maps"
 	"net/http"
@@ -61,6 +62,9 @@ type room struct {
 	// the Server's lock, then linesMu.
 	linesMu sync.Mutex
 	lines   []lineid.Line
+	// message is the encoded "lines" message of lines, or nil when lines
+	// changed since it was made. Guarded by linesMu.
+	message []byte
 
 	// saveMu serializes save and guards the fields below. It is never taken
 	// while the Document is locked (Track runs with it locked).
@@ -80,6 +84,7 @@ func (r *room) Track(changes []authority.Change, doc []uint16, author any, now i
 		r.lines = lineid.Apply(r.lines, c.Before, c.Changes.Edits(), now)
 	}
 	r.lines = r.sign(doc, r.lines, user, now)
+	r.message = nil
 	r.linesMu.Unlock()
 
 	if r.scheduled.CompareAndSwap(false, true) {
@@ -121,11 +126,28 @@ func (r *room) restoreLines(saved []lineid.Line) {
 		// Lines that were never signed, or whose text changed while the card
 		// was closed, are signed now. No user is behind that change.
 		r.lines = r.sign(doc, r.lines, "", time.Now().Unix())
+		r.message = nil
 	})
 }
 
-// Message is the extra message of the collab stream. There is none.
-func (r *room) Message() []byte { return nil }
+// Message is the extra message of the collab stream: the metadata of every
+// line, sent to an editor when it joins and after every accepted edit. It is
+// always the whole list, so a client that missed one still ends up right. The
+// encoding is made once per change, not once per editor. Called with the
+// Server's lock held, which comes before linesMu.
+func (r *room) Message() []byte {
+	r.linesMu.Lock()
+	defer r.linesMu.Unlock()
+	if r.message == nil {
+		data, err := json.Marshal(linesMessage{Type: "lines", Lines: telomereLines(r.lines)})
+		if err != nil {
+			slog.Warn("encode lines message", "card", r.id, "error", err)
+			return nil
+		}
+		r.message = data
+	}
+	return r.message
+}
 
 func (r *room) settle() {
 	r.scheduled.Store(false)

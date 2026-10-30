@@ -63,7 +63,6 @@ export async function renameLinks(
   );
 }
 
-
 // Uploads an image used in a pod to the server (see
 // internal/serve/attachments.go), which shrinks it and stores it once per
 // content. Resolves to the attachment path ("@/files/<ULID><ext>") to write in
@@ -146,12 +145,11 @@ export async function searchCards(
   });
 }
 
-// Fetches who edited each line of a card and which lines the user has not
-// seen yet (see internal/serve/telomere.go). requestKey: null keeps it from
-// being auto-cancelled by another request.
-export async function fetchTelomere(
-  cardId: string,
-): Promise<TelomereResponse> {
+// Fetches who the user is and when they last left a card (see
+// internal/serve/telomere.go). With the lines the server streams to the
+// editor, that tells which lines the user has not seen yet. requestKey: null
+// keeps it from being auto-cancelled by another request.
+export async function fetchTelomere(cardId: string): Promise<TelomereResponse> {
   return await pb.send<TelomereResponse>(
     `/api/admin/cards/${cardId}/telomere`,
     { method: "GET", requestKey: null },

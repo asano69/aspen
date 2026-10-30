@@ -16,7 +16,10 @@ interface FixtureCase {
 
 // Resolved from the working directory, like extractLinks.test.ts.
 const fixture: FixtureCase[] = JSON.parse(
-  readFileSync(resolve(process.cwd(), "../testdata/nested-brackets.json"), "utf8"),
+  readFileSync(
+    resolve(process.cwd(), "../testdata/nested-brackets.json"),
+    "utf8",
+  ),
 );
 
 // The first line of a card is its title and is never parsed, so the text goes
@@ -25,8 +28,8 @@ const TITLE_LINE = "T\n";
 
 function inlineNodes(text: string): string[] {
   const doc = TITLE_LINE + text;
-  const line = aspenSyntaxLanguage.parser.parse(doc).topNode.firstChild
-    ?.nextSibling;
+  const line =
+    aspenSyntaxLanguage.parser.parse(doc).topNode.firstChild?.nextSibling;
   const nodes: string[] = [];
   for (let node = line?.firstChild; node; node = node.nextSibling) {
     nodes.push(`${node.name}:${doc.slice(node.from, node.to)}`);

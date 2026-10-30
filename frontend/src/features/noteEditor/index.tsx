@@ -17,7 +17,7 @@ import { collabExtension, type Channel } from "@/lib/collab";
 import { hangingIndent } from "./plugins/decorations/hangingIndent";
 import { wordBreak } from "./plugins/decorations/wordBreak";
 import { codeBlockLines } from "./plugins/decorations/codeBlockLines";
-import { telomere } from "./plugins/decorations/telomere";
+import { refreshTelomere, telomere } from "./plugins/decorations/telomere";
 import { imageWidget } from "./plugins/decorations/imageWidget";
 import { mermaidBlock } from "./plugins/decorations/mermaidBlock";
 import { emptyLinks, setLinkAlive } from "./plugins/decorations/emptyLinks";
@@ -28,7 +28,6 @@ import {
   requestLinkAlive,
 } from "@/lib/stores/linkAliveStore";
 import { usePod } from "@/pages/pods/PodContext";
-import { currentUser } from "@/lib/api/auth";
 import { defaultKeymapGroups } from "./keymaps";
 import { titleCandidateExtension } from "./titleCandidatePlugin";
 import { syntheticAnnotation } from "./userEdit";
@@ -51,6 +50,7 @@ import { pasteCodeBlockIndent } from "./plugins/interactions/pasteCodeBlockInden
 import { selectionMenu } from "./plugins/interactions/selectionMenu";
 import { titleCompletion } from "./plugins/interactions/titleCompletion";
 import type { TitleCandidate } from "@/lib/models/card";
+import type { TelomereEntry } from "@/lib/models/telomere";
 import TelomerePopover, { type TelomereSelection } from "./TelomerePopover";
 import { registerDebugView } from "./debug";
 import { imeDebug } from "./imeDebug";
@@ -66,6 +66,9 @@ export interface NoteEditorProps {
   // drafting is pushed to it like any other edit.
   initialText?: string;
   autofocus?: boolean;
+  // One entry per line of the document, for the telomere bar (see
+  // lib/stores/lineMeta.ts). A draft has none.
+  lineEntries?: () => TelomereEntry[];
   // Selection to restore (and focus the editor with) when this editor
   // mounts. Used only for the draft-to-existing-card transition (see
   // CardForm's focusSelection), so the caret stays exactly where the
@@ -144,7 +147,7 @@ export default function NoteEditor(props: NoteEditorProps) {
     // Bar left of each line: who edited it and whether it is unread (see
     // plugins/decorations/telomere.ts).
     telomere(
-      () => currentUser()?.name ?? "",
+      () => props.lineEntries?.() ?? [],
       (entry, anchor) => setTelomereSelection({ entry, anchor }),
     ),
     codeBlockLines,
@@ -292,6 +295,15 @@ export default function NoteEditor(props: NoteEditorProps) {
         ),
       }),
     );
+  });
+
+  // Redraws the telomere when the line entries change. Same bridge as above:
+  // this effect tracks the Solid memo and tells CodeMirror once.
+  createEffect(() => {
+    const view = editorView();
+    if (!view) return;
+    props.lineEntries?.();
+    untrack(() => view.dispatch({ effects: refreshTelomere.of(null) }));
   });
 
   // The page's own look (padding, shadow, radius) lives in

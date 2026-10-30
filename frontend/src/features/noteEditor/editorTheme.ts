@@ -348,7 +348,6 @@ export const editorTheme = EditorView.theme({
     color: "var(--empty-page-link-color)",
   },
 
-
   // Quote (see parser/aspen's Quote node and rules/quote.ts).
   // Italic + a muted color is enough to distinguish a quoted line
   // from ordinary text without a block-level treatment (this decoration

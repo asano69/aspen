@@ -69,11 +69,7 @@ export function parseDecoration(
   const close = decoClose(cx, contentFrom);
   if (close <= contentFrom) return -1;
 
-  const children = parseNested(
-    cx,
-    cx.slice(contentFrom, close),
-    contentFrom,
-  );
+  const children = parseNested(cx, cx.slice(contentFrom, close), contentFrom);
   return cx.addElement(
     cx.elt("deco", pos, close + 1, [
       cx.elt("decoMark", pos, contentFrom),

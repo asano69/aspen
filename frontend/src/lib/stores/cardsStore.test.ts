@@ -265,9 +265,7 @@ describe("setCardSort", () => {
     ]);
     setCardSort("updated");
 
-    await vi.waitFor(() =>
-      expect(podWindow("n")?.ids).toEqual(["n-9", "n-0"]),
-    );
+    await vi.waitFor(() => expect(podWindow("n")?.ids).toEqual(["n-9", "n-0"]));
     expect(queryCardsPage).toHaveBeenLastCalledWith("n", 0, 100, "updated");
     expect(podWindow("n")?.total).toBe(3);
     expect(cardsById["n-1"]).toBeUndefined();

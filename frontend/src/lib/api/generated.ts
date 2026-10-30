@@ -96,7 +96,8 @@ export interface SearchResponse {
   items: SearchItem[];
 }
 /**
- * TelomereLine is the edit record of one line of a card.
+ * TelomereLine is the edit record of one line of a card, as the "lines"
+ * message of the collab stream carries it (see internal/serve/telomere.go).
  */
 export interface TelomereLine {
   /**
@@ -111,16 +112,19 @@ export interface TelomereLine {
    * Email address of the user who made that edit; empty if unknown.
    */
   user: string;
-  /**
-   * True when someone else edited the line after the requesting user last
-   * left the card.
-   */
-  unread: boolean;
 }
 /**
- * TelomereResponse is the body of GET /api/admin/cards/{id}/telomere. Lines
- * has one entry per line of the card's text, in order.
+ * TelomereResponse is the body of GET /api/admin/cards/{id}/telomere: what
+ * only the requesting user knows. With the lines, it tells which lines are
+ * unread.
  */
 export interface TelomereResponse {
-  lines: TelomereLine[];
+  /**
+   * Email address of the requesting user, as it appears in TelomereLine.User.
+   */
+  me: string;
+  /**
+   * Unix time the user last left the card's room; 0 if there is no record.
+   */
+  left: number /* int64 */;
 }

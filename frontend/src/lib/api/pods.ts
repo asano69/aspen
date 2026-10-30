@@ -21,7 +21,6 @@ export function podCoverURL(pod: PodRecord): string | undefined {
   return pod.cover ? pb.files.getURL(pod, pod.cover) : undefined;
 }
 
-
 // Creates a pod. The "name" field is required and pattern-constrained,
 // but the real id isn't known until after creation -- so this creates
 // with a throwaway placeholder value (satisfying both the required and
@@ -47,9 +46,7 @@ export async function createPod(
 
 export async function updatePod(
   id: string,
-  changes: Partial<
-    Pick<PodRecord, "title" | "position" | "links" | "deleted">
-  >,
+  changes: Partial<Pick<PodRecord, "title" | "position" | "links" | "deleted">>,
 ): Promise<PodRecord> {
   return await pb.collection("pods").update<PodRecord>(id, changes);
 }

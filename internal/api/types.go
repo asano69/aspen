@@ -79,7 +79,8 @@ type SearchResponse struct {
 	Items []SearchItem `json:"items"`
 }
 
-// TelomereLine is the edit record of one line of a card.
+// TelomereLine is the edit record of one line of a card, as the "lines"
+// message of the collab stream carries it (see internal/serve/telomere.go).
 type TelomereLine struct {
 	// ID of the line (see internal/lineid).
 	ID string `json:"id"`
@@ -87,13 +88,14 @@ type TelomereLine struct {
 	Updated int64 `json:"updated"`
 	// Email address of the user who made that edit; empty if unknown.
 	User string `json:"user"`
-	// True when someone else edited the line after the requesting user last
-	// left the card.
-	Unread bool `json:"unread"`
 }
 
-// TelomereResponse is the body of GET /api/admin/cards/{id}/telomere. Lines
-// has one entry per line of the card's text, in order.
+// TelomereResponse is the body of GET /api/admin/cards/{id}/telomere: what
+// only the requesting user knows. With the lines, it tells which lines are
+// unread.
 type TelomereResponse struct {
-	Lines []TelomereLine `json:"lines"`
+	// Email address of the requesting user, as it appears in TelomereLine.User.
+	Me string `json:"me"`
+	// Unix time the user last left the card's room; 0 if there is no record.
+	Left int64 `json:"left"`
 }

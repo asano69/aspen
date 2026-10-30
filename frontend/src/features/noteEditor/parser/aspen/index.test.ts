@@ -68,7 +68,9 @@ describe("Aspen Lezer syntax", () => {
       ["#aa[ b", ""],
     ];
     for (const [input, nodes] of cases) {
-      expect(tree(input), input).toBe(`Document(Paragraph(${nodes}))`.replace("Paragraph()", "Paragraph"));
+      expect(tree(input), input).toBe(
+        `Document(Paragraph(${nodes}))`.replace("Paragraph()", "Paragraph"),
+      );
     }
   });
 
@@ -269,7 +271,15 @@ describe("Aspen Lezer syntax", () => {
   });
 
   it("parses every decoration character as the same flat deco node", () => {
-    for (const input of ["[/ x]", "[// x]", "[*/ x]", "[/* x]", "[- x]", "[_ x]", "[. x]"]) {
+    for (const input of [
+      "[/ x]",
+      "[// x]",
+      "[*/ x]",
+      "[/* x]",
+      "[- x]",
+      "[_ x]",
+      "[. x]",
+    ]) {
       expect(tree(input)).toBe("Document(Paragraph(deco(decoMark,decoMark)))");
     }
   });
@@ -341,9 +351,7 @@ describe("Aspen Lezer syntax", () => {
         "Document(Paragraph(link(linkMark,linkMark)))",
       );
       expect(tree(`[${char.repeat(241)}]`)).toBe("Document(Paragraph)");
-      expect(tree(`#${char.repeat(240)}`)).toBe(
-        "Document(Paragraph(hashTag))",
-      );
+      expect(tree(`#${char.repeat(240)}`)).toBe("Document(Paragraph(hashTag))");
       expect(tree(`#${char.repeat(241)}`)).toBe("Document(Paragraph)");
     }
     // Only wiki links and hashtags are limited: a URL link has no stored title.

@@ -1,8 +1,13 @@
 // telomere.go serves the data of the telomere, the bar left of each line of
 // the note editor: who edited a line and when (the signed lines of
-// card_contents, see contents.go), and whether the line is unread. A line is
-// unread when someone else edited it after the requesting user last left the
-// card's room (the "left" time of room_events, see room_events.go).
+// card_contents, see contents.go), and whether the line is unread.
+//
+// The lines reach an editor through the "lines" message of the collab stream
+// (see room.Message in rooms.go), so they follow every accepted edit. The
+// route below only answers what the stream cannot: who the requesting user is
+// and when they last left the card's room (the "left" time of room_events, see
+// room_events.go). A line is unread when someone else edited it after that
+// time; the client works that out.
 package serve
 
 import (
@@ -17,27 +22,20 @@ import (
 	"github.com/asano69/aspen/internal/lineid"
 )
 
+// linesMessage is the "lines" message of the collab stream: the metadata of
+// every line of the card, in order.
+type linesMessage struct {
+	Type  string             `json:"type"`
+	Lines []api.TelomereLine `json:"lines"`
+}
+
 // telomereHandler serves GET /api/admin/cards/{id}/telomere.
 func telomereHandler(e *core.RequestEvent) error {
-	card, err := e.App.FindRecordById("cards", e.Request.PathValue("id"))
-	if errors.Is(err, sql.ErrNoRows) {
-		return e.NotFoundError("card not found", nil)
-	}
-	if err != nil {
-		return e.InternalServerError("find card", err)
-	}
-
-	lines, err := currentLines(e.App, card)
-	if err != nil {
-		return e.InternalServerError("read the lines of the card", err)
-	}
-	left, err := lastLeft(e.App, e.Auth.Id, card.Id)
+	left, err := lastLeft(e.App, e.Auth.Id, e.Request.PathValue("id"))
 	if err != nil {
 		return e.InternalServerError("read when the user left the card", err)
 	}
-	return e.JSON(http.StatusOK, api.TelomereResponse{
-		Lines: telomereLines(lines, e.Auth.Email(), left),
-	})
+	return e.JSON(http.StatusOK, api.TelomereResponse{Me: e.Auth.Email(), Left: left})
 }
 
 // currentLines returns the lines of a card: the live ones while the card is
@@ -72,17 +70,13 @@ func lastLeft(app core.App, userID, cardID string) (int64, error) {
 	return left.Time().Unix(), nil
 }
 
-// telomereLines turns stored lines into the response rows. A line without a
-// known author is never unread, and neither is a line the user edited.
-func telomereLines(lines []lineid.Line, me string, left int64) []api.TelomereLine {
+// telomereLines keeps what the editor shows of each line. The signature and
+// the hash stay on the server. A card without lines gives an empty list, not
+// nil (which would encode as null).
+func telomereLines(lines []lineid.Line) []api.TelomereLine {
 	out := make([]api.TelomereLine, len(lines))
 	for i, l := range lines {
-		out[i] = api.TelomereLine{
-			ID:      l.ID,
-			Updated: l.Updated,
-			User:    l.User,
-			Unread:  l.User != "" && l.User != me && l.Updated > left,
-		}
+		out[i] = api.TelomereLine{ID: l.ID, Updated: l.Updated, User: l.User}
 	}
 	return out
 }
