@@ -3,7 +3,7 @@
    card and its props are intentionally read once during setup. */
 import { createEffect, onCleanup } from "solid-js";
 import type { EditorView } from "@codemirror/view";
-import { connect } from "cm-websocket";
+import { connect } from "@/lib/collab";
 import NoteEditor from "./index";
 import RelatedCards from "@/pages/cards/RelatedCards";
 import type { TitleCandidate } from "@/lib/models/card";

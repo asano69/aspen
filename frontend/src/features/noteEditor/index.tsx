@@ -13,7 +13,7 @@ import { EditorView, keymap, drawSelection } from "@codemirror/view";
 import { history } from "@codemirror/commands";
 import { closeBrackets } from "@codemirror/autocomplete";
 import { createCodeMirror } from "solid-codemirror";
-import { collabExtension, type Channel } from "cm-websocket";
+import { collabExtension, type Channel } from "@/lib/collab";
 import { hangingIndent } from "./plugins/decorations/hangingIndent";
 import { wordBreak } from "./plugins/decorations/wordBreak";
 import { codeBlockLines } from "./plugins/decorations/codeBlockLines";

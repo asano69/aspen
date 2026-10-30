@@ -6,7 +6,7 @@ import {
 } from "@codemirror/collab";
 import type { Extension } from "@codemirror/state";
 import { ViewPlugin, type EditorView, type ViewUpdate } from "@codemirror/view";
-import type { Channel } from "../channel";
+import type { Channel } from "./channel";
 import {
   fromWire,
   toWire,

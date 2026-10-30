@@ -1,6 +1,6 @@
 import { ChangeSet } from "@codemirror/state";
 import type { Update } from "@codemirror/collab";
-import type { Message } from "../channel";
+import type { Message } from "./channel";
 
 // Wire format of one update. `changes` is ChangeSet JSON.
 export interface WireUpdate {

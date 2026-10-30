@@ -6,7 +6,7 @@ import (
 	"testing"
 	"unicode/utf16"
 
-	"github.com/asano69/cmgo/ot"
+	"github.com/asano69/cardpod/internal/cmgo/ot"
 )
 
 func units(s string) []uint16 { return utf16.Encode([]rune(s)) }

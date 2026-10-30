@@ -16,7 +16,7 @@ package lineid
 import (
 	"slices"
 
-	"github.com/asano69/cmgo/ot"
+	"github.com/asano69/cardpod/internal/cmgo/ot"
 	"github.com/google/uuid"
 )
 

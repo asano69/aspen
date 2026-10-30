@@ -17,8 +17,8 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
-	"github.com/asano69/cmgo/authority"
-	"github.com/asano69/cmgo/collab"
+	"github.com/asano69/cardpod/internal/cmgo/authority"
+	"github.com/asano69/cardpod/internal/cmgo/collab"
 
 	"github.com/asano69/cardpod/internal/lineid"
 	"github.com/asano69/cardpod/internal/linesign"
