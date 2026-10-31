@@ -229,7 +229,7 @@ func TestUniqueStem(t *testing.T) {
 		uniqueStem("A", used), // differs only in case: still a collision
 		uniqueStem("b", used),
 	}
-	want := []string{"a", "a(2)", "A(3)", "b"}
+	want := []string{"a", "a#2", "A#3", "b"}
 	if strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Errorf("stems = %v, want %v", got, want)
 	}

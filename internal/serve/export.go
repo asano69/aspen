@@ -13,7 +13,7 @@
 //
 // Cards are written in titleLc order. <stem> is the card's title made safe as a
 // file name and cut to maxStemBytes. When two stems are the same (compared
-// case-insensitively, as some file systems do), a later one gets "(2)", "(3)", ...
+// case-insensitively, as some file systems do), a later one gets "#2", "#3", ...
 // so no name collides. The manifest lists every file, so an importer needs no
 // knowledge of the naming rules and reads cards in the listed order.
 //
@@ -51,7 +51,7 @@ const (
 
 	// maxStemBytes caps the readable part of a file name. Most file systems
 	// limit a name to 255 bytes, so the longest suffix (".json", 5 bytes) still
-	// fits. A "(<n>)" suffix is taken out of this budget, not added to it.
+	// fits. A "#<n>" suffix is taken out of this budget, not added to it.
 	maxStemBytes = 240
 
 	// fallbackStem is used when a title has nothing left after sanitizing.
@@ -227,14 +227,16 @@ func exportStem(title string) string {
 	return stem
 }
 
-// uniqueStem returns stem, or stem with "(2)", "(3)", ... when a name that
+// uniqueStem returns stem, or stem with "#2", "#3", ... when a name that
 // differs only in case is already in used, and records the result. The suffix
+// is "#<n>" rather than "(<n>)" so it cannot be mistaken for a copy marker
+// that the OS adds. The suffix
 // is taken out of the length budget by cutting stem, so the name never exceeds
 // maxStemBytes.
 func uniqueStem(stem string, used map[string]bool) string {
 	name := stem
 	for n := 2; used[strings.ToLower(name)]; n++ {
-		suffix := fmt.Sprintf("(%d)", n)
+		suffix := fmt.Sprintf("#%d", n)
 		name = truncateBytes(stem, maxStemBytes-len(suffix)) + suffix
 	}
 	used[strings.ToLower(name)] = true
