@@ -1,0 +1,115 @@
+/* Public classes: .settings, .settings-nav, .settings-tab, .settings-panel,
+ * .settings-section, .settings-section-title, .settings-section-body,
+ * .settings-row, .settings-row-label, .settings-row-control,
+ * .settings-empty.
+ * The shared layout of the user and pod settings (see features/settings).
+ * The selected tab has [data-selected], set by Kobalte. */
+@layer components {
+  .settings {
+    display: grid;
+    grid-template-columns: 16rem minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .settings-nav {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .settings-tab {
+    padding: 10px 12px;
+    border-left: 3px solid transparent;
+    text-align: left;
+    font-size: 16px;
+    line-height: 20px;
+    color: var(--page-text-color);
+    cursor: pointer;
+    transition: background-color 0.15s;
+  }
+
+  .settings-tab:hover {
+    background-color: var(--color-hover-bg);
+  }
+
+  .settings-tab[data-selected] {
+    border-left-color: var(--page-link-color);
+    background-color: var(--card-bg);
+  }
+
+  .settings-panel {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    outline: none;
+  }
+
+  .settings-section {
+    background-color: var(--card-bg);
+    box-shadow: var(--card-box-shadow);
+    border-radius: 2px;
+  }
+
+  .settings-section-title {
+    padding: 16px;
+    background-color: var(--card-title-bg);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--page-text-color);
+  }
+
+  .settings-section-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .settings-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .settings-row-label {
+    color: var(--page-text-color);
+  }
+
+  .settings-empty {
+    color: var(--card-description-color);
+  }
+
+  /* Narrow screens: the tab list becomes a scrolling row above the panel. */
+  @media (max-width: 767px) {
+    .settings {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .settings-nav {
+      flex-direction: row;
+      overflow-x: auto;
+    }
+
+    .settings-tab {
+      flex-shrink: 0;
+      border-left: 0;
+      border-bottom: 3px solid transparent;
+    }
+
+    .settings-tab[data-selected] {
+      border-bottom-color: var(--page-link-color);
+    }
+
+    .settings-panel {
+      grid-column: 1;
+    }
+
+    .settings-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { For, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
+import { useNavigate } from "@solidjs/router";
 import { DropdownMenu } from "@kobalte/core/dropdown-menu";
 import { Image } from "@kobalte/core/image";
 import {
@@ -36,6 +37,7 @@ const THEME_OPTIONS: ThemeOption[] = [
 // Split out of TopBar so TopBar stays focused on layout (toggle + logo)
 // and this file can grow its own menu items without bloating TopBar.
 export default function UserMenu() {
+  const navigate = useNavigate();
   const handleLogout = () => {
     logout();
   };
@@ -65,7 +67,10 @@ export default function UserMenu() {
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content class="menu-content">
-          <DropdownMenu.Item onSelect={handleSettings} class="menu-item">
+          <DropdownMenu.Item
+            onSelect={() => navigate("/settings")}
+            class="menu-item"
+          >
             <Settings size={16} />
             User Settings
           </DropdownMenu.Item>

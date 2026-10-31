@@ -10,6 +10,8 @@ import CardForm from "../pages/cards/CardForm";
 import SearchPage from "../pages/search/SearchPage";
 import ApiDocs from "../pages/admin/ApiDocs";
 import Md2sb from "../pages/admin/Md2sb";
+import UserSettings from "../pages/settings/UserSettings";
+import PodSettings from "../pages/settings/PodSettings";
 
 // All top-level routes in one place, so adding or removing a page never
 // requires touching main.tsx.
@@ -27,6 +29,10 @@ export default function AppRouter() {
       {/* Markdown -> Scrapbox notation converter (see features/md2sb). */}
       <Route path="/admin/md2sb" component={Md2sb} />
       <Route path="/" component={PodCards} />
+      {/* "settings" and "pods" are reserved pod names (see
+          internal/slug/reserved.go), so these never collide with "/:slug". */}
+      <Route path="/settings" component={UserSettings} />
+      <Route path="/pods/:podName/settings" component={PodSettings} />
       {/* The pod segment in the URL is now the pod's unique
           "name" field, not its PocketBase id (see CardList.tsx
           and CardForm.tsx, which resolve the actual record via

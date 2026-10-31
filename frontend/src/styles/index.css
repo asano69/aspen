@@ -30,6 +30,7 @@
 @import "./components/form.css";
 @import "./components/login.css";
 @import "./components/admin.css";
+@import "./components/settings.css";
 
 /* Unlayered on purpose -- must load last so it wins the cascade over
  * every layered rule above (see user.css's own comment). */
