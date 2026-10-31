@@ -9,6 +9,8 @@ import { removePod, renamePod } from "@/lib/stores/podsStore";
 export interface PodMenuProps {
   id: string;
   title: string;
+  // The pod's unique "name" (the URL segment), used to open its settings.
+  slug: string;
 }
 
 // Dropdown menu of the open pod, right of its name in the TopBar. Mirrors
@@ -36,6 +38,13 @@ export default function PodMenu(props: PodMenuProps) {
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content class="menu-content">
+            <DropdownMenu.Item
+              onSelect={() => navigate(`/pods/${props.slug}/settings`)}
+              class="menu-item"
+            >
+              <Settings size={16} />
+              Pod settings
+            </DropdownMenu.Item>
             <DropdownMenu.Item
               onSelect={() => setRenameOpen(true)}
               class="menu-item"

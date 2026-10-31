@@ -175,7 +175,11 @@ export default function TopBar(props: TopBarProps) {
             <PackageOpen />
           </button>
           <Show when={topBarPodLink()}>
-            <PodMenu id={topBarPodLink()!.id} title={topBarPodLink()!.name} />
+            <PodMenu
+              id={topBarPodLink()!.id}
+              title={topBarPodLink()!.name}
+              slug={topBarPodLink()!.slug}
+            />
           </Show>
 
           <UserMenu />
