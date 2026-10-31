@@ -78,6 +78,8 @@ func registerRoutes(e *core.ServeEvent) error {
 	admin.POST("/cards/{id}/rename-links", renameLinksHandler)
 	admin.GET("/cards/{id}/telomere", telomereHandler)
 	admin.POST("/attachments", uploadAttachmentHandler)
+	admin.GET("/pods/{name}/git", gitSettingsHandler)
+	admin.PUT("/pods/{name}/git", updateGitSettingsHandler)
 
 	// Uploaded images (see attachments.go). Public like any <img> source; it
 	// is registered before the SPA fallback below, so it wins that match.

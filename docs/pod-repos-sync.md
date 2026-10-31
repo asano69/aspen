@@ -68,3 +68,13 @@ export/impotコマンドの形式に合わせる（ロジックを使い回す�
 
 * 作業ツリーありにしました。exportの書き出しロジックを無改造で使い回すためで、pb_data/git/<podName>/ に export と同じ形式のファイルを書き、その中に .git を置きます。ディスクは約2倍使います。重ければ後で作業ツリーなしに変えられるよう、go-gitは podrepo に閉じ込めてあります。
 * 再起動後のdirty判定は、リポジトリのHEADコミット時刻と各テーブルの updated を比べる方式にしました。状態テーブルは作りません。
+
+
+# プッシュミラーの設計
+
+## 設計
+- 同期先の唯一の正本を <data>/git/<pod>/.git/config の remote "origin" にします。URL とユーザー名・パスワードは、Gitea と同じく URL の userinfo（https://user:pass@host/...）として保存します。
+- mirrors.json は廃止します。コミット後の即時 push は今のままで、間隔の設定は入れていません。
+パスワードは API のレスポンスに含めず、hasPassword だけ返します。保存時にパスワード欄が空なら既存のパスワードを保持します。
+- 資格情報は .git/config に平文で残ります（Gitea の push mirror と同様）。
+- API は GET/PUT /api/admin/pods/{name}/git です。Pod 設定の「Git Settings」タブに、URL・ユーザー名・パスワードの 3 項目を置きます。

@@ -2,11 +2,15 @@
 // the only package that imports go-git, so the rest of the app never sees its
 // types. The repository is derived data: the database stays the source of
 // truth, and the folder can always be rewritten from it.
+//
+// The remote ("origin") lives in the repository's own .git/config, including
+// the credentials, which are stored in the URL's user info like Gitea does.
 package podrepo
 
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -20,18 +24,40 @@ import (
 const (
 	authorName  = "aspen"
 	authorEmail = "aspen@localhost"
+
+	remoteName = "origin"
 )
 
-// Commit stages every change in dir (additions, edits and deletions) and
-// commits it. The repository is created on first use. It reports false when
-// nothing changed, in which case no commit is made.
-func Commit(dir, message string) (bool, error) {
+// ErrInvalidURL is returned (wrapped) by SetRemote for a URL that cannot be
+// used as a remote. Test for it with errors.Is.
+var ErrInvalidURL = errors.New("invalid remote URL")
+
+// Remote is the remote a pod is pushed to. The zero value means no remote.
+type Remote struct {
+	URL      string // without credentials
+	Username string
+	Password string
+}
+
+// openOrInit opens the repository in dir, creating it on first use.
+func openOrInit(dir string) (*git.Repository, error) {
 	repo, err := git.PlainOpen(dir)
 	if errors.Is(err, git.ErrRepositoryNotExists) {
 		repo, err = git.PlainInit(dir, false)
 	}
 	if err != nil {
-		return false, fmt.Errorf("open repository %s: %w", dir, err)
+		return nil, fmt.Errorf("open repository %s: %w", dir, err)
+	}
+	return repo, nil
+}
+
+// Commit stages every change in dir (additions, edits and deletions) and
+// commits it. The repository is created on first use. It reports false when
+// nothing changed, in which case no commit is made.
+func Commit(dir, message string) (bool, error) {
+	repo, err := openOrInit(dir)
+	if err != nil {
+		return false, err
 	}
 	wt, err := repo.Worktree()
 	if err != nil {
@@ -73,10 +99,84 @@ func LastCommitTime(dir string) (t time.Time, ok bool) {
 	return commit.Committer.When, true
 }
 
-// Push sends the current branch of the repository in dir to the remote url,
-// authenticating with token. History is never rewritten, so no force push is
-// needed. Being already up to date is not an error.
-func Push(dir, url, token string) error {
+// GetRemote reads the remote from the repository's config. A missing
+// repository or remote gives the zero Remote.
+func GetRemote(dir string) (Remote, error) {
+	repo, err := git.PlainOpen(dir)
+	if errors.Is(err, git.ErrRepositoryNotExists) {
+		return Remote{}, nil
+	}
+	if err != nil {
+		return Remote{}, fmt.Errorf("open repository %s: %w", dir, err)
+	}
+	cfg, err := repo.Config()
+	if err != nil {
+		return Remote{}, fmt.Errorf("read config of %s: %w", dir, err)
+	}
+	rc := cfg.Remotes[remoteName]
+	if rc == nil || len(rc.URLs) == 0 {
+		return Remote{}, nil
+	}
+
+	u, err := url.Parse(rc.URLs[0])
+	if err != nil {
+		return Remote{}, fmt.Errorf("parse remote URL of %s: %w", dir, err)
+	}
+	var r Remote
+	if u.User != nil {
+		r.Username = u.User.Username()
+		r.Password, _ = u.User.Password()
+		u.User = nil
+	}
+	r.URL = u.String()
+	return r, nil
+}
+
+// SetRemote writes the remote to the repository's config, creating the
+// repository on first use. An empty URL removes the remote.
+func SetRemote(dir string, r Remote) error {
+	var stored string
+	if r.URL != "" {
+		u, err := url.Parse(r.URL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return fmt.Errorf("%w: %q must be an http(s) URL", ErrInvalidURL, r.URL)
+		}
+		switch {
+		case r.Username != "" && r.Password != "":
+			u.User = url.UserPassword(r.Username, r.Password)
+		case r.Username != "":
+			u.User = url.User(r.Username)
+		}
+		stored = u.String()
+	}
+
+	repo, err := openOrInit(dir)
+	if err != nil {
+		return err
+	}
+	cfg, err := repo.Config()
+	if err != nil {
+		return fmt.Errorf("read config of %s: %w", dir, err)
+	}
+	if stored == "" {
+		delete(cfg.Remotes, remoteName)
+	} else {
+		cfg.Remotes[remoteName] = &config.RemoteConfig{Name: remoteName, URLs: []string{stored}}
+	}
+	if err := repo.SetConfig(cfg); err != nil {
+		return fmt.Errorf("write config of %s: %w", dir, err)
+	}
+	return nil
+}
+
+// Push sends the current branch of the repository in dir to its remote. It
+// does nothing when no remote is set. History is never rewritten, so no force
+// push is needed. Being already up to date is not an error.
+func Push(dir string) error {
+	r, err := GetRemote(dir)
+	if err != nil || r.URL == "" {
+		return err
+	}
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
 		return fmt.Errorf("open repository %s: %w", dir, err)
@@ -85,14 +185,17 @@ func Push(dir, url, token string) error {
 	if err != nil {
 		return fmt.Errorf("repository %s has no commit to push: %w", dir, err)
 	}
+
+	// The URL is passed without credentials, so errors never contain them.
+	opts := &git.PushOptions{RemoteURL: r.URL}
 	branch := head.Name().String()
-	err = repo.Push(&git.PushOptions{
-		RemoteURL: url,
-		RefSpecs:  []config.RefSpec{config.RefSpec(branch + ":" + branch)},
-		Auth:      &http.BasicAuth{Username: "git", Password: token},
-	})
+	opts.RefSpecs = []config.RefSpec{config.RefSpec(branch + ":" + branch)}
+	if r.Username != "" {
+		opts.Auth = &http.BasicAuth{Username: r.Username, Password: r.Password}
+	}
+	err = repo.Push(opts)
 	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
-		return fmt.Errorf("push %s to %s: %w", dir, url, err)
+		return fmt.Errorf("push %s to %s: %w", dir, r.URL, err)
 	}
 	return nil
 }

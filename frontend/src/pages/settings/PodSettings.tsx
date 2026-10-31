@@ -4,11 +4,12 @@ import { SettingsTabs, type SettingsTab } from "@/features/settings";
 import { fetchPodByName, podCoverURL } from "@/lib/api/pods";
 import { orderedPods } from "@/lib/stores/podsStore";
 import { useTopBarPodLink } from "@/lib/topBarSlot";
+import PodGitSettings from "./PodGitSettings";
 
 // Add a `content` to a tab once its settings exist.
 const TABS: SettingsTab[] = [
   { id: "general", label: "General Settings" },
-  { id: "git", label: "Git Settings" },
+  { id: "git", label: "Git Settings", content: PodGitSettings },
   { id: "cover", label: "Cover" },
   { id: "theme", label: "Theme" },
   { id: "export", label: "Export your pod data" },

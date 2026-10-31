@@ -1,10 +1,37 @@
 package podrepo
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+func TestRemote(t *testing.T) {
+	dir := t.TempDir()
+	if r, err := GetRemote(dir); err != nil || r != (Remote{}) {
+		t.Fatalf("GetRemote without a repository = (%+v, %v), want zero", r, err)
+	}
+
+	want := Remote{URL: "https://example.com/me/pod.git", Username: "bob", Password: "p@ss/word"}
+	if err := SetRemote(dir, want); err != nil {
+		t.Fatalf("SetRemote: %v", err)
+	}
+	if got, err := GetRemote(dir); err != nil || got != want {
+		t.Errorf("GetRemote = (%+v, %v), want %+v", got, err, want)
+	}
+
+	if err := SetRemote(dir, Remote{URL: "ftp://example.com/x"}); !errors.Is(err, ErrInvalidURL) {
+		t.Errorf("SetRemote(ftp) = %v, want ErrInvalidURL", err)
+	}
+
+	if err := SetRemote(dir, Remote{}); err != nil {
+		t.Fatalf("SetRemote(empty): %v", err)
+	}
+	if got, _ := GetRemote(dir); got != (Remote{}) {
+		t.Errorf("GetRemote after removal = %+v, want zero", got)
+	}
+}
 
 func TestCommit(t *testing.T) {
 	dir := t.TempDir()

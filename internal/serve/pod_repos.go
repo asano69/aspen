@@ -14,19 +14,12 @@
 // database remains the source of truth: the repository can be deleted and
 // rebuilt, but a rebuilt history differs from what a mirror already holds.
 //
-// A pod is mirrored (pushed) after each commit when <data dir>/mirrors.json
-// names it:
-//
-//	{"<pod name>": {"url": "https://example.com/me/pod.git", "token": "..."}}
-//
-// The file is read on every push, so it can be edited while the server runs. A
-// failed push is only logged and retried after the next commit.
+// A pod is mirrored (pushed) after each commit when its repository has a
+// remote (see pod_git.go, which edits it from the pod settings). A failed push
+// is only logged and retried after the next commit.
 package serve
 
 import (
-	"encoding/json"
-	"errors"
-	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -42,14 +35,7 @@ import (
 const (
 	podRepoDir        = "git"
 	podRepoQuietDelay = 5 * time.Minute
-	mirrorsFile       = "mirrors.json"
 )
-
-// mirror is the remote one pod is pushed to.
-type mirror struct {
-	URL   string `json:"url"`
-	Token string `json:"token"`
-}
 
 type podRepos struct {
 	app  core.App
@@ -235,7 +221,9 @@ func (r *podRepos) commit(podID string) {
 		slog.Warn("commit pod", "pod", name, "error", err)
 		return
 	}
-	r.push(name, dir)
+	if err := podrepo.Push(dir); err != nil {
+		slog.Warn("push pod to its mirror", "pod", name, "error", err)
+	}
 }
 
 // clearExport removes what a previous export wrote (and keeps .git), so cards
@@ -249,26 +237,3 @@ func clearExport(dir string) error {
 	return nil
 }
 
-// push sends the pod to its mirror. It does nothing when the pod has none.
-func (r *podRepos) push(name, dir string) {
-	data, err := os.ReadFile(filepath.Join(r.app.DataDir(), mirrorsFile))
-	if errors.Is(err, fs.ErrNotExist) {
-		return
-	}
-	if err != nil {
-		slog.Warn("read mirrors file", "error", err)
-		return
-	}
-	var mirrors map[string]mirror
-	if err := json.Unmarshal(data, &mirrors); err != nil {
-		slog.Warn("invalid mirrors file", "file", mirrorsFile, "error", err)
-		return
-	}
-	m, ok := mirrors[name]
-	if !ok {
-		return
-	}
-	if err := podrepo.Push(dir, m.URL, m.Token); err != nil {
-		slog.Warn("push pod to its mirror", "pod", name, "error", err)
-	}
-}

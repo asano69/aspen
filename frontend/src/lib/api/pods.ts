@@ -1,6 +1,7 @@
 import pb from "./pb";
 import { randomKey } from "../randomKey";
 import type { PodRecord } from "../models/pod";
+import type { GitSettings, GitSettingsRequest } from "./generated";
 
 // Looks up an pod by its unique "name" field. Pods are addressed by
 // this field in the URL instead of their PocketBase id, so any page
@@ -49,6 +50,26 @@ export async function updatePod(
   changes: Partial<Pick<PodRecord, "title" | "position" | "links" | "deleted">>,
 ): Promise<PodRecord> {
   return await pb.collection("pods").update<PodRecord>(id, changes);
+}
+
+// Reads the Git remote of a pod (see internal/serve/pod_git.go).
+export async function fetchGitSettings(podName: string): Promise<GitSettings> {
+  return await pb.send<GitSettings>(`/api/admin/pods/${podName}/git`, {
+    method: "GET",
+    requestKey: null,
+  });
+}
+
+// Saves the Git remote of a pod. An empty password keeps the stored one.
+export async function saveGitSettings(
+  podName: string,
+  body: GitSettingsRequest,
+): Promise<GitSettings> {
+  return await pb.send<GitSettings>(`/api/admin/pods/${podName}/git`, {
+    method: "PUT",
+    body,
+    requestKey: null,
+  });
 }
 
 // Soft-deletes a pod by stamping its "deleted" date; the record itself stays

@@ -96,6 +96,25 @@ export interface SearchResponse {
   items: SearchItem[];
 }
 /**
+ * GitSettings is the body of GET and PUT /api/admin/pods/{name}/git: the
+ * remote the pod's Git repository is pushed to. The password is never sent
+ * back; HasPassword tells whether one is stored.
+ */
+export interface GitSettings {
+  url: string;
+  username: string;
+  hasPassword: boolean;
+}
+/**
+ * GitSettingsRequest is the body of PUT /api/admin/pods/{name}/git. An empty
+ * Password keeps the stored one; an empty URL removes the remote.
+ */
+export interface GitSettingsRequest {
+  url: string;
+  username: string;
+  password: string;
+}
+/**
  * TelomereLine is the edit record of one line of a card, as the "lines"
  * message of the collab stream carries it (see internal/serve/telomere.go).
  */

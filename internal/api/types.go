@@ -79,6 +79,23 @@ type SearchResponse struct {
 	Items []SearchItem `json:"items"`
 }
 
+// GitSettings is the body of GET and PUT /api/admin/pods/{name}/git: the
+// remote the pod's Git repository is pushed to. The password is never sent
+// back; HasPassword tells whether one is stored.
+type GitSettings struct {
+	URL         string `json:"url"`
+	Username    string `json:"username"`
+	HasPassword bool   `json:"hasPassword"`
+}
+
+// GitSettingsRequest is the body of PUT /api/admin/pods/{name}/git. An empty
+// Password keeps the stored one; an empty URL removes the remote.
+type GitSettingsRequest struct {
+	URL      string `json:"url"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // TelomereLine is the edit record of one line of a card, as the "lines"
 // message of the collab stream carries it (see internal/serve/telomere.go).
 type TelomereLine struct {
