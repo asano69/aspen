@@ -272,6 +272,23 @@ func TestExport_LongTitleKeepsTheFileNameWithinTheLimit(t *testing.T) {
 	}
 }
 
+func TestExportStem_ReplacesUnsafeCharacters(t *testing.T) {
+	cases := []struct{ title, want string }{
+		{"a/b", "a-b"},
+		{`a\b`, "a_b"},
+		{"a:b", "a_b"},
+		{"a*b?c", "a_b_c"},
+		{`a"b<c>d|e`, "a_b_c_d_e"},
+		{"日本語/タイトル", "日本語-タイトル"},
+		{"plain title", "plain_title"},
+	}
+	for _, c := range cases {
+		if got := exportStem(c.title); got != c.want {
+			t.Errorf("exportStem(%q) = %q, want %q", c.title, got, c.want)
+		}
+	}
+}
+
 func TestExportStem(t *testing.T) {
 	if got := exportStem(""); got != fallbackStem {
 		t.Errorf(`exportStem("") = %q, want %q`, got, fallbackStem)

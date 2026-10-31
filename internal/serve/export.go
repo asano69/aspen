@@ -193,6 +193,22 @@ func exportCard(dir string, entry manifestCard, text string, lines []lineid.Line
 	return writeFile(dir, entry.Lines, data)
 }
 
+// unsafeNameChars replaces the characters that are dangerous in a file name
+// before pathologize sees the title: "/" becomes "-" (it usually separates
+// words, as in "a/b"), the other reserved characters become "_".
+var unsafeNameChars = strings.NewReplacer(
+	"/", "-",
+	`\`, "_",
+	" ", "_",
+	":", "_",
+	"*", "_",
+	"?", "_",
+	`"`, "_",
+	"<", "_",
+	">", "_",
+	"|", "_",
+)
+
 // exportStem makes a card title safe as the readable part of a file name on
 // every OS, and short enough to leave room for the suffix.
 func exportStem(title string) string {
@@ -201,7 +217,10 @@ func exportStem(title string) string {
 	if strings.TrimSpace(title) == "" {
 		return fallbackStem
 	}
-	stem := strings.TrimSpace(truncateBytes(pathologize.Clean(title), maxStemBytes))
+	// pathologize stays as the last line of defense for anything the
+	// replacer above does not know about (control characters, reserved
+	// names, trailing dots, ...).
+	stem := strings.TrimSpace(truncateBytes(pathologize.Clean(unsafeNameChars.Replace(title)), maxStemBytes))
 	if stem == "" {
 		return fallbackStem
 	}
