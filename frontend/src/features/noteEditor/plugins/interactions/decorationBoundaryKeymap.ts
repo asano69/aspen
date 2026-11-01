@@ -3,25 +3,21 @@ import { syntaxTree } from "@codemirror/language";
 import { Direction, type EditorView, type KeyBinding } from "@codemirror/view";
 import { Deco } from "../../parser/aspen";
 
-function outsideAssoc(
+function decorationAtBoundary(
   state: EditorState,
   pos: number,
-): -1 | 1 | undefined {
-  let assoc: -1 | 1 | undefined;
+): { from: number; to: number } | undefined {
+  let boundary: { from: number; to: number } | undefined;
   syntaxTree(state).iterate({
     enter(node) {
       if (node.type !== Deco) return;
-      if (pos === node.from) {
-        assoc = -1;
-        return false;
-      }
-      if (pos === node.to) {
-        assoc = 1;
+      if (pos === node.from || pos === node.to) {
+        boundary = { from: node.from, to: node.to };
         return false;
       }
     },
   });
-  return assoc;
+  return boundary;
 }
 
 function moveToDecorationBoundary(visualRight: boolean) {
@@ -32,9 +28,29 @@ function moveToDecorationBoundary(visualRight: boolean) {
     // Match CodeMirror's visual ArrowLeft/ArrowRight behavior, including RTL.
     const ltr = view.textDirectionAt(selection.main.head) === Direction.LTR;
     const forward = visualRight === ltr;
+
+    // The outer position is represented by a preview widget while the cursor
+    // is outside. Step into its source explicitly so the widget's atomic range
+    // doesn't make the user skip the entire decoration.
+    const currentBoundary = decorationAtBoundary(view.state, selection.main.head);
+    if (currentBoundary) {
+      const atOpen = selection.main.head === currentBoundary.from;
+      const outside = atOpen ? selection.main.assoc < 0 : selection.main.assoc > 0;
+      if (outside && (atOpen ? forward : !forward)) {
+        const head = atOpen ? currentBoundary.from + 1 : currentBoundary.to - 1;
+        view.dispatch({
+          selection: EditorSelection.cursor(head, atOpen ? 1 : -1),
+          scrollIntoView: true,
+          userEvent: "select",
+        });
+        return true;
+      }
+    }
+
     const next = view.moveByChar(selection.main, forward);
-    const assoc = outsideAssoc(view.state, next.head);
-    if (assoc === undefined) return false;
+    const boundary = decorationAtBoundary(view.state, next.head);
+    if (!boundary) return false;
+    const assoc = next.head === boundary.from ? -1 : 1;
 
     view.dispatch({
       selection: EditorSelection.cursor(next.head, assoc, next.bidiLevel),

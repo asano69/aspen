@@ -3,6 +3,7 @@ import {
   Decoration,
   WidgetType,
   type DecorationSet,
+  type Rect,
 } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import { decorationPlugin } from "./decorationPlugin";
@@ -23,6 +24,56 @@ function revealMark(view: EditorView, node: SyntaxNodeRef, styleClass: string) {
   return Decoration.mark({
     class: [styleClass, ...decoClasses(chars)].join(" "),
   });
+}
+
+// At an outer decoration boundary, the browser places the native selection
+// inside the decorated text node when there is no plain text on that side
+// (most notably before a decoration at the start of a line). Render the node
+// as the same styled text in a non-editable widget for that boundary state.
+// The source returns as editable text as soon as the cursor enters the node.
+class DecoPreviewWidget extends WidgetType {
+  constructor(
+    private readonly styleClass: string,
+    private readonly text: string,
+    private readonly boundarySide: -1 | 1,
+  ) {
+    super();
+  }
+
+  eq(other: DecoPreviewWidget) {
+    return (
+      other.styleClass === this.styleClass &&
+      other.text === this.text &&
+      other.boundarySide === this.boundarySide
+    );
+  }
+
+  toDOM() {
+    const span = document.createElement("span");
+    span.className = this.styleClass;
+    span.textContent = this.text;
+    span.contentEditable = "false";
+    return span;
+  }
+
+  coordsAt(dom: HTMLElement, _pos: number, side: number): Rect | null {
+    const atCaretEdge = this.boundarySide < 0 ? side < 0 : side > 0;
+    if (!atCaretEdge) return null;
+
+    const line = dom.closest(".cm-line") as HTMLElement | null;
+    if (!line) return null;
+    const lineRect = line.getBoundingClientRect();
+    const lineStyle = getComputedStyle(line);
+    const fontSize = Number.parseFloat(lineStyle.fontSize) || 15;
+    const parsedLineHeight = Number.parseFloat(lineStyle.lineHeight);
+    const height = Number.isFinite(parsedLineHeight)
+      ? parsedLineHeight
+      : fontSize;
+    const markRect = dom.getBoundingClientRect();
+    const left = this.boundarySide < 0 ? markRect.left : markRect.right;
+    const top = lineRect.top + (lineRect.height - height) / 2;
+    return { left, right: left, top, bottom: top + height };
+  }
 }
 
 // Hides a delimiter/mark node (e.g. "[* " or "]") using a replacing
@@ -87,7 +138,29 @@ function buildDecorations(view: EditorView): DecorationSet {
       if (!styleClass) return; // not a revealable node type
 
       const { from, to } = node;
-      decorations.push(revealMark(view, node, styleClass).range(from, to));
+      if (node.type === Deco) {
+        const decoMark = revealMark(view, node, styleClass);
+        const outsideAtOpen =
+          main.empty && main.head === from && main.assoc < 0;
+        const outsideAtClose =
+          main.empty && main.head === to && main.assoc > 0;
+
+        if (outsideAtOpen || outsideAtClose) {
+          decorations.push(
+            Decoration.replace({
+              widget: new DecoPreviewWidget(
+                decoMark.spec.class as string,
+                view.state.sliceDoc(from, to),
+                outsideAtOpen ? -1 : 1,
+              ),
+            }).range(from, to),
+          );
+          return;
+        }
+        decorations.push(decoMark.range(from, to));
+      } else {
+        decorations.push(revealMark(view, node, styleClass).range(from, to));
+      }
 
       // Line-level editing: every mark on the active line stays visible, so
       // the line being edited always shows its raw notation. This also avoids
