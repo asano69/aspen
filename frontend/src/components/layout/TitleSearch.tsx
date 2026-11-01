@@ -17,6 +17,15 @@ export interface TitleSearchProps {
 // themselves) and what picking a title does are decided by the caller (see
 // TopBar). Class names follow Cosense's navbar (.navbar-form > .search-form >
 // .form-group > .dropdown > .form-control, plus .btn-search for the icon).
+// Home/End (with or without Shift) must move the caret inside the input.
+// Kobalte's combobox would otherwise use them to jump to the first/last
+// suggestion and cancel the browser's default behavior. A native listener
+// runs before Solid's delegated handlers, so stopping propagation here keeps
+// Kobalte from ever seeing the key. preventDefault is deliberately not called.
+function keepHomeEndForCaret(event: KeyboardEvent) {
+  if (event.key === "Home" || event.key === "End") event.stopPropagation();
+}
+
 export default function TitleSearch(props: TitleSearchProps) {
   const [titles, setTitles] = createSignal<string[]>([]);
   // Identifies the latest query, so a slow answer to an older input is dropped.
@@ -73,6 +82,7 @@ export default function TitleSearch(props: TitleSearchProps) {
           <Search.Control class="dropdown" aria-label="Search titles">
             <Search.Input
               ref={input}
+              on:keydown={keepHomeEndForCaret}
               class="form-control"
               autocomplete="off"
               spellcheck={false}
