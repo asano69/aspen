@@ -89,11 +89,12 @@ function buildDecorations(view: EditorView): DecorationSet {
       const { from, to } = node;
       decorations.push(revealMark(view, node, styleClass).range(from, to));
 
-      // Keep decoration brackets visible throughout the active line. This
-      // avoids changing their inline DOM around the caret as it crosses the
-      // bracket boundary, including just before an IME composition starts.
+      // Line-level editing: every mark on the active line stays visible, so
+      // the line being edited always shows its raw notation. This also avoids
+      // changing inline DOM around the caret as it crosses a bracket
+      // boundary, including just before an IME composition starts.
       const onActiveLine = from <= activeLine.to && to >= activeLine.from;
-      if (node.type === Deco && onActiveLine) return;
+      if (onActiveLine) return;
 
       // "Touching" means the current selection overlaps the node's range at
       // all -- not just an empty cursor inside it. Without this, extending a
