@@ -26,12 +26,11 @@ function revealMark(view: EditorView, node: SyntaxNodeRef, styleClass: string) {
   });
 }
 
-// At an outer decoration boundary, the browser places the native selection
-// inside the decorated text node when there is no plain text on that side
-// (most notably before a decoration at the start of a line). Render the node
-// as the same styled text in a non-editable widget for that boundary state.
-// The source returns as editable text as soon as the cursor enters the node.
-class DecoPreviewWidget extends WidgetType {
+// At a revealable node's outer boundary, render its source as a non-editable
+// widget. This keeps the browser's native selection out of the styled DOM so
+// text inserted at the boundary (including IME composition) cannot inherit
+// the node's style. The source returns as editable text when the cursor enters.
+class RevealPreviewWidget extends WidgetType {
   constructor(
     private readonly styleClass: string,
     private readonly text: string,
@@ -40,7 +39,7 @@ class DecoPreviewWidget extends WidgetType {
     super();
   }
 
-  eq(other: DecoPreviewWidget) {
+  eq(other: RevealPreviewWidget) {
     return (
       other.styleClass === this.styleClass &&
       other.text === this.text &&
@@ -88,6 +87,19 @@ class DecoPreviewWidget extends WidgetType {
 // own length.
 const hiddenMark = Decoration.replace({});
 
+// A cursor on either exclusive edge of a revealable node is outside it,
+// independent of CodeMirror's cursor association.
+function boundarySideAt(
+  selection: { empty: boolean; head: number },
+  from: number,
+  to: number,
+): -1 | 1 | undefined {
+  if (!selection.empty) return undefined;
+  if (selection.head === from) return -1;
+  if (selection.head === to) return 1;
+  return undefined;
+}
+
 // Placeholder for a revealable node whose content is entirely empty
 // (e.g. an empty inline code span, "``"). Hiding both marks in that
 // case would leave no visible character at all for the node's own
@@ -131,6 +143,7 @@ function buildDecorations(view: EditorView): DecorationSet {
   const decorations = [];
   const { main } = view.state.selection;
   const activeLine = view.state.doc.lineAt(main.head);
+  const previewRanges = new Set<string>();
 
   syntaxTree(view.state).iterate({
     enter(node) {
@@ -138,32 +151,30 @@ function buildDecorations(view: EditorView): DecorationSet {
       if (!styleClass) return; // not a revealable node type
 
       const { from, to } = node;
-      if (node.type === Deco) {
-        const decoMark = revealMark(view, node, styleClass);
-        // `from` is before the opening mark, so it is outside regardless of
-        // cursor association. Keeping the source editable at this DOM edge
-        // lets inserted text inherit the decoration (including during IME
-        // composition).
-        const outsideAtOpen = main.empty && main.head === from;
-        // `to` is the position after the closing mark, so it is outside
-        // regardless of cursor association. In particular, a cursor placed
-        // there with assoc < 0 would otherwise leave the source decoration
-        // editable at its DOM edge, causing IME composition text to inherit
-        // the decoration until the composition is committed.
-        const outsideAtClose = main.empty && main.head === to;
-
-        if (outsideAtOpen || outsideAtClose) {
+      const boundarySide = boundarySideAt(main, from, to);
+      if (boundarySide) {
+        // Nested revealable nodes can share a boundary and even the same
+        // range. The first (outermost) node owns that preview; adjacent nodes
+        // have different ranges and both keep their own boundary widget.
+        const rangeKey = `${from}:${to}`;
+        if (!previewRanges.has(rangeKey)) {
+          previewRanges.add(rangeKey);
+          const mark = revealMark(view, node, styleClass);
           decorations.push(
             Decoration.replace({
-              widget: new DecoPreviewWidget(
-                decoMark.spec.class as string,
+              widget: new RevealPreviewWidget(
+                mark.spec.class as string,
                 view.state.sliceDoc(from, to),
-                outsideAtOpen ? -1 : 1,
+                boundarySide,
               ),
             }).range(from, to),
           );
-          return;
         }
+        return false;
+      }
+
+      if (node.type === Deco) {
+        const decoMark = revealMark(view, node, styleClass);
         decorations.push(decoMark.range(from, to));
       } else {
         decorations.push(revealMark(view, node, styleClass).range(from, to));
