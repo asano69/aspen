@@ -37,24 +37,6 @@ function revealMark(view: EditorView, node: SyntaxNodeRef, styleClass: string) {
 // own length.
 const hiddenMark = Decoration.replace({});
 
-// Keep editable text on either side of a bracketed decoration in its own
-// DOM text node. Without these zero-width boundaries, the browser can leave
-// the caret in the decoration's marked span after `]` is typed. That is
-// especially troublesome for IME composition, which starts before the next
-// syntax-tree rebuild. The widgets carry no document text and are not
-// editable; CodeMirror still owns the selection at the adjacent document
-// position.
-class DecorationBoundaryWidget extends WidgetType {
-  toDOM() {
-    const span = document.createElement("span");
-    span.className = "cm-decoration-boundary";
-    span.contentEditable = "false";
-    return span;
-  }
-}
-
-const decorationBoundary = new DecorationBoundaryWidget();
-
 // Placeholder for a revealable node whose content is entirely empty
 // (e.g. an empty inline code span, "``"). Hiding both marks in that
 // case would leave no visible character at all for the node's own
@@ -97,6 +79,7 @@ class EmptyRevealWidget extends WidgetType {
 function buildDecorations(view: EditorView): DecorationSet {
   const decorations = [];
   const { main } = view.state.selection;
+  const activeLine = view.state.doc.lineAt(main.head);
 
   syntaxTree(view.state).iterate({
     enter(node) {
@@ -106,26 +89,16 @@ function buildDecorations(view: EditorView): DecorationSet {
       const { from, to } = node;
       decorations.push(revealMark(view, node, styleClass).range(from, to));
 
-      if (node.type === Deco) {
-        decorations.push(
-          Decoration.widget({ widget: decorationBoundary, side: -1 }).range(from),
-          Decoration.widget({ widget: decorationBoundary, side: 1 }).range(to),
-        );
-      }
+      // Keep decoration brackets visible throughout the active line. This
+      // avoids changing their inline DOM around the caret as it crosses the
+      // bracket boundary, including just before an IME composition starts.
+      const onActiveLine = from <= activeLine.to && to >= activeLine.from;
+      if (node.type === Deco && onActiveLine) return;
 
-      // A collapsed cursor at either edge of a decoration is outside it.
-      // In particular, after moving right past a closing bracket, treating
-      // `to` as touching reveals the closing mark and leaves the browser's
-      // native caret inside the decoration's marked DOM. The zero-width
-      // boundary widgets above then cannot isolate the following input.
-      // Non-empty selections still count as touching when they overlap the
-      // node, including when extended into it with shift+Arrow.
-      const touching =
-        node.type === Deco
-          ? main.empty
-            ? main.head > from && main.head < to
-            : main.from < to && main.to > from
-          : main.from <= to && main.to >= from;
+      // "Touching" means the current selection overlaps the node's range at
+      // all -- not just an empty cursor inside it. Without this, extending a
+      // selection into the node can hide marks mid-selection.
+      const touching = main.from <= to && main.to >= from;
       if (touching) return; // leave marks visible for editing
 
       // Some node types (Image, LinkedImage) carry no mark children
@@ -179,11 +152,11 @@ function buildDecorations(view: EditorView): DecorationSet {
 
 // IME-safe rebuilding is handled by decorationPlugin (see its comment).
 export const syntaxReveal = decorationPlugin({
-  build: buildDecorations,
-  // A new syntax tree (e.g. after a background parse of a long
-  // document) also changes which nodes exist to be styled or hidden.
-  shouldRebuild: (update) =>
-    update.docChanged ||
-    update.selectionSet ||
-    syntaxTree(update.startState) !== syntaxTree(update.state),
-});
+    build: buildDecorations,
+    // A new syntax tree (e.g. after a background parse of a long
+    // document) also changes which nodes exist to be styled or hidden.
+    shouldRebuild: (update) =>
+      update.docChanged ||
+      update.selectionSet ||
+      syntaxTree(update.startState) !== syntaxTree(update.state),
+  });
