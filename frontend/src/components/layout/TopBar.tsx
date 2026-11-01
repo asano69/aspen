@@ -1,5 +1,5 @@
 import { createEffect, createSignal, on, Show } from "solid-js";
-import { A, useNavigate } from "@solidjs/router";
+import { A, useLocation, useNavigate } from "@solidjs/router";
 import { Menu, Plus, PackageOpen } from "@/lib/icons";
 import { titleToSegment } from "@/lib/models/slugify";
 import { suggestTitles } from "@/lib/dexie/titleIndex";
@@ -26,6 +26,12 @@ export default function TopBar(props: TopBarProps) {
   // with this title, exactly like following a wiki link: an existing card
   // opens, otherwise a draft with that title starts (see CardForm).
   const [query, setQuery] = createSignal("");
+  // Bumped to remount TitleSearch: its input value cannot be set from outside.
+  const [searchEpoch, setSearchEpoch] = createSignal(0);
+  const resetSearch = () => {
+    setQuery("");
+    setSearchEpoch((n) => n + 1);
+  };
   const addCardHref = () => {
     const slug = topBarPodLink()!.slug;
     const title = query().trim();
@@ -34,9 +40,18 @@ export default function TopBar(props: TopBarProps) {
 
   // Text typed for one scope must not leak into the other.
   createEffect(
+    on(() => topBarPodLink() !== undefined, resetSearch, { defer: true }),
+  );
+
+  // Arriving at the pod's home (e.g. via the pod link) clears the search.
+  const location = useLocation();
+  createEffect(
     on(
-      () => topBarPodLink() !== undefined,
-      () => setQuery(""),
+      () => location.pathname,
+      (path) => {
+        const link = topBarPodLink();
+        if (link && path.replace(/\/$/, "") === `/${link.slug}`) resetSearch();
+      },
       { defer: true },
     ),
   );
@@ -133,11 +148,14 @@ export default function TopBar(props: TopBarProps) {
                 >
                   <Plus size={20} strokeWidth={4} />
                 </button>
-                <TitleSearch
-                  suggest={suggestPods}
-                  onSelect={openPod}
-                  onQueryChange={setQuery}
-                />
+                {/* Always truthy; keyed so a new epoch remounts the search. */}
+                <Show when={searchEpoch() + 1} keyed>
+                  <TitleSearch
+                    suggest={suggestPods}
+                    onSelect={openPod}
+                    onQueryChange={setQuery}
+                  />
+                </Show>
               </>
             }
           >
@@ -149,13 +167,15 @@ export default function TopBar(props: TopBarProps) {
             >
               <Plus size={20} strokeWidth={4} />
             </A>
-            <TitleSearch
-              suggest={(text) => suggestTitles(topBarPodLink()!.id, text)}
-              onSelect={(title) =>
-                navigate(`/${topBarPodLink()!.slug}/${titleToSegment(title)}`)
-              }
-              onQueryChange={setQuery}
-            />
+            <Show when={searchEpoch() + 1} keyed>
+              <TitleSearch
+                suggest={(text) => suggestTitles(topBarPodLink()!.id, text)}
+                onSelect={(title) =>
+                  navigate(`/${topBarPodLink()!.slug}/${titleToSegment(title)}`)
+                }
+                onQueryChange={setQuery}
+              />
+            </Show>
           </Show>
         </div>
 
