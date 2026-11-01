@@ -140,8 +140,11 @@ function buildDecorations(view: EditorView): DecorationSet {
       const { from, to } = node;
       if (node.type === Deco) {
         const decoMark = revealMark(view, node, styleClass);
-        const outsideAtOpen =
-          main.empty && main.head === from && main.assoc < 0;
+        // `from` is before the opening mark, so it is outside regardless of
+        // cursor association. Keeping the source editable at this DOM edge
+        // lets inserted text inherit the decoration (including during IME
+        // composition).
+        const outsideAtOpen = main.empty && main.head === from;
         // `to` is the position after the closing mark, so it is outside
         // regardless of cursor association. In particular, a cursor placed
         // there with assoc < 0 would otherwise leave the source decoration
