@@ -40,6 +40,7 @@ import {
 } from "@codemirror/language";
 import { aspenSyntax } from "./parser/aspen";
 import { syntaxReveal } from "./plugins/decorations/syntaxReveal";
+import { decorationBoundaryKeymap } from "./plugins/interactions/decorationBoundaryKeymap";
 import { wikiLinkNavigation } from "./plugins/interactions/wikiLinkNavigation";
 import { externalLinkNavigation } from "./plugins/interactions/externalLinkNavigation";
 import { pasteUrlDecode } from "./plugins/interactions/pasteUrlDecode";
@@ -120,6 +121,7 @@ export default function NoteEditor(props: NoteEditorProps) {
     // stale layout position until the next reflow forces the browser
     // to recompute it.
     drawSelection(),
+    keymap.of(decorationBoundaryKeymap),
     // Auto-closes (), [], {}, '', "", `` and types over an existing
     // closer instead of duplicating it. Also handles nested brackets
     // on its own -- "[" twice in a row produces "[[|]]".
